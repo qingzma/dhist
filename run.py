@@ -1,9 +1,13 @@
 import argparse
-import logging
+# import logging
 import os
 import time
 
 from joins.tools import convert_time_to_int
+from joins.base_logger import logger
+from joins.train_stats import train_stats
+
+# logging.getLogger('matplotlib.font_manager').disabled = True
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -20,23 +24,11 @@ if __name__ == '__main__':
                         default="dbname=imdb user=postgres password=postgres host=127.0.0.1 port=5436",
                         help='postgres connection string')
 
-    parser.add_argument('--log_level', type=int, default=logging.DEBUG)
+    # parser.add_argument('--log_level', type=int, default=logging.DEBUG)
 
     args = parser.parse_args()
 
     os.makedirs('logs', exist_ok=True)
-    logging.basicConfig(
-        level=args.log_level,
-        # [%(threadName)-12.12s]
-        format="%(asctime)s [%(levelname)-5.5s]  %(message)s",
-        handlers=[
-            logging.FileHandler(
-                "logs/{}_{}.log".format(args.dataset, time.strftime("%Y%m%d-%H%M%S"))),
-            logging.StreamHandler()
-        ])
-
-    logging.getLogger('matplotlib.font_manager').disabled = True
-    logger = logging.getLogger(__name__)
 
     logger.info(f'Start running experiment for {args.dataset}')
 
@@ -47,6 +39,7 @@ if __name__ == '__main__':
 
         elif args.train:
             logger.info("start train models")
+            train_stats()
 
         elif args.evaluate:
             logger.info("start evaluating models")
