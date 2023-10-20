@@ -135,7 +135,7 @@ class Kde2D:
         cset = ax.contour(xx, yy, zz, colors='k')
         ax.clabel(cset, inline=1, fontsize=10)
         plt.show()
-        exit()
+        # exit()
 
 
 if __name__ == '__main__':

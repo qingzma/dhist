@@ -33,3 +33,7 @@ python run.py --dataset stats \
 ```
 python -m unittest
 ```
+
+```
+https://github.com/VincentStimper/normalizing-flows
+```
