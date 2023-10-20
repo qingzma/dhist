@@ -37,7 +37,8 @@ class Kde1D:
         self.scaler = preprocessing.StandardScaler()
         x_scaled = self.scaler.fit_transform(x)
         self.kde = KernelDensity(
-            kernel="gaussian", bandwidth=0.75).fit(x_scaled)
+            kernel=kernel, bandwidth=0.75).fit(x_scaled)
+        # self.plot()
 
     def predict(self, x):
         return np.exp(self.kde.score_samples(self.scaler.transform(x)))
@@ -47,7 +48,7 @@ class Kde1D:
         dens = self.predict(x)
         plt.plot(x, dens)
         plt.title(self.table)
-        print(self.column_head.name)
+        # print(self.column_head.name)
         plt.xlabel(self.column_head.name)
         plt.ylabel("probability")
         plt.show()
@@ -64,17 +65,18 @@ class Kde2D:
         self.scaler = None
         self.min = None
         self.max = None
-        self.plot_bins = 5
+        self.plot_bins = 3
         self.column_head = None
         self.table = None
 
-    def fit(self, x, kernel='gaussian', header="column_head", table="table"):
+    def fit(self, x, kernel='linear', header="column_head", table="table"):
         """train the kernel density estimation of the given data distribution
 
         Args:
             X (_type_): _description_
             kernel (str, optional): ["gaussian", "tophat", "epanechnikov", "exponential", "linear", "cosine"]. Defaults to 'gaussian'.
         """
+        x = x[:10000]
         self.min = np.min(x, axis=0)
         self.max = np.max(x, axis=0)
         # print("x is:", x)
@@ -87,8 +89,10 @@ class Kde2D:
         self.table = table
         self.scaler = preprocessing.StandardScaler()
         x_scaled = self.scaler.fit_transform(x)
+        print(x[:20])
+        print(x_scaled[:20])
         self.kde = KernelDensity(
-            kernel="gaussian", bandwidth=0.75).fit(x_scaled)
+            kernel=kernel, bandwidth=0.75).fit(x_scaled)
 
     def predict(self, x):
         return np.exp(self.kde.score_samples(self.scaler.transform(x)))
@@ -116,9 +120,20 @@ class Kde2D:
         # kde_skl.fit(xy_train)
 
         # score_samples() returns the log-likelihood of the samples
-        print(xy_sample)
+        # print(xy_sample)
         z = np.exp(self.kde.score_samples(xy_sample))
-        print(z)
+        zz = np.reshape(z, xx.shape)
+        print(zz)
+        # plt.pcolormesh(xx, yy, zz)
+        # # plt.scatter(x, y, s=2, facecolor='white')
+        fig = plt.figure()
+        ax = fig.gca()
+        ax.set_xlim(self.min[0], self.max[0])
+        ax.set_ylim(self.min[1], self.max[1])
+        cfset = ax.contourf(xx, yy, zz, cmap='Blues')
+        cset = ax.contour(xx, yy, zz, colors='k')
+        ax.clabel(cset, inline=1, fontsize=10)
+        plt.show()
         exit()
 
 
