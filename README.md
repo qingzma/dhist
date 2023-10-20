@@ -27,3 +27,9 @@ python run.py --dataset stats \
 ```
 
 ### 2.2 evaluate
+
+# Tests
+
+```
+python -m unittest
+```
