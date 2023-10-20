@@ -5,7 +5,7 @@ import time
 
 from joins.tools import convert_time_to_int
 from joins.base_logger import logger
-from joins.train_stats import train_stats
+from joins.stats.train_stats import train_stats
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -15,7 +15,9 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', default='stats',
                         help='the target dataset')
     parser.add_argument('--data_folder',
-                        default='/home/quincy/Document/research/End-to-End-CardEst-Benchmark/datasets/stats_simplified_int/')
+                        default='data/stats/')
+    parser.add_argument(
+        '--model_folder', default='models')
     parser.add_argument(
         '--preprocess', help='convert date to int', action='store_true')
     parser.add_argument('--db_conn', type=str,
@@ -28,7 +30,7 @@ if __name__ == '__main__':
 
     os.makedirs('logs', exist_ok=True)
 
-    logger.info(f'Start running experiment for {args.dataset}')
+    logger.info('Start running experiment for %s', args.dataset)
 
     if args.dataset == 'stats':
         if args.preprocess:
@@ -36,8 +38,16 @@ if __name__ == '__main__':
             convert_time_to_int(args.data_folder)
 
         elif args.train:
-            logger.info("start train models")
-            train_stats()
+            logger.info("start training models")
+            start_time = time.time()
+            train_stats(args.dataset, args.data_folder, args.model_folder,)
+            end_time = time.time()
+            logger.info(
+                "Training completed: total training time is %.6f s.", end_time - start_time)
 
         elif args.evaluate:
             logger.info("start evaluating models")
+            start_time = time.time()
+            end_time = time.time()
+            logger.info(
+                "Evaluation completed: total evaluation time is %.6f s.", end_time - start_time)
