@@ -1,6 +1,7 @@
 logs/*
 .vscode/
 __pycache__/
+data/stats/
 
 *.pyc
 .DS_Store

@@ -3,7 +3,7 @@ from joins.base_logger import logger
 from joins.pdf import Kde
 
 
-class Table:
+class TableContainer:
     def __init__(self) -> None:
         self.df = None
         self.name = None
@@ -45,5 +45,5 @@ class Column:
 
 
 if __name__ == '__main__':
-    table = Table()
+    table = TableContainer()
     table.fit(file='data/pm25_100.csv', join_keys=['PRES'], exclude=['cbwd'])
