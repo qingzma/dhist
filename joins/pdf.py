@@ -76,7 +76,7 @@ class Kde2D:
             X (_type_): _description_
             kernel (str, optional): ["gaussian", "tophat", "epanechnikov", "exponential", "linear", "cosine"]. Defaults to 'gaussian'.
         """
-        x = x[:10000]
+        x = x[:1000]
         self.min = np.min(x, axis=0)
         self.max = np.max(x, axis=0)
         # print("x is:", x)
@@ -89,8 +89,8 @@ class Kde2D:
         self.table = table
         self.scaler = preprocessing.StandardScaler()
         x_scaled = self.scaler.fit_transform(x)
-        print(x[:20])
-        print(x_scaled[:20])
+        # print(x[:20])
+        # print(x_scaled[:20])
         self.kde = KernelDensity(
             kernel=kernel, bandwidth=0.75).fit(x_scaled)
 
@@ -121,9 +121,10 @@ class Kde2D:
 
         # score_samples() returns the log-likelihood of the samples
         # print(xy_sample)
-        z = np.exp(self.kde.score_samples(xy_sample))
+        # np.exp(self.kde.score_samples(xy_sample))
+        z = self.predict(xy_sample)
         zz = np.reshape(z, xx.shape)
-        print(zz)
+        # print(zz)
         # plt.pcolormesh(xx, yy, zz)
         # # plt.scatter(x, y, s=2, facecolor='white')
         fig = plt.figure()
