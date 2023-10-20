@@ -10,3 +10,5 @@ logging.basicConfig(
         logging.StreamHandler()
     ])
 logger = logging.getLogger(__name__)
+# disable matplotlib logging
+logging.getLogger("matplotlib").setLevel(logging.WARNING)

@@ -1,4 +1,4 @@
-# cardinatlity estimation based on ML
+# cardinality estimation based on ML
 
 ## 1. Environment Setup
 

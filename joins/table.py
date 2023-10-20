@@ -1,5 +1,6 @@
 import pandas as pd
 from joins.base_logger import logger
+from joins.pdf import Kde
 
 
 class Table:
@@ -31,12 +32,16 @@ class Column:
     def __init__(self) -> None:
         self.name = None
         self.size = None
+        self.pdf = None
 
     def fit(self, df_column) -> None:
         logger.info("fit the pdf...")
-
-    def plot(self) -> None:
-        logger.info("plot the pdf...")
+        kde = Kde()
+        kde.fit(df_column.to_numpy().reshape(-1, 1))
+        self.pdf = kde
+        kde.plot()
+    # def plot(self) -> None:
+    #     logger.info("plot the pdf...")
 
 
 if __name__ == '__main__':

@@ -7,8 +7,6 @@ from joins.tools import convert_time_to_int
 from joins.base_logger import logger
 from joins.train_stats import train_stats
 
-# logging.getLogger('matplotlib.font_manager').disabled = True
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--train', help='train models', action='store_true')
