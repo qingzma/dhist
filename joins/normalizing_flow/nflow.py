@@ -4,10 +4,12 @@ import normflows as nf
 
 from matplotlib import pyplot as plt
 from tqdm import tqdm
+from sklearn import preprocessing
 
 
 class Nflow2D:
-    def __init__(self, max_iter=400, b_plot=True, grid_size=200, show_iter=100) -> None:
+    def __init__(self, max_iter=200, b_plot=True, grid_size=200, show_iter=100) -> None:
+        self.scaler = None
         self.max_iter = max_iter
 
         self.xx = None
@@ -43,6 +45,11 @@ class Nflow2D:
         self.model = model
 
     def fit(self, xs):
+        # print(type(xs[0][0]))
+        if isinstance(xs, np.ndarray):
+            self.scaler = preprocessing.StandardScaler()
+            x_scaled = self.scaler.fit_transform(xs)
+            xs = torch.from_numpy(x_scaled)
         # Get training samples
         x = xs.to(self.device)
         # Train model
@@ -68,8 +75,10 @@ class Nflow2D:
 
             if self.b_plot:
                 if self.xx is None:
+                    mins = torch.min(xs, axis=0).values.detach().numpy()
+                    maxs = torch.max(xs, axis=0).values.detach().numpy()
                     self.xx, self.yy = torch.meshgrid(
-                        torch.linspace(-3, 3, self.grid_size), torch.linspace(-3, 3, self.grid_size))
+                        torch.linspace(mins[0], maxs[0], self.grid_size), torch.linspace(mins[1], maxs[1], self.grid_size))
                     zz = torch.cat(
                         [self.xx.unsqueeze(2), self.yy.unsqueeze(2)], 2).view(-1, 2)
                     self.zz = zz.to(self.device)
@@ -98,6 +107,7 @@ class Nflow2D:
         self.model.eval()
 
     def predict(self, data):
+        x = self.scaler.transform(data)
         data = data.to(self.device)
         log_prob = self.model.log_prob(data).to(
             'cpu')  # .view(*self.xx.shape)
@@ -140,47 +150,47 @@ class Nflow2D:
 
 
 if __name__ == '__main__':
-    nflow = Nflow1D(max_iter=10, b_plot=False)
-    # Define target distribution
-    # target = nf.distributions.GaussianMixture(3, 1)
-    # target = nf.distributions.UniformGaussian(
-    #     2, [1], torch.tensor([1., 2 * np.pi]))
-    # Set up target
+    # nflow = Nflow1D(max_iter=10, b_plot=False)
+    # # Define target distribution
+    # # target = nf.distributions.GaussianMixture(3, 1)
+    # # target = nf.distributions.UniformGaussian(
+    # #     2, [1], torch.tensor([1., 2 * np.pi]))
+    # # Set up target
 
-    class Target:
-        def __init__(self, ndim, ind_circ):
-            self.ndim = ndim
-            self.ind_circ = ind_circ
+    # class Target:
+    #     def __init__(self, ndim, ind_circ):
+    #         self.ndim = ndim
+    #         self.ind_circ = ind_circ
 
-        def sample(self, n):
-            s = torch.randn(n, self.ndim)
-            c = torch.rand(n, self.ndim) > 0.6
-            s = c * (0.3 * s - 0.5) + (1 - 1. * c) * (s + 1.3)
-            u = torch.rand(n, len(self.ind_circ))
-            s_ = torch.acos(2 * u - 1)
-            c = torch.rand(n, len(self.ind_circ)) > 0.3
-            s_[c] = -s_[c]
-            s[:, self.ind_circ] = (s_ + 1) % (2 * np.pi) - np.pi
-            return s
+    #     def sample(self, n):
+    #         s = torch.randn(n, self.ndim)
+    #         c = torch.rand(n, self.ndim) > 0.6
+    #         s = c * (0.3 * s - 0.5) + (1 - 1. * c) * (s + 1.3)
+    #         u = torch.rand(n, len(self.ind_circ))
+    #         s_ = torch.acos(2 * u - 1)
+    #         c = torch.rand(n, len(self.ind_circ)) > 0.3
+    #         s_[c] = -s_[c]
+    #         s[:, self.ind_circ] = (s_ + 1) % (2 * np.pi) - np.pi
+    #         return s
 
-    # Visualize target
-    # target = Target(2, [1])
-    # s = target.sample(10000)
-    # x = s[:, 0]
-    # plt.hist(s[:, 0].data.numpy(), bins=200)
-    # plt.show()
-    # plt.hist(s[:, 1].data.numpy(), bins=200)
-    # plt.show()
-    # num_samples = 2 ** 16
-    # x = target.sample(num_samples)
-    x = torch.tensor(np.array(np.linspace(0, 1, 10).reshape(-1, 1)))
-    print(x)
-    # exit()
-    nflow.fit(x)
-    nflow.plot()
-    zz = torch.tensor([[1.0], [2.0], [3.0]])
-    print(zz)
-    print(nflow.predict(zz))
+    # # Visualize target
+    # # target = Target(2, [1])
+    # # s = target.sample(10000)
+    # # x = s[:, 0]
+    # # plt.hist(s[:, 0].data.numpy(), bins=200)
+    # # plt.show()
+    # # plt.hist(s[:, 1].data.numpy(), bins=200)
+    # # plt.show()
+    # # num_samples = 2 ** 16
+    # # x = target.sample(num_samples)
+    # x = torch.tensor(np.array(np.linspace(0, 1, 10).reshape(-1, 1)))
+    # print(x)
+    # # exit()
+    # nflow.fit(x)
+    # nflow.plot()
+    # zz = torch.tensor([[1.0], [2.0], [3.0]])
+    # print(zz)
+    # print(nflow.predict(zz))
 
     nflow = Nflow2D(max_iter=10, b_plot=False)
     # Define target distribution

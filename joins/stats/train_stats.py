@@ -15,7 +15,7 @@ def train_stats(dataset, data_path, model_folder, kernel='gaussian'):
     # print(data_path)
     for t in schema.tables:
         table_path = os.path.join(data_path, t.table_name) + '.csv'
-        print(table_path)
+        # print(table_path)
         df = pd.read_csv(table_path)
         # print(df)
         tableContainer = TableContainer()
