@@ -29,7 +29,7 @@ class Nflow1D:
         self.target_distribution = Uniform(torch.tensor(0.0).to(
             self.device), torch.tensor(1.0).to(self.device))
 
-    def fit(self, x):
+    def fit(self, x, epoch=100):
         self.min = np.min(x)
         self.max = np.max(x)
         self.scaler = preprocessing.StandardScaler()
@@ -38,7 +38,7 @@ class Nflow1D:
             x_scaled, self.device), batch_size=128, shuffle=True)
 
         self.pdf, train_losses = train_and_eval(
-            50, 5e-3, train_loader, self.target_distribution, self.device)
+            epoch, 5e-3, train_loader, self.target_distribution, self.device)
         self.pdf.eval()
 
         if self.b_plot:
@@ -140,10 +140,10 @@ class NumpyDataset(data.Dataset):
 
 
 if __name__ == '__main__':
-    n_train, n_test = 200, 1000
+    n_train, n_test = 2000, 1000
     train_data = generate_mixture_of_gaussians(n_train)
     train_data = train_data.reshape(-1, 1)
-    print(train_data)
+    # print(train_data)
     flow = Nflow1D(enable_cuda=True)
-    flow.fit(train_data)
+    flow.fit(train_data, epoch=20)
     flow.plot()
