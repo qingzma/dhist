@@ -43,3 +43,4 @@ https://github.com/tommyod/KDEpy
 
 1. kernel = box or gaussian
 2. coutour plot log
+3. 1d bw selection. lead to negative density.

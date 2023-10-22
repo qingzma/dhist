@@ -14,7 +14,7 @@ from scipy.interpolate import RegularGridInterpolator
 from scipy.interpolate import CubicSpline
 from matplotlib import cm, ticker
 
-kernel = "gaussian"  # "box"
+kernel = "box"  # "box",gaussian
 
 
 class KdePy1D:
@@ -23,8 +23,8 @@ class KdePy1D:
         self.min = None
         self.max = None
 
-    def fit(self, x, grid_size=2**10):
-        x, p = FFTKDE(bw="ISJ", kernel=kernel).fit(x)(grid_size)  # "ISJ"
+    def fit(self, x, grid_size=2**11):
+        x, p = FFTKDE(bw=500, kernel=kernel).fit(x)(grid_size)  # "ISJ"
         self.kde = CubicSpline(x, p)
         self.min = np.min(x)
         self.max = np.max(x)
