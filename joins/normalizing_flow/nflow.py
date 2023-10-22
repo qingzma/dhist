@@ -54,7 +54,7 @@ class Nflow2D:
         if isinstance(xs, np.ndarray):
             self.scaler = preprocessing.StandardScaler()
             x_scaled = self.scaler.fit_transform(xs)
-            xs = torch.from_numpy(x_scaled)
+            xs = torch.FloatTensor(x_scaled)
         # Get training samples
         x = xs.to(self.device)
         # Train model
@@ -112,7 +112,7 @@ class Nflow2D:
         self.model.eval()
 
     def predict(self, data):
-        x = torch.from_numpy(self.scaler.transform(data.astype('float32')))
+        x = torch.FloatTensor(self.scaler.transform(data))
         x = x.to(self.device)
         log_prob = self.model.log_prob(x).to(
             'cpu')  # .view(*self.xx.shape)
@@ -207,7 +207,7 @@ if __name__ == '__main__':
     # Define target distribution
     target = nf.distributions.TwoMoons()
     num_samples = 2 ** 10
-    x = target.sample(num_samples).cpu().detach().numpy().astype('float32')
+    x = target.sample(num_samples).cpu().detach().numpy()
     # print(x)
     nflow.fit(x)
     nflow.plot()
