@@ -81,16 +81,19 @@ class Kde2D:
             X (_type_): _description_
             kernel (str, optional): ["gaussian", "tophat", "epanechnikov", "exponential", "linear", "cosine"]. Defaults to 'gaussian'.
         """
-        # sample_limit = 20
+        # sample_limit = 10
         # if len(x) > sample_limit:
         #     # print(x)
         #     print("size limit to ", sample_limit)
         #     i = np.random.choice(
         #         range(len(x)), size=sample_limit, replace=False)
-        #     # print(i)
+        #     print(i)
+        #     print("x before\n", x)
         #     # print(range(10))
         #     # exit()
         #     x = x[i]
+        #     print("x changed to ")
+        #     print(x)
         #     print("done")
         # print(x)
         x = x[:1000]

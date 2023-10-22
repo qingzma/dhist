@@ -8,7 +8,7 @@ from sklearn import preprocessing
 
 
 class Nflow2D:
-    def __init__(self, max_iter=200, b_plot=True, grid_size=200, show_iter=100) -> None:
+    def __init__(self, max_iter=200, b_plot=True, grid_size=200, show_iter=100, enable_cuda=False) -> None:
         self.scaler = None
         self.max_iter = max_iter
 
@@ -37,7 +37,6 @@ class Nflow2D:
         # Construct flow model
         model = nf.NormalizingFlow(base, flows)
         # Move model on GPU if available
-        enable_cuda = False
         device = 'cpu'
         if enable_cuda:
             if torch.cuda.is_available():

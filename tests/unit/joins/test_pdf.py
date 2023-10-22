@@ -1,5 +1,5 @@
 import unittest
-from joins.pdf import Kde
+from joins.pdf.kde import Kde
 import numpy as np
 
 

@@ -1,7 +1,8 @@
 import pandas as pd
 from joins.base_logger import logger
-from joins.pdf import Kde1D, Kde2D
-from joins.normalizing_flow.nflow import Nflow2D
+from joins.pdf.kde import Kde1D, Kde2D
+from joins.pdf.normalizing_flow.nflow import Nflow2D
+from joins.pdf.kdepy import KdePy1D, KdePy2D, plot2d, plot1d
 
 
 class TableContainer:
@@ -60,22 +61,31 @@ class Column2d:
         self.size = None
         self.pdf = None
 
-    def fit(self, df_columns, table_name, b_nflow=False) -> None:
+    def fit(self, df_columns, table_name, method="fft") -> None:
+        """
+        methods: ["fft", "kde","nflow"]
+        """
         # use float32 for pytorch compatibility
         df_columns = df_columns.astype('float32')
         logger.info("fit the 2pdf...")
         self.name = df_columns.head()
-        if b_nflow:
-            flow = Nflow2D(max_iter=100, show_iter=200)
+        if method == 'nflow':
+            flow = Nflow2D(max_iter=100, show_iter=200, enable_cuda=False)
             flow.fit(df_columns.to_numpy())
             self.pdf = flow
             flow.plot()
-        else:
+        elif method == 'kde':
             kde = Kde2D()
             kde.fit(df_columns.to_numpy(),  # .reshape(-1, 2),
                     header=self.name, table=table_name)
             self.pdf = kde
             kde.plot()
+        else:
+            kde = KdePy2D()
+            kde.fit(df_columns.to_numpy())
+            self.pdf = kde
+            plot2d(kde)
+
     # def plot(self) -> None:
     #     logger.info("plot the pdf...")
 
