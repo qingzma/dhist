@@ -121,7 +121,8 @@ class Nflow2D:
     def plot(self):
         if self.b_plot:
             # Plot target distribution
-            f, ax = plt.subplots(1, 1, sharey=True, figsize=(15, 7))
+            fig = plt.figure()
+            ax = fig.gca()
 
             # log_prob = self.target.log_prob(self.zz).to('cpu').view(*self.xx.shape)
             # prob = torch.exp(log_prob)
@@ -141,8 +142,13 @@ class Nflow2D:
             prob = torch.exp(log_prob)
             prob[torch.isnan(prob)] = 0
 
-            ax.pcolormesh(self.xx, self.yy,
-                          prob.data.numpy(), cmap='coolwarm')
+            cfset = ax.contourf(
+                self.xx, self.yy, prob.data.numpy(), cmap='Blues')
+            cset = ax.contour(self.xx, self.yy, prob.data.numpy(), colors='k')
+            ax.clabel(cset, inline=1, fontsize=10)
+
+            # ax.pcolormesh(self.xx, self.yy,
+            #               prob.data.numpy(), cmap='coolwarm')
 
             ax.set_aspect('equal', 'box')
             ax.set_axis_off()
