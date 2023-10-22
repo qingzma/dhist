@@ -37,3 +37,8 @@ python -m unittest
 ```
 https://github.com/VincentStimper/normalizing-flows
 ```
+
+## TODO
+
+1. kernel = box or gaussian
+2. coutour plot log

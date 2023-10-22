@@ -12,6 +12,9 @@ from scipy.stats import norm
 from KDEpy import NaiveKDE, TreeKDE, FFTKDE
 from scipy.interpolate import RegularGridInterpolator
 from scipy.interpolate import CubicSpline
+from matplotlib import cm, ticker
+
+kernel = "gaussian"  # "box"
 
 
 class KdePy1D:
@@ -21,7 +24,7 @@ class KdePy1D:
         self.max = None
 
     def fit(self, x, grid_size=2**10):
-        x, p = FFTKDE(bw="ISJ").fit(x)(grid_size)
+        x, p = FFTKDE(bw="ISJ", kernel=kernel).fit(x)(grid_size)
         self.kde = CubicSpline(x, p)
         self.min = np.min(x)
         self.max = np.max(x)
@@ -38,7 +41,7 @@ class KdePy2D:
 
     def fit(self, x, grid_size=2**10):
         # print("train")
-        x, p = FFTKDE(bw=10, kernel="box").fit(
+        x, p = FFTKDE(bw=10, kernel=kernel).fit(
             x)((grid_size, grid_size))
         xx, yy = np.unique(x[:, 0]), np.unique(x[:, 1])
         self.min = [xx[0], yy[0]]
@@ -66,14 +69,16 @@ def plot1d(kde: KdePy1D):
 def plot2d(kde: KdePy2D):
     fig = plt.figure()
     ax = fig.gca()
-    N = 8  # Number of contours
+    N = 4  # Number of contours
     xx = np.linspace(kde.min[0], kde.max[0],  2**8)
     yy = np.linspace(kde.min[1], kde.max[1],  2**8)
     p = kde.predict_grid(xx, yy)
-    cfset = ax.contourf(xx, yy, p, N, cmap="Blues")
-    cset = ax.contour(xx, yy, p, N, linewidths=0.8, colors="k")
-    # cset = ax.contourf(xx, yy, p, N, cmap="PuBu")
+    cfset = ax.contourf(xx, yy, p, N, cmap="Blues",
+                        locator=ticker.LogLocator())
+    cset = ax.contour(xx, yy, p, N, linewidths=0.8,
+                      colors="k", locator=ticker.LogLocator())
     ax.clabel(cset, inline=1, fontsize=10)
+    cbar = fig.colorbar(cfset)
     plt.show()
 
 

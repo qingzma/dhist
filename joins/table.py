@@ -43,13 +43,24 @@ class Column:
         self.size = None
         self.pdf = None
 
-    def fit(self, df_column, table_name) -> None:
+    def fit(self, df_column, table_name, method="fft") -> None:
+        """
+        methods: ["fft", "kde","nflow"]
+        """
         logger.info("fit the pdf...")
         self.name = df_column.head()
-        kde = Kde1D()
-        kde.fit(df_column.to_numpy().reshape(-1, 1),
-                header=self.name, table=table_name)
-        self.pdf = kde
+        if method == "kde":
+            kde = Kde1D()
+            kde.fit(df_column.to_numpy().reshape(-1, 1),
+                    header=self.name, table=table_name)
+            self.pdf = kde
+        elif method == "nflow":
+            print("not implemented yet")
+        else:
+            kde = KdePy1D()
+            kde.fit(df_column.to_numpy().reshape(-1, 1))
+            self.pdf = kde
+            plot1d(kde)
         # kde.plot()
     # def plot(self) -> None:
     #     logger.info("plot the pdf...")
