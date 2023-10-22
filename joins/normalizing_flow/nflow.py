@@ -150,11 +150,11 @@ class Nflow2D:
             # ax.pcolormesh(self.xx, self.yy,
             #               prob.data.numpy(), cmap='coolwarm')
 
-            ax.set_aspect('equal', 'box')
-            ax.set_axis_off()
+            # ax.set_aspect('equal', 'box')
+            # ax.set_axis_off()
             ax.set_title('Real NVP', fontsize=24)
 
-            plt.subplots_adjust(wspace=0.1)
+            # plt.subplots_adjust(wspace=0.1)
 
             plt.show()
         self.model.eval()
@@ -203,10 +203,10 @@ if __name__ == '__main__':
     # print(zz)
     # print(nflow.predict(zz))
 
-    nflow = Nflow2D(max_iter=10, b_plot=True)
+    nflow = Nflow2D(max_iter=100, b_plot=True)
     # Define target distribution
     target = nf.distributions.TwoMoons()
-    num_samples = 2 ** 8
+    num_samples = 2 ** 10
     x = target.sample(num_samples).cpu().detach().numpy().astype('float32')
     # print(x)
     nflow.fit(x)
