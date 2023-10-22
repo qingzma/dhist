@@ -54,6 +54,7 @@ class Column:
             kde.fit(df_column.to_numpy().reshape(-1, 1),
                     header=self.name, table=table_name)
             self.pdf = kde
+            kde.plot()
         elif method == "nflow":
             print("not implemented yet")
         else:

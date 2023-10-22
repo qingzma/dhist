@@ -36,6 +36,7 @@ python -m unittest
 
 ```
 https://github.com/VincentStimper/normalizing-flows
+https://github.com/tommyod/KDEpy
 ```
 
 ## TODO

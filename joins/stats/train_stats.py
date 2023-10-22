@@ -6,8 +6,8 @@ from joins.stats.prepare_data import process_stats_data
 
 
 def train_stats(dataset, data_path, model_folder, kernel='gaussian'):
-    table = TableContainer()
-    table.fit('data/pm25_100.csv', join_keys=['PRES'])
+    # table = TableContainer()
+    # table.fit('data/pm25_100.csv', join_keys=['PRES'])
     model_container = dict()
     schema, all_keys, equivalent_keys, table_keys = process_stats_data(
         dataset, data_path, model_folder, kernel='gaussian')
@@ -15,7 +15,7 @@ def train_stats(dataset, data_path, model_folder, kernel='gaussian'):
     # print(data_path)
     for t in schema.tables:
         table_path = os.path.join(data_path, t.table_name) + '.csv'
-        # print(table_path)
+        print(table_path)
         df = pd.read_csv(table_path)
         # print(df)
         tableContainer = TableContainer()

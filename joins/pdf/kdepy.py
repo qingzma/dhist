@@ -24,7 +24,7 @@ class KdePy1D:
         self.max = None
 
     def fit(self, x, grid_size=2**10):
-        x, p = FFTKDE(bw="ISJ", kernel=kernel).fit(x)(grid_size)
+        x, p = FFTKDE(bw="ISJ", kernel=kernel).fit(x)(grid_size)  # "ISJ"
         self.kde = CubicSpline(x, p)
         self.min = np.min(x)
         self.max = np.max(x)
@@ -77,7 +77,7 @@ def plot2d(kde: KdePy2D):
                         locator=ticker.LogLocator())
     cset = ax.contour(xx, yy, p, N, linewidths=0.8,
                       colors="k", locator=ticker.LogLocator())
-    ax.clabel(cset, inline=1, fontsize=10)
+    # ax.clabel(cset, inline=1, fontsize=10)
     cbar = fig.colorbar(cfset)
     plt.show()
 
