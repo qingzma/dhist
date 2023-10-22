@@ -37,9 +37,14 @@ class Nflow2D:
         # Construct flow model
         model = nf.NormalizingFlow(base, flows)
         # Move model on GPU if available
-        enable_cuda = True
-        self.device = torch.device('cuda' if torch.cuda.is_available()
-                                   and enable_cuda else 'cpu')
+        enable_cuda = False
+        device = 'cpu'
+        if enable_cuda:
+            if torch.cuda.is_available():
+                device = 'cuda'
+            elif torch.backends.mps.is_available():
+                device = 'mps'
+        self.device = torch.device(device)
         model = model.to(self.device)
 
         self.model = model
@@ -107,9 +112,9 @@ class Nflow2D:
         self.model.eval()
 
     def predict(self, data):
-        x = self.scaler.transform(data)
-        data = data.to(self.device)
-        log_prob = self.model.log_prob(data).to(
+        x = torch.from_numpy(self.scaler.transform(data.astype('float32')))
+        x = x.to(self.device)
+        log_prob = self.model.log_prob(x).to(
             'cpu')  # .view(*self.xx.shape)
         return torch.exp(log_prob)
 
@@ -192,13 +197,14 @@ if __name__ == '__main__':
     # print(zz)
     # print(nflow.predict(zz))
 
-    nflow = Nflow2D(max_iter=10, b_plot=False)
+    nflow = Nflow2D(max_iter=10, b_plot=True)
     # Define target distribution
     target = nf.distributions.TwoMoons()
-    num_samples = 2 ** 16
-    x = target.sample(num_samples)
+    num_samples = 2 ** 8
+    x = target.sample(num_samples).cpu().detach().numpy().astype('float32')
+    # print(x)
     nflow.fit(x)
     nflow.plot()
-    zz = torch.tensor([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]])
-    print(zz)
+    zz = np.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]])
+    # print(zz)
     print(nflow.predict(zz))

@@ -21,7 +21,7 @@ ax.set_xlim(xmin, xmax)
 ax.set_ylim(ymin, ymax)
 # Contourf plot
 cfset = ax.contourf(xx, yy, f, cmap='Blues')
-## Or kernel density estimate plot instead of the contourf plot
+# Or kernel density estimate plot instead of the contourf plot
 # ax.imshow(np.rot90(f), cmap='Blues', extent=[xmin, xmax, ymin, ymax])
 # Contour plot
 cset = ax.contour(xx, yy, f, colors='k')
