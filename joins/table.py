@@ -60,7 +60,7 @@ class Column2d:
         self.size = None
         self.pdf = None
 
-    def fit(self, df_columns, table_name, b_nflow=True) -> None:
+    def fit(self, df_columns, table_name, b_nflow=False) -> None:
         # use float32 for pytorch compatibility
         df_columns = df_columns.astype('float32')
         logger.info("fit the 2pdf...")

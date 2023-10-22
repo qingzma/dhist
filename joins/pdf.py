@@ -3,6 +3,8 @@ import numpy as np
 from sklearn import preprocessing
 import matplotlib.pyplot as plt
 
+bandwidth = 0.75
+
 
 class Kde1D:
     """this is the probability density estimation method 
@@ -37,7 +39,7 @@ class Kde1D:
         self.scaler = preprocessing.StandardScaler()
         x_scaled = self.scaler.fit_transform(x)
         self.kde = KernelDensity(
-            kernel=kernel, bandwidth=0.75).fit(x_scaled)
+            kernel=kernel, bandwidth=bandwidth).fit(x_scaled)
         # self.plot()
 
     def predict(self, x):
@@ -48,8 +50,11 @@ class Kde1D:
         dens = self.predict(x)
         plt.plot(x, dens)
         plt.title(self.table)
-        # print(self.column_head.name)
-        plt.xlabel(self.column_head.name)
+        # print(self.column_head)
+        if isinstance(self.column_head, str):
+            plt.xlabel(self.column_head)
+        else:
+            plt.xlabel(self.column_head.name)
         plt.ylabel("probability")
         plt.show()
 
@@ -76,6 +81,18 @@ class Kde2D:
             X (_type_): _description_
             kernel (str, optional): ["gaussian", "tophat", "epanechnikov", "exponential", "linear", "cosine"]. Defaults to 'gaussian'.
         """
+        # sample_limit = 20
+        # if len(x) > sample_limit:
+        #     # print(x)
+        #     print("size limit to ", sample_limit)
+        #     i = np.random.choice(
+        #         range(len(x)), size=sample_limit, replace=False)
+        #     # print(i)
+        #     # print(range(10))
+        #     # exit()
+        #     x = x[i]
+        #     print("done")
+        # print(x)
         x = x[:1000]
         self.min = np.min(x, axis=0)
         self.max = np.max(x, axis=0)
@@ -92,7 +109,7 @@ class Kde2D:
         # print(x[:20])
         # print(x_scaled[:20])
         self.kde = KernelDensity(
-            kernel=kernel, bandwidth=0.75).fit(x_scaled)
+            kernel=kernel, bandwidth=bandwidth).fit(x_scaled)
 
     def predict(self, x):
         return np.exp(self.kde.score_samples(self.scaler.transform(x)))
