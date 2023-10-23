@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import norm
 from KDEpy import NaiveKDE, TreeKDE, FFTKDE
 from scipy.interpolate import RegularGridInterpolator
-from scipy.interpolate import CubicSpline
+from scipy.interpolate import CubicSpline, KroghInterpolator, BarycentricInterpolator, PchipInterpolator
 from matplotlib import cm, ticker
 
 kernel = "box"  # "box",gaussian
@@ -23,9 +23,9 @@ class KdePy1D:
         self.min = None
         self.max = None
 
-    def fit(self, x, grid_size=2**12):
+    def fit(self, x, grid_size=2**10):
         x, p = FFTKDE(bw="ISJ", kernel=kernel).fit(x)(grid_size)  # "ISJ",500
-        self.kde = CubicSpline(x, p)
+        self.kde = PchipInterpolator(x, p)
         self.min = np.min(x)
         self.max = np.max(x)
 
