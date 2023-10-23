@@ -1,5 +1,6 @@
 import logging
 import time
+
 logging.basicConfig(
     level=logging.DEBUG,
     # [%(threadName)-12.12s]
@@ -12,3 +13,4 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 # disable matplotlib logging
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
+logging.getLogger('numexpr').setLevel(logging.WARNING)

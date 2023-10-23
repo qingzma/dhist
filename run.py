@@ -3,6 +3,7 @@ import os
 import time
 
 from joins.base_logger import logger
+from joins.stats.evaluate_stats import evaluate_stats
 from joins.stats.train_stats import train_stats
 from joins.tools import convert_time_to_int
 
@@ -16,7 +17,11 @@ if __name__ == '__main__':
     parser.add_argument('--data_folder',
                         default='data/stats/')
     parser.add_argument(
-        '--model_folder', default='models')
+        '--model_folder', default='models', help="the folder to store model")
+    parser.add_argument(
+        '--model', default='models/stats_box_1024.pkl', help="the path to the pickled model, for evaluation")
+    parser.add_argument(
+        '--query', default='query.sql', help="the path to the query file, for evaluation")
     parser.add_argument(
         '--preprocess', help='convert date to int', action='store_true')
     parser.add_argument('--db_conn', type=str,
@@ -53,7 +58,7 @@ if __name__ == '__main__':
         elif args.evaluate:
             logger.info("start evaluating models")
             start_time = time.time()
-
+            evaluate_stats(args)
             end_time = time.time()
             logger.info(
                 "Evaluation completed: total evaluation time is %.6f s.", end_time - start_time)

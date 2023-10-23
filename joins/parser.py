@@ -2,13 +2,14 @@ import csv
 import os
 import time
 
+import numpy as np
 import sqlparse
 from sqlparse.tokens import Token
 
-from joins.schema_base import Query, QueryType, AggregationType, \
-    AggregationOperationType
-
 from joins.base_logger import logger
+from joins.join_graph import process_condition
+from joins.schema_base import (AggregationOperationType, AggregationType,
+                               Query, QueryType)
 
 
 def timestamp_transorform(time_string, start_date="2010-07-19 00:00:00"):
@@ -408,3 +409,127 @@ def save_csv(csv_rows, target_csv_path):
             if i == 0:
                 w.writeheader()
             w.writerow(row)
+
+
+def parse_query_simple(query):
+    """
+    If your selection query contains no aggregation and nested sub-queries, you can use this function to parse a
+    join query. Otherwise, use parse_query function.
+    """
+    # if self.bns is None:
+    #     # this is a hack, since we currently only implemented the bayescard and sampling for single table estimate
+    #     tables_all, join_cond, join_keys = parse_query_all_join(query)
+    #     table_filters = dict()
+    #     return tables_all, table_filters, join_cond, join_keys
+
+    query = query.replace(" where ", " WHERE ")
+    query = query.replace(" from ", " FROM ")
+    query = query.replace(" and ", " AND ")
+    query = query.split(";")[0]
+    query = query.strip()
+    tables_all = {}
+    join_cond = []
+    table_query = {}
+    join_keys = {}
+    tables_str = query.split(" WHERE ")[0].split(" FROM ")[-1]
+    for table_str in tables_str.split(","):
+        table_str = table_str.strip()
+        if " as " in table_str:
+            tables_all[table_str.split(
+                " as ")[-1]] = table_str.split(" as ")[0]
+        else:
+            tables_all[table_str.split(" ")[-1]] = table_str.split(" ")[0]
+
+    # processing conditions
+    conditions = query.split(" WHERE ")[-1].split(" AND ")
+    for cond in conditions:
+        table, cond, join, join_key = process_condition(cond, tables_all)
+        if not join:
+            attr = cond[0]
+            op = cond[1]
+            value = cond[2]
+            if "Date" in attr:
+                assert "::timestamp" in value  # this is hardcoded for STATS-CEB workload
+                value = timestamp_transorform(
+                    value.strip().split("::timestamp")[0])
+            if table not in table_query:
+                table_query[table] = dict()
+            # construct_table_query(
+            #     self.bns[table], table_query[table], attr, op, value)
+            if attr not in table_query[table]:
+                table_query[table][attr] = dict()
+            table_query[table][attr][op] = value
+        else:
+            join_cond.append(cond)
+            for tab in join_key:
+                if tab in join_keys:
+                    join_keys[tab].add(join_key[tab])
+                else:
+                    join_keys[tab] = set([join_key[tab]])
+
+    return tables_all, table_query, join_cond, join_keys
+
+
+def construct_table_query(BN, table_query, attr, ops, val, epsilon=1e-6):
+    # if BN is None or attr not in BN.attr_type:
+    #     return None
+    if BN.attr_type[attr] == 'continuous':
+        if ops == ">=":
+            query_domain = (val, np.infty)
+        elif ops == ">":
+            query_domain = (val + epsilon, np.infty)
+        elif ops == "<=":
+            query_domain = (-np.infty, val)
+        elif ops == "<":
+            query_domain = (-np.infty, val - epsilon)
+        elif ops == "=" or ops == "==":
+            query_domain = val
+        else:
+            assert False, f"operation {ops} is invalid for continous domain"
+
+        if attr not in table_query:
+            table_query[attr] = query_domain
+        else:
+            prev_l = table_query[attr][0]
+            prev_r = table_query[attr][1]
+            query_domain = (max(prev_l, query_domain[0]), min(
+                prev_r, query_domain[1]))
+            table_query[attr] = query_domain
+
+    else:
+        attr_domain = BN.domain[attr]
+        if type(attr_domain[0]) != str:
+            attr_domain = np.asarray(attr_domain)
+        if ops == "in":
+            assert type(val) == list, "use list for in query"
+            query_domain = val
+        elif ops == "=" or ops == "==":
+            if type(val) == list:
+                query_domain = val
+            else:
+                query_domain = [val]
+        else:
+            if type(val) == list:
+                assert len(val) == 1
+                val = val[0]
+                assert (type(val) == int or type(val) == float)
+            operater = OPS[ops]
+            query_domain = list(attr_domain[operater(attr_domain, val)])
+
+        if attr not in table_query:
+            table_query[attr] = query_domain
+        else:
+            query_domain = [i for i in query_domain if i in table_query[attr]]
+            table_query[attr] = query_domain
+
+    return table_query
+
+
+OPS = {
+    '>': np.greater,
+    '<': np.less,
+    '>=': np.greater_equal,
+    '<=': np.less_equal,
+    '=': np.equal,
+    '==': np.equal
+}

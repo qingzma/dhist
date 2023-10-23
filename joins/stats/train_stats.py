@@ -29,15 +29,18 @@ def train_stats(args):
             table_path, join_keys=table_keys[t.table_name], args=args)
         model_container[t.table_name] = tableContainer
 
-    print(schema)
-    print(all_keys)
-    print(equivalent_keys)
-    print(table_keys)
+    # print(schema)
+    # print(all_keys)
+    # print(equivalent_keys)
+    # print(table_keys)
 
     if not os.path.exists(model_folder):
         os.mkdir(model_folder)
+    model_name = f"model_{dataset}_{kernel}_{grid}"
+    model_container['name'] = model_name
+    model_container['schema'] = schema
     model_path = os.path.join(
-        model_folder, f"model_{dataset}_{kernel}_{grid}.pkl")
+        model_folder, f"{model_name}.pkl")
     pickle.dump(model_container, open(
         model_path, 'wb'), pickle.HIGHEST_PROTOCOL)
-    logger.info(f"models save at {model_path}")
+    logger.info("models save at %s", model_path)

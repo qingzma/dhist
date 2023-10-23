@@ -181,16 +181,18 @@ class Query:
         self.conditions.append((table, condition))
 
 
-def identify_key_values(schema):
+def identify_key_values(schema: SchemaGraph):
     """
     identify all the key attributes from the schema of a DB, currently we assume all possible joins are known
     It is also easy to support unseen joins, which we left as a future work.
     :param schema: the schema of a DB
     :return: a dict of all keys, {table: [keys]};
              a dict of set, each indicating which keys on different tables are considered the same key.
+             a dict of table keys.{table, set(join keys)}
     """
     all_keys = set()
     equivalent_keys = dict()
+    table_keys = dict()
     for i, join in enumerate(schema.relationships):
         keys = join.identifier.split(" = ")
         all_keys.add(keys[0])
@@ -211,4 +213,45 @@ def identify_key_values(schema):
 
     assert len(all_keys) == sum(
         [len(equivalent_keys[k]) for k in equivalent_keys])
-    return all_keys, equivalent_keys
+
+    for ks in all_keys:
+        t, k = ks.split(".")[0], ks.split('.')[1]
+        if t not in table_keys:
+            table_keys[t] = set({k})
+        else:
+            table_keys[t].add(k)
+    return all_keys, equivalent_keys, table_keys
+
+
+def identify_conditions(table_query, join_keys):
+    """identify the selection conditions during join.
+        [key_condition, non_key_condition]
+    Args:
+        table_query (): the single table selection condition
+        schema (): the schema of tables
+    """
+    key_conditions = {}
+    non_key_conditions = {}
+    for table in table_query:
+        print("---------------------")
+        print(table+" -- schema :")
+        print(join_keys[table])
+        for condition_key in table_query[table]:
+            if condition_key in join_keys[table]:  # selection on join key
+                # for op in table_query[table][condition_key]:
+
+                if table not in key_conditions:
+                    key_conditions[table] = {}
+                if condition_key not in key_conditions[table]:
+                    key_conditions[table][condition_key] = {}
+                key_conditions[table][condition_key] = table_query[table][condition_key]
+            else:  # non key selection
+                # for op in table_query[table][condition_key]:
+
+                if table not in non_key_conditions:
+                    non_key_conditions[table] = {}
+                if condition_key not in non_key_conditions[table]:
+                    non_key_conditions[table][condition_key] = {}
+                non_key_conditions[table][condition_key] = table_query[table][condition_key]
+
+    return key_conditions, non_key_conditions

@@ -6,3 +6,4 @@ models/*.pkl
 
 *.pyc
 .DS_Store
+*.txt
