@@ -233,9 +233,9 @@ def identify_conditions(table_query, join_keys):
     key_conditions = {}
     non_key_conditions = {}
     for table in table_query:
-        print("---------------------")
-        print(table+" -- schema :")
-        print(join_keys[table])
+        # print("---------------------")
+        # print(table+" -- schema :")
+        # print(join_keys[table])
         for condition_key in table_query[table]:
             if condition_key in join_keys[table]:  # selection on join key
                 # for op in table_query[table][condition_key]:
