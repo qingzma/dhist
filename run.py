@@ -1,11 +1,10 @@
 import argparse
-# import logging
 import os
 import time
 
-from joins.tools import convert_time_to_int
 from joins.base_logger import logger
 from joins.stats.train_stats import train_stats
+from joins.tools import convert_time_to_int
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

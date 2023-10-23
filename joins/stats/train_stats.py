@@ -1,9 +1,8 @@
 import os
-import pandas as pd
 
-from joins.table import TableContainer
-from joins.stats.prepare_data import process_stats_data
 from joins.base_logger import logger
+from joins.stats.prepare_data import process_stats_data
+from joins.table import TableContainer
 
 
 def train_stats(args):

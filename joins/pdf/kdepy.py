@@ -3,16 +3,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import matplotlib
-import time
-import os
-import numpy as np
+
 import matplotlib.pyplot as plt
-from scipy.stats import norm
-from KDEpy import NaiveKDE, TreeKDE, FFTKDE
-from scipy.interpolate import RegularGridInterpolator
-from scipy.interpolate import CubicSpline, KroghInterpolator, BarycentricInterpolator, PchipInterpolator
-from matplotlib import cm, ticker
+import numpy as np
+from KDEpy import FFTKDE
+from matplotlib import ticker
+from scipy.interpolate import (  # BarycentricInterpolator, CubicSpline, KroghInterpolator,
+    PchipInterpolator, RegularGridInterpolator)
 
 # kernel = "box"  # "box",gaussian
 
