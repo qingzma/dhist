@@ -2,6 +2,7 @@ logs/*
 .vscode/
 __pycache__/
 data/stats/
+models/*.pkl
 
 *.pyc
 .DS_Store

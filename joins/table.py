@@ -8,7 +8,7 @@ from joins.pdf.normalizing_flow.nflow import Nflow2D
 
 class TableContainer:
     def __init__(self) -> None:
-        self.df = None
+        # self.df = None
         self.name = None
         self.size = None
         self.file_path = None

@@ -1,4 +1,5 @@
 import os
+import pickle
 
 from joins.base_logger import logger
 from joins.stats.prepare_data import process_stats_data
@@ -10,6 +11,7 @@ def train_stats(args):
     data_path = args.data_folder
     model_folder = args.model_folder
     kernel = args.kernel
+    grid = args.grid
     # table = TableContainer()
     # table.fit('data/pm25_100.csv', join_keys=['PRES'])
     model_container = dict()
@@ -31,3 +33,11 @@ def train_stats(args):
     print(all_keys)
     print(equivalent_keys)
     print(table_keys)
+
+    if not os.path.exists(model_folder):
+        os.mkdir(model_folder)
+    model_path = os.path.join(
+        model_folder, f"model_{dataset}_{kernel}_{grid}.pkl")
+    pickle.dump(model_container, open(
+        model_path, 'wb'), pickle.HIGHEST_PROTOCOL)
+    logger.info(f"models save at {model_path}")
