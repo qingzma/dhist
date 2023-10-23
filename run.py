@@ -23,6 +23,12 @@ if __name__ == '__main__':
     parser.add_argument('--db_conn', type=str,
                         default="dbname=imdb user=postgres password=postgres host=127.0.0.1 port=5436",
                         help='postgres connection string')
+    parser.add_argument(
+        '--plot', help="display distribution plot during training", action='store_true')
+    parser.add_argument(
+        "--grid", help="grid size of model training", type=int, choices=range(5, 2**13), default=2**10)
+    parser.add_argument(
+        "--kernel", help="kernel function for density estimation", type=str, default='box')
 
     # parser.add_argument('--log_level', type=int, default=logging.DEBUG)
 
@@ -40,7 +46,7 @@ if __name__ == '__main__':
         elif args.train:
             logger.info("start training models")
             start_time = time.time()
-            train_stats(args.dataset, args.data_folder, args.model_folder,)
+            train_stats(args)
             end_time = time.time()
             logger.info(
                 "Training completed: total training time is %.6f s.", end_time - start_time)

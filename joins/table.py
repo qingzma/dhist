@@ -14,7 +14,7 @@ class TableContainer:
         self.pdfs = dict()
         self.correlations = dict()
 
-    def fit(self, file, join_keys, exclude=None, use_2d_model=True) -> None:
+    def fit(self, file, join_keys, exclude=None, use_2d_model=True, args=None) -> None:
         df = pd.read_csv(file, sep=',')
         self.size = df.shape[0]
         self.file_path = file
@@ -27,13 +27,13 @@ class TableContainer:
             for join_key in join_keys:
                 df_col = df[join_key].fillna(-1)  # replace NULL with -1 !
                 column = Column()
-                column.fit(df_col, self.name)
+                column.fit(df_col, self.name, args=args)
                 self.pdfs[join_key] = column
         else:
             # replace NULL with -1 !
             df[list(join_keys)] = df[list(join_keys)].fillna(-1)
             columns = Column2d()
-            columns.fit(df[list(join_keys)], self.name)
+            columns.fit(df[list(join_keys)], self.name, args=args)
             self.pdfs[','.join(list(join_keys))] = columns
 
 
@@ -43,25 +43,28 @@ class Column:
         self.size = None
         self.pdf = None
 
-    def fit(self, df_column, table_name, method="fft") -> None:
+    def fit(self, df_column, table_name, method="fft", args=None) -> None:
         """
         methods: ["fft", "kde","nflow"]
         """
-        logger.info("fit the pdf...")
+        logger.debug("fit the 1d pdf...")
         self.name = df_column.head()
         if method == "kde":
             kde = Kde1D()
             kde.fit(df_column.to_numpy().reshape(-1, 1),
                     header=self.name, table=table_name)
             self.pdf = kde
-            kde.plot()
+            if args.plot:
+                kde.plot()
         elif method == "nflow":
-            print("not implemented yet")
+            logger.warning("1d nflow is not implemented yet")
         else:
             kde = KdePy1D()
-            kde.fit(df_column.to_numpy().reshape(-1, 1))
+            kde.fit(df_column.to_numpy().reshape(-1, 1),
+                    grid_size=args.grid, kernel=args.kernel)
             self.pdf = kde
-            plot1d(kde)
+            if args.plot:
+                plot1d(kde)
         # kde.plot()
     # def plot(self) -> None:
     #     logger.info("plot the pdf...")
@@ -73,30 +76,34 @@ class Column2d:
         self.size = None
         self.pdf = None
 
-    def fit(self, df_columns, table_name, method="fft") -> None:
+    def fit(self, df_columns, table_name, method="fft",  args=None) -> None:
         """
         methods: ["fft", "kde","nflow"]
         """
         # use float32 for pytorch compatibility
         df_columns = df_columns.astype('float32')
-        logger.info("fit the 2pdf...")
+        logger.debug("fit the 2d pdf...")
         self.name = df_columns.head()
         if method == 'nflow':
             flow = Nflow2D(max_iter=100, show_iter=200, enable_cuda=False)
             flow.fit(df_columns.to_numpy())
             self.pdf = flow
-            flow.plot()
+            if args.plot:
+                flow.plot()
         elif method == 'kde':
             kde = Kde2D()
             kde.fit(df_columns.to_numpy(),  # .reshape(-1, 2),
                     header=self.name, table=table_name)
             self.pdf = kde
-            kde.plot()
+            if args.plot:
+                kde.plot()
         else:
             kde = KdePy2D()
-            kde.fit(df_columns.to_numpy())
+            kde.fit(df_columns.to_numpy(),
+                    grid_size=args.grid, kernel=args.kernel)
             self.pdf = kde
-            plot2d(kde)
+            if args.plot:
+                plot2d(kde)
 
     # def plot(self) -> None:
     #     logger.info("plot the pdf...")

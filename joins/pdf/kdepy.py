@@ -14,7 +14,7 @@ from scipy.interpolate import RegularGridInterpolator
 from scipy.interpolate import CubicSpline, KroghInterpolator, BarycentricInterpolator, PchipInterpolator
 from matplotlib import cm, ticker
 
-kernel = "box"  # "box",gaussian
+# kernel = "box"  # "box",gaussian
 
 
 class KdePy1D:
@@ -23,7 +23,7 @@ class KdePy1D:
         self.min = None
         self.max = None
 
-    def fit(self, x, grid_size=2**10):
+    def fit(self, x, grid_size=2**10, kernel="box"):
         x, p = FFTKDE(bw="ISJ", kernel=kernel).fit(x)(grid_size)  # "ISJ",500
         self.kde = PchipInterpolator(x, p)
         self.min = np.min(x)
@@ -39,7 +39,7 @@ class KdePy2D:
         self.min = None
         self.max = None
 
-    def fit(self, x, grid_size=2**10):
+    def fit(self, x, grid_size=2**10, kernel="box"):
         # print("train")
         x, p = FFTKDE(bw=10, kernel=kernel).fit(
             x)((grid_size, grid_size))
