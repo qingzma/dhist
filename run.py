@@ -53,6 +53,7 @@ if __name__ == '__main__':
         elif args.evaluate:
             logger.info("start evaluating models")
             start_time = time.time()
+
             end_time = time.time()
             logger.info(
                 "Evaluation completed: total evaluation time is %.6f s.", end_time - start_time)
