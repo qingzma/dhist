@@ -1,5 +1,6 @@
 import argparse
 import os
+import sys
 import time
 
 from joins.base_logger import logger
@@ -7,7 +8,8 @@ from joins.stats.evaluate_stats import evaluate_stats
 from joins.stats.train_stats import train_stats
 from joins.tools import convert_time_to_int
 
-if __name__ == '__main__':
+
+def parse_args(args):
     parser = argparse.ArgumentParser()
     parser.add_argument('--train', help='train models', action='store_true')
     parser.add_argument(
@@ -36,7 +38,12 @@ if __name__ == '__main__':
 
     # parser.add_argument('--log_level', type=int, default=logging.DEBUG)
 
-    args = parser.parse_args()
+    args = parser.parse_args(args)
+    return args
+
+
+if __name__ == '__main__':
+    args = parse_args(sys.argv[1:])
 
     os.makedirs('logs', exist_ok=True)
 
