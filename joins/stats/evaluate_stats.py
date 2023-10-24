@@ -24,7 +24,7 @@ def evaluate_stats(args: ArgumentParser):
 
     cnt_key = []
     cnt_non_key = []
-    for query_str in queries:  # [:10]
+    for query_str in queries[:1]:  # [:10]
         query = query_str.split("||")[0][:-1]
         true_card = int(query_str.split("||")[-1])
         t = time.time()

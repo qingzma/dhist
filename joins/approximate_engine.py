@@ -22,6 +22,9 @@ class ApproximateEngine:
         key_conditions, non_key_conditions = identify_conditions(
             table_queries, join_keys)
 
+        # currently, no selection on the join key
+        assert (len(key_conditions) == 0)
+
         print(query_str)
         # print(tables_all)
         print("table_queries\n", table_queries)
