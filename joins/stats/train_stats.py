@@ -3,6 +3,7 @@ import pickle
 
 from joins.base_logger import logger
 from joins.stats.prepare_data import process_stats_data
+from joins.stats.schema import get_stats_relevant_attributes
 from joins.table import TableContainer
 
 
@@ -17,7 +18,12 @@ def train_stats(args):
     model_container = dict()
     schema, all_keys, equivalent_keys, table_keys = process_stats_data(
         dataset, data_path, model_folder, kernel=kernel)
+    join_keys, relevant_keys, counters = get_stats_relevant_attributes(schema)
 
+    # print("table_keys", table_keys)
+    # print("all_keys", all_keys)
+    # print(schema.tables[])
+    # exit()
     # print(data_path)
     for t in schema.tables:
         table_path = os.path.join(data_path, t.table_name) + '.csv'
@@ -26,7 +32,7 @@ def train_stats(args):
         # print(df)
         tableContainer = TableContainer()
         tableContainer.fit(
-            table_path, join_keys=table_keys[t.table_name], args=args)
+            table_path, join_keys=join_keys, relevant_keys=relevant_keys, args=args)
         model_container[t.table_name] = tableContainer
 
     # print(schema)

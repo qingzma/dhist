@@ -105,3 +105,38 @@ def gen_stats_light_schema(hdf_path):
     schema.add_relationship('posts', 'OwnerUserId', 'users', 'Id')
 
     return schema
+
+
+def get_stats_relevant_attributes(schema: SchemaGraph):
+    join_keys, attrs, counters = dict(), dict(), dict()
+    for k in schema.table_dictionary:
+        atrributes = schema.table_dictionary[k].attributes
+        primary_key = schema.table_dictionary[k].primary_key
+        irrelevant_attributes = schema.table_dictionary[k].irrelevant_attributes
+        relevant_attributes = [v for v in atrributes if (
+            v not in primary_key and v not in irrelevant_attributes)]
+        attrs[k] = relevant_attributes
+        counters[k] = schema.table_dictionary[k].table_size
+
+        ids = [kk for kk in atrributes if (
+            "Id" in kk and kk not in irrelevant_attributes and kk != 'LinkTypeId')]
+        join_keys[k] = ids
+
+    return join_keys, attrs, counters
+
+
+# def get_stats_relevant_attributes():
+#     return dict({'badges': ['UserId', 'Date'],
+#                  'votes': ['PostId', 'CreationDate', 'UserId', 'BountyAmount'],
+#                  'postHistory': ['PostId', 'CreationDate', 'UserId'],
+#                  'posts': ['PostTypeId', 'CreationDate',
+#                            'Score', 'ViewCount', 'OwnerUserId',
+#                            'AnswerCount', 'CommentCount', 'FavoriteCount', ],
+#                  'users': ['Reputation', 'CreationDate',
+#                            'Views', 'UpVotes', 'DownVotes'],
+#                  'comments': ['PostId', 'Score',
+#                               'CreationDate', 'UserId'],
+#                  'postLinks': ['CreationDate',
+#                                'PostId', 'RelatedPostId', 'LinkTypeId'],
+#                  'tags': ['Id', 'Count', 'ExcerptPostId']
+#                  })

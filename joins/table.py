@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 from joins.base_logger import logger
@@ -15,27 +16,27 @@ class TableContainer:
         self.pdfs = dict()
         self.correlations = dict()
 
-    def fit(self, file, join_keys, exclude=None, use_2d_model=True, args=None) -> None:
+    def fit(self, file, join_keys, relevant_keys, exclude=None, use_2d_model=True, args=None) -> None:
         df = pd.read_csv(file, sep=',')
         self.size = df.shape[0]
         self.file_path = file
         self.name = file.split('/')[-1].split('.')[0]
 
-        # currently only support at most 2 join keys in a table
-        assert len(join_keys) <= 2
-
-        if len(join_keys) == 1 or (not use_2d_model):
-            for join_key in join_keys:
-                df_col = df[join_key].fillna(-1)  # replace NULL with -1 !
-                column = Column()
-                column.fit(df_col, self.name, args=args)
-                self.pdfs[join_key] = column
-        else:
-            # replace NULL with -1 !
-            df[list(join_keys)] = df[list(join_keys)].fillna(-1)
-            columns = Column2d()
-            columns.fit(df[list(join_keys)], self.name, args=args)
-            self.pdfs[','.join(list(join_keys))] = columns
+        # currently only support at most 1 join keys in a table
+        # print("join_keys", join_keys)
+        # assert len(join_keys) == 1
+        # if len(join_keys) == 1 or (not use_2d_model):
+        for join_key in join_keys[self.name]:
+            df_col = df[join_key].fillna(-1)  # replace NULL with -1 !
+            column = Column()
+            column.fit(df_col, self.name, args=args)
+            self.pdfs[join_key] = column
+        # else:
+        # replace NULL with -1 !
+        # df[list(join_keys)] = df[list(join_keys)].fillna(-1)
+        # columns = Column2d()
+        # columns.fit(df[list(join_keys)], self.name, args=args)
+        # self.pdfs[','.join(list(join_keys))] = columns
 
 
 class Column:
@@ -43,16 +44,21 @@ class Column:
         self.name = None
         self.size = None
         self.pdf = None
+        self.min = None
+        self.max = None
 
     def fit(self, df_column, table_name, method="fft", args=None) -> None:
         """
         methods: ["fft", "kde","nflow"]
         """
+        x = df_column.to_numpy().reshape(-1, 1)
         logger.debug("fit the 1d pdf...")
+        self.min = np.min(x)
+        self.max = np.max(x)
         self.name = df_column.head()
         if method == "kde":
             kde = Kde1D()
-            kde.fit(df_column.to_numpy().reshape(-1, 1),
+            kde.fit(x,
                     header=self.name, table=table_name)
             self.pdf = kde
             if args.plot:
