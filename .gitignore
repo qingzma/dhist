@@ -3,6 +3,7 @@ logs/*
 __pycache__/
 data/stats/
 models/*.pkl
+*.egg-info/
 
 *.pyc
 .DS_Store
