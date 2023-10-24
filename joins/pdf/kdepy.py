@@ -22,6 +22,9 @@ class KdePy1D:
 
     def fit(self, x, grid_size=2**10, kernel="box"):
         x, p = FFTKDE(bw="ISJ", kernel=kernel).fit(x)(grid_size)  # "ISJ",500
+        sums = np.sum(p[:-2])*(x[2]-x[1])  # [:-2])*(x[2]-x[1])  #np.sum(
+        # print("sums is: ", sums)
+        p = p/sums
         self.kde = PchipInterpolator(x, p)
         self.min = np.min(x)
         self.max = np.max(x)

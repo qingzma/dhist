@@ -7,6 +7,7 @@ from joins.parser import parse_query_simple
 from joins.schema_base import identify_conditions, identify_key_values
 from joins.stats.schema import get_stats_relevant_attributes
 from joins.table import TableContainer
+import time
 
 
 class ApproximateEngine:
@@ -57,6 +58,7 @@ class ApproximateEngine:
 
 
 def simple_card(models: dict[str, TableContainer], tables_all, join_cond, relevant_keys, counters, grid=100):
+    t11 = time.time()
     assert (len(join_cond) == 1)
     col_models = []
     n_models = []
@@ -75,20 +77,25 @@ def simple_card(models: dict[str, TableContainer], tables_all, join_cond, releva
     maxs = min(mdl1.max, mdl2.max)
     assert (mins < maxs)
 
+    t2 = time.time()
     # *
     result = integrate.quad(lambda x: mdl1.pdf.predict(
-        x)*mdl2.pdf.predict(x), mins, maxs)[0]  # *n1*n2
+        x)*mdl2.pdf.predict(x), mins, maxs, limit=500)[0] * n1*n2
     print("result: ", result)
+    t3 = time.time()
 
-    x = np.linspace(mins, maxs, 1000)
+    x = np.linspace(mins, maxs, 10000)
     width = x[1] - x[0]
-    print("width:", width)
+    # print("width:", width)
     pred1 = mdl1.pdf.predict(x)
     pred2 = mdl2.pdf.predict(x)
-    result = np.sum(np.multiply(pred1, pred2))*n1*n2  # *width*n1*n2
+    result = width*np.sum(np.multiply(pred1, pred2))*n1*n2  # *width*n1*n2
     # result = integrate.quad(lambda x: mdl1.pdf.predict(
     #     x)*mdl2.pdf.predict(x), mins, maxs)[0]*n1*n2
     print("result: ", result)
+    logger.info("time cost for this query is %f", (t3-t2))
+    logger.info("time cost for this query is %f", (time.time()-t3))
+    logger.info("time cost for this query is %f", (time.time()-t11))
     return result
 
     # for alias in tables_all:

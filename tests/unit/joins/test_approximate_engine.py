@@ -13,7 +13,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
     # train needed models
     @classmethod
     def setUpClass(cls):
-        arguments = ["--train", "--grid", "102"]
+        arguments = ["--train", "--grid", "1024", "--kernel", "gaussian"]
         args = parse_args(arguments)
         train_stats(args)
 
@@ -22,12 +22,12 @@ class TestApproximateEngineMethod(unittest.TestCase):
     def tearDownClass(cls):
         for file in os.listdir("models"):
             print("files: " + file)
-            if "102" in file:
+            if "1024" in file:
                 os.remove("models/"+file)
 
     def test_simple_query(self):
         query = "SELECT COUNT(*) FROM votes as v, posts as p WHERE p.Id = v.PostId"
-        with open("models/model_stats_box_102.pkl", 'rb') as f:
+        with open("models/model_stats_gaussian_1024.pkl", 'rb') as f:
             model = pickle.load(f)
         engine = ApproximateEngine(model)
         engine.query(query)
