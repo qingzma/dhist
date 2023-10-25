@@ -12,7 +12,7 @@ from scipy.interpolate import (BarycentricInterpolator, CubicSpline,
                                KroghInterpolator, PchipInterpolator,
                                RegularGridInterpolator, interp2d)
 
-from joins.fast_interp import interp2d as interp
+# from joins.fast_interp import interp2d as interp
 
 # kernel = "box"  # "box",gaussian
 
@@ -54,8 +54,8 @@ class KdePy2D:
         sums = np.sum(p)*width_x*width_y
         p = p/sums
         pp = p.reshape(grid_size, grid_size).T
-        # self.kde = RegularGridInterpolator((xx, yy), pp)
-        self.kde = interp(self.min, self.max, [width_x, width_y], pp, k=5)
+        self.kde = RegularGridInterpolator((xx, yy), pp)
+        # self.kde = interp(self.min, self.max, [width_x, width_y], pp, k=5)
 
     def predict(self, x):
         # only support 1 point at this moment
