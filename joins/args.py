@@ -24,7 +24,7 @@ def parse_args(args_):
     parser.add_argument(
         '--plot', help="display distribution plot during training", action='store_true')
     parser.add_argument(
-        "--grid", help="grid size of model training", type=int, choices=range(5, 2**13), default=2**10)
+        "--grid", help="grid size of model training", type=int, choices=range(5, 2**20), default=2**10)
     parser.add_argument(
         "--kernel", help="kernel function for density estimation", type=str, default='box')
 

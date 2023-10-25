@@ -1,7 +1,7 @@
-from sklearn.neighbors import KernelDensity
+import matplotlib.pyplot as plt
 import numpy as np
 from sklearn import preprocessing
-import matplotlib.pyplot as plt
+from sklearn.neighbors import KernelDensity
 
 bandwidth = 0.75
 
@@ -37,13 +37,14 @@ class Kde1D:
         self.column_head = header
         self.table = table
         self.scaler = preprocessing.StandardScaler()
-        x_scaled = self.scaler.fit_transform(x)
+        # x_scaled = self.scaler.fit_transform(x)
         self.kde = KernelDensity(
-            kernel=kernel, bandwidth=bandwidth).fit(x_scaled)
+            kernel=kernel, bandwidth=bandwidth).fit(x)
         # self.plot()
 
     def predict(self, x):
-        return np.exp(self.kde.score_samples(self.scaler.transform(x)))
+        # return np.exp(self.kde.score_samples(self.scaler.transform(x)))
+        return np.exp(self.kde.score_samples(x))
 
     def plot(self):
         x = np.linspace(self.min, self.max, self.plot_bins).reshape(-1, 1)

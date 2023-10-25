@@ -38,6 +38,31 @@ class TableContainer:
         # columns.fit(df[list(join_keys)], self.name, args=args)
         # self.pdfs[','.join(list(join_keys))] = columns
 
+        print(join_keys)
+        print(relevant_keys)
+        # for t in join_keys:
+        t = self.name
+        for join_key in join_keys[t]:
+            if t in relevant_keys:
+                for relevant_key in relevant_keys[t]:
+                    # print("relevant_key", relevant_key)
+                    if relevant_key != join_key:
+                        columns = Column2d()
+                        # print(df)
+                        # print(df.columns)
+                        # print([join_key, relevant_key])
+                        d = df[[join_key, relevant_key]].fillna(-1)
+                        # print(d)
+                        # exit()
+                        columns.fit(d,
+                                    self.name, args=args)
+                        if t not in self.correlations:
+                            self.correlations[t] = dict()
+                        if join_key not in self.correlations[t]:
+                            self.correlations[t][join_key] = dict()
+                        self.correlations[t][join_key][relevant_key] = columns
+        # exit()
+
 
 class Column:
     def __init__(self) -> None:

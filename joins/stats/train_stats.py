@@ -2,6 +2,7 @@ import os
 import pickle
 
 from joins.base_logger import logger
+from joins.schema_base import identify_conditions
 from joins.stats.prepare_data import process_stats_data
 from joins.stats.schema import get_stats_relevant_attributes
 from joins.table import TableContainer

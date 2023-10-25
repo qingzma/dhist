@@ -8,8 +8,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from KDEpy import FFTKDE
 from matplotlib import ticker
-from scipy.interpolate import (  # BarycentricInterpolator, CubicSpline, KroghInterpolator,
-    PchipInterpolator, RegularGridInterpolator)
+from scipy.interpolate import (BarycentricInterpolator, CubicSpline,
+                               KroghInterpolator, PchipInterpolator,
+                               RegularGridInterpolator)
 
 # kernel = "box"  # "box",gaussian
 
@@ -25,7 +26,7 @@ class KdePy1D:
         sums = np.sum(p[:-2])*(x[2]-x[1])  # [:-2])*(x[2]-x[1])  #np.sum(
         # print("sums is: ", sums)
         p = p/sums
-        self.kde = PchipInterpolator(x, p)
+        self.kde = PchipInterpolator(x, p)  # PchipInterpolator
         self.min = np.min(x)
         self.max = np.max(x)
 

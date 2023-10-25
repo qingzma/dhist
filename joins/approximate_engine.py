@@ -43,10 +43,16 @@ class ApproximateEngine:
         # exit()
         print("key_conditions\n", key_conditions)
         print("non_key_conditions\n", non_key_conditions)
-
-        res = simple_card(self.models, tables_all, join_cond,
-                          self.relevant_keys, self.counters)
-        return res
+        if key_conditions:
+            logger.warning("selection on join key is not supported yet.")
+            return
+        if not non_key_conditions:  # simple case, no selections
+            return simple_card(self.models, tables_all, join_cond,
+                               self.relevant_keys, self.counters)
+        else:
+            return selection_card(self.models, tables_all, join_cond, non_key_conditions,
+                                  self.relevant_keys, self.counters)
+        return
 
     def integrate1d(self, model_name, l, h):
         if self.auto_grid:
@@ -58,7 +64,7 @@ class ApproximateEngine:
         pass
 
 
-def simple_card(models: dict[str, TableContainer], tables_all, join_cond, relevant_keys, counters, grid=100):
+def simple_card(models: dict[str, TableContainer], tables_all, join_cond, relevant_keys, counters, grid=10000):
     t11 = time.time()
     assert (len(join_cond) == 1)
     col_models = []
@@ -85,7 +91,7 @@ def simple_card(models: dict[str, TableContainer], tables_all, join_cond, releva
     print("result: ", result)
     t3 = time.time()
 
-    x = np.linspace(mins, maxs, 10000)
+    x = np.linspace(mins, maxs, grid)
     width = x[1] - x[0]
     # print("width:", width)
     pred1 = mdl1.pdf.predict(x)
@@ -99,11 +105,45 @@ def simple_card(models: dict[str, TableContainer], tables_all, join_cond, releva
     logger.info("time cost for this query is %f", (time.time()-t11))
     return result
 
-    # for alias in tables_all:
-    #     table = tables_all[alias]
-    #     print("table is : ", table)
-    #     mdls = models[table].pdfs
-    #     print(mdls)
 
-    # for col in mdls:
-    #     print("col: ", col)
+def selection_card(models: dict[str, TableContainer], tables_all, join_cond, non_key_conditions, relevant_keys, counters, grid=10000):
+    t11 = time.time()
+    assert (len(join_cond) == 1)
+    col_models = []
+    n_models = []
+    conditions = [cond.split(" = ") for cond in join_cond][0]
+    logger.info("conditions %s", conditions)
+    logger.info("join_cond: %s", join_cond)
+    logger.info("tables_all: %s", tables_all)
+    logger.info("non_key_conditions: %s", non_key_conditions)
+    t1, k1 = conditions[0].split(".")
+    t2, k2 = conditions[1].split(".")
+    print(t1, k1)
+    n1, n2 = counters[t1], counters[t2]
+
+    mdl1, mdl2 = models[t1].pdfs[k1], models[t2].pdfs[k2]
+    print(mdl1)
+    mins = max(mdl1.min, mdl2.min)
+    maxs = min(mdl1.max, mdl2.max)
+    assert (mins < maxs)
+
+    t2 = time.time()
+    # *
+    result = integrate.quad(lambda x: mdl1.pdf.predict(
+        x)*mdl2.pdf.predict(x), mins, maxs, limit=500)[0] * n1*n2
+    print("result: ", result)
+    t3 = time.time()
+
+    x = np.linspace(mins, maxs, grid)
+    width = x[1] - x[0]
+    # print("width:", width)
+    pred1 = mdl1.pdf.predict(x)
+    pred2 = mdl2.pdf.predict(x)
+    result = width*np.sum(np.multiply(pred1, pred2))*n1*n2  # *width*n1*n2
+    # result = integrate.quad(lambda x: mdl1.pdf.predict(
+    #     x)*mdl2.pdf.predict(x), mins, maxs)[0]*n1*n2
+    print("result: ", result)
+    logger.info("time cost for this query is %f", (t3-t2))
+    logger.info("time cost for this query is %f", (time.time()-t3))
+    logger.info("time cost for this query is %f", (time.time()-t11))
+    return result
