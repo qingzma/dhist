@@ -99,7 +99,7 @@ def simple_card(models: dict[str, TableContainer], tables_all, join_cond, releva
     result = width*np.sum(np.multiply(pred1, pred2))*n1*n2  # *width*n1*n2
     # result = integrate.quad(lambda x: mdl1.pdf.predict(
     #     x)*mdl2.pdf.predict(x), mins, maxs)[0]*n1*n2
-    # print("result: ", result)
+    logger.info("result: %f", result)
     # logger.info("time cost for this query is %f", (t3-t2))
     # logger.info("time cost for this query is %f", (time.time()-t3))
     logger.info("time cost for this query is %f", (time.time()-t11))
