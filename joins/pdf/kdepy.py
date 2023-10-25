@@ -10,7 +10,9 @@ from KDEpy import FFTKDE
 from matplotlib import ticker
 from scipy.interpolate import (BarycentricInterpolator, CubicSpline,
                                KroghInterpolator, PchipInterpolator,
-                               RegularGridInterpolator)
+                               RegularGridInterpolator, interp2d)
+
+from joins.fast_interp import interp2d as interp
 
 # kernel = "box"  # "box",gaussian
 
@@ -52,8 +54,8 @@ class KdePy2D:
         sums = np.sum(p)*width_x*width_y
         p = p/sums
         pp = p.reshape(grid_size, grid_size).T
-        self.kde = RegularGridInterpolator((xx, yy), pp)
-        # print("done")
+        # self.kde = RegularGridInterpolator((xx, yy), pp)
+        self.kde = interp(self.min, self.max, [width_x, width_y], pp, k=5)
 
     def predict(self, x):
         # only support 1 point at this moment
@@ -61,7 +63,15 @@ class KdePy2D:
 
     def predict_grid(self, x_grid, y_grid):
         X, Y = np.meshgrid(x_grid, y_grid, indexing='ij')
-        return self.kde((X, Y), method="slinear")
+        # print(X)
+        # print(Y)
+        # print(X.shape)
+        # print(Y.shape)
+        # x = X.reshape(1, -1)[0]
+        # y = Y.reshape(1, -1)[0]
+        # print(x)
+        return self.kde((X, Y))
+        # return self.kde((X, Y), method="slinear")
 
 
 def plot1d(kde: KdePy1D):

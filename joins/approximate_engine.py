@@ -110,44 +110,25 @@ def right_table_selection_card(models: dict[str, TableContainer], tables_all, jo
     t11 = time.time()
     assert (len(join_cond) == 1)
     join_cond = [i.replace(' ', '') for i in join_cond]
-    col_models = []
-    n_models = []
-    conditions = [cond.replace(' ', '').split(" = ") for cond in join_cond][0]
-    # logger.info("conditions %s", conditions)
-    # logger.info("join_cond: %s", join_cond)
-    # logger.info("tables_all: %s", tables_all)
-    # logger.info("non_key_conditions: %s", non_key_conditions)
-    # logger.info(join_cond[0].split("."))
+    # col_models = []
+    # n_models = []
+    # conditions = [cond.replace(' ', '').split(" = ") for cond in join_cond][0]
     join_table_and_keys = [c.split("=")
                            for c in join_cond]  # [i.split(".") for i in
     tbl_and_join_key_dict = {}
     for i in join_table_and_keys[0]:
         t_name, k_name = i.split(".")
         tbl_and_join_key_dict[t_name] = k_name
-    # join_table_and_keys = [i.split(".") for i in join_table_and_keys[0]]
 
-    # logger.info("tbl_and_join_key_dict %s", tbl_and_join_key_dict)
-    # t1, k1 = join_cond[0].split(".")
-    # t2, k2 = join_cond[1].split(".")
-    # print(t1, k1)
-    # n1, n2 = counters[t1], counters[t2]
-
-    # only right table is allowd to have a selection condition. not left
     assert (len(non_key_conditions) == 1)
 
     right_table_name = list(non_key_conditions.keys())[0]
-    # logger.info("right_table_name %s", right_table_name)
-    # exit()
-    # logger.info(models[right_table_name].correlations.keys())
-    # mdl_right = models[right_table_name].correlations[tbl_and_join_key_dict[right_table_name]]
     left_table_name = list(tbl_and_join_key_dict.keys())
     left_table_name.remove(right_table_name)
     left_table_name = left_table_name[0]
-    # logger.info("left_table_name %s", left_table_name)
 
     # get the non_key
     non_keys = non_key_conditions[right_table_name]
-    # logger.info("non_keys,%s", non_keys)
 
     bounds = {}
     for non_k in non_keys:
@@ -168,60 +149,43 @@ def right_table_selection_card(models: dict[str, TableContainer], tables_all, jo
 
     mdl1, mdl2 = models[left_table_name].pdfs[tbl_and_join_key_dict[left_table_name]
                                               ], models[right_table_name].correlations[tbl_and_join_key_dict[right_table_name]][extra_col]
-    # print(mdl1)
-    # print("mdl2", mdl2)
-    # print("mdl2.min", mdl2.min)
+
     mins = max(mdl1.min, mdl2.min[0])
     maxs = min(mdl1.max, mdl2.max[0])
     assert (mins < maxs)
     n1, n2 = counters[left_table_name], counters[right_table_name]
 
-    t2 = time.time()
-    # *
     bound = bounds[extra_col]
     if mdl2.min[1] > bound[0]:
         bound[0] = mdl2.min[1]
     if mdl2.max[1] < bound[1]:
         bound[1] = mdl2.max[1]
-    # logger.info("bound is %s", bound)
-
-    # def f(y, x): return mdl1.pdf.predict(x)*mdl2.pdf.predict([x, y])
-    # result = integrate.dblquad(
-    #     f, mins, maxs, bound[0], bound[1])[0] * n1*n2
-    # print("result: ", result)
-    t3 = time.time()
 
     grid_x_size = 300
-    grid_y_size = 300
+    grid_y_size = 200
+    t2 = time.time()
     x_grid = np.linspace(mins, maxs, grid_x_size)
     width_x = x_grid[1] - x_grid[0]
     y_grid = np.linspace(bound[0], bound[1], grid_y_size)
     width_y = y_grid[1] - y_grid[0]
-    # print("width:", width)
+
+    t3 = time.time()
     pred1 = mdl1.pdf.predict(x_grid)
+    t4 = time.time()
 
-    # result1 = np.sum(pred1)*width_x
     pred2 = mdl2.pdf.predict_grid(x_grid, y_grid)
+    t5 = time.time()
 
-    # print("pred1", pred1)
     pred1 = np.array([pred1 for _ in range(grid_y_size)]
                      ).reshape(grid_x_size, grid_y_size)
-    # pred1 = np.repeat([pred1], 20).reshape(50, 20)
 
-    # print("pred1", pred1)
-    # print("pred1.repeat", np.repeat(pred1, grid_y_size))
-    # print("pred2", pred2)
-    # print("pred1", pred1.shape)
-    # print("pred2", pred2.shape)
-    # result2 = width_x*width_y * \
-    #     np.sum(pred2)  # *width*n1*n2
     result = np.sum(np.multiply(pred1, pred2))*width_x*width_y*n1*n2
+    t6 = time.time()
+    logger.info("time cost for grid %f", (t3-t2))
+    logger.info("time cost for 1d predict %f", (t4-t3))
+    logger.info("time cost for 2d predict is %f", (t5-t4))
+    logger.info("time cost for integral is %f", (t6-t5))
+
     logger.info("result: %f", result)
-    # print("result2", result2)
-    # result = integrate.quad(lambda x: mdl1.pdf.predict(
-    #     x)*mdl2.pdf.predict(x), mins, maxs)[0]*n1*n2
-    # print("result: ", result)
-    # logger.info("time cost for this query is %f", (t3-t2))
-    # logger.info("time cost for this query is %f", (time.time()-t3))
     logger.info("time cost for this query is %f", (time.time()-t11))
     return result
