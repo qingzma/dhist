@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import scipy.integrate as integrate
 
@@ -7,7 +9,6 @@ from joins.parser import parse_query_simple
 from joins.schema_base import identify_conditions, identify_key_values
 from joins.stats.schema import get_stats_relevant_attributes
 from joins.table import TableContainer
-import time
 
 
 class ApproximateEngine:
@@ -43,9 +44,9 @@ class ApproximateEngine:
         print("key_conditions\n", key_conditions)
         print("non_key_conditions\n", non_key_conditions)
 
-        simple_card(self.models, tables_all, join_cond,
-                    self.relevant_keys, self.counters)
-        return key_conditions, non_key_conditions
+        res = simple_card(self.models, tables_all, join_cond,
+                          self.relevant_keys, self.counters)
+        return res
 
     def integrate1d(self, model_name, l, h):
         if self.auto_grid:
