@@ -38,8 +38,8 @@ class TableContainer:
         # columns.fit(df[list(join_keys)], self.name, args=args)
         # self.pdfs[','.join(list(join_keys))] = columns
 
-        print(join_keys)
-        print(relevant_keys)
+        # print(join_keys)
+        # print(relevant_keys)
         # for t in join_keys:
         t = self.name
         for join_key in join_keys[t]:
