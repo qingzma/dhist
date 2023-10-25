@@ -11,13 +11,13 @@ from joins.tools import q_error
 
 
 class TestApproximateEngineMethod(unittest.TestCase):
-    # # train needed models
-    # @classmethod
-    # def setUpClass(cls):
-    #     # ['biweight', 'box', 'cosine', 'epa', 'exponential', 'gaussian', 'tri', 'tricube', 'triweight']
-    #     arguments = ["--train", "--grid", "1000", "--kernel", "gaussian"]
-    #     args = parse_args(arguments)
-    #     train_stats(args)
+    # train needed models
+    @classmethod
+    def setUpClass(cls):
+        # ['biweight', 'box', 'cosine', 'epa', 'exponential', 'gaussian', 'tri', 'tricube', 'triweight']
+        arguments = ["--train", "--grid", "1000", "--kernel", "gaussian"]
+        args = parse_args(arguments)
+        train_stats(args)
 
     # # remove trained models for test purposes
     # @classmethod

@@ -97,7 +97,7 @@ class Kde2D:
         #     print(x)
         #     print("done")
         # print(x)
-        x = x[:1000]
+        # x = x[:1000]
         self.min = np.min(x, axis=0)
         self.max = np.max(x, axis=0)
         # print("x is:", x)

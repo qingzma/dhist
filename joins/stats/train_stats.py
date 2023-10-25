@@ -49,5 +49,5 @@ def train_stats(args):
     model_path = os.path.join(
         model_folder, f"{model_name}.pkl")
     with open(model_path, 'wb') as f:
-        pickle.dump(model_container, f, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(dict(model_container), f, pickle.HIGHEST_PROTOCOL)
     logger.info("models save at %s", model_path)
