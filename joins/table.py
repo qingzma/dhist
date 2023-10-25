@@ -56,11 +56,11 @@ class TableContainer:
                         # exit()
                         columns.fit(d,
                                     self.name, args=args)
-                        if t not in self.correlations:
-                            self.correlations[t] = dict()
-                        if join_key not in self.correlations[t]:
-                            self.correlations[t][join_key] = dict()
-                        self.correlations[t][join_key][relevant_key] = columns
+                        # if t not in self.correlations:
+                        #     self.correlations[t] = dict()
+                        if join_key not in self.correlations:
+                            self.correlations[join_key] = dict()
+                        self.correlations[join_key][relevant_key] = columns
         # exit()
 
 
@@ -107,6 +107,8 @@ class Column2d:
         self.name = None
         self.size = None
         self.pdf = None
+        self.min = None
+        self.max = None
 
     def fit(self, df_columns, table_name, method="fft",  args=None) -> None:
         """
@@ -115,6 +117,10 @@ class Column2d:
         # use float32 for pytorch compatibility
         df_columns = df_columns.astype('float32')
         logger.debug("fit the 2d pdf...")
+        # logger.info("mins: %s", df_columns.min())
+        self.min = df_columns.min().values
+        self.max = df_columns.max().values
+        # exit()
         self.name = df_columns.head()
         if method == 'nflow':
             flow = Nflow2D(max_iter=100, show_iter=200, enable_cuda=False)
@@ -143,4 +149,4 @@ class Column2d:
 
 if __name__ == '__main__':
     table = TableContainer()
-    table.fit(file='data/pm25_100.csv', join_keys=['PRES'], exclude=['cbwd'])
+    # table.fit(file='data/pm25_100.csv', join_keys=['PRES'], exclude=['cbwd'])

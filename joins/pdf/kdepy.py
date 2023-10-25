@@ -47,6 +47,10 @@ class KdePy2D:
         xx, yy = np.unique(x[:, 0]), np.unique(x[:, 1])
         self.min = [xx[0], yy[0]]
         self.max = [xx[-1], yy[-1]]
+        width_x = xx[1]-xx[0]
+        width_y = yy[1]-yy[0]
+        sums = np.sum(p)*width_x*width_y
+        p = p/sums
         pp = p.reshape(grid_size, grid_size).T
         self.kde = RegularGridInterpolator((xx, yy), pp)
         # print("done")

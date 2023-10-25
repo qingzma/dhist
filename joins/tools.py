@@ -1,6 +1,7 @@
 import os
-import pandas as pd
 import time
+
+import pandas as pd
 
 
 def timestamp_transorform(time_string, start_date="2010-07-19 00:00:00"):
@@ -22,3 +23,7 @@ def convert_time_to_int(data_folder):
                             new_value.append(timestamp_transorform(value))
                         df_rows[attribute] = new_value
             df_rows.to_csv(csv_file_location, index=False)
+
+
+def q_error(res, true_card):
+    return max(res/true_card, true_card/res)
