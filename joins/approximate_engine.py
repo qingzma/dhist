@@ -9,6 +9,15 @@ from joins.parser import parse_query_simple
 from joins.schema_base import identify_conditions, identify_key_values
 from joins.stats.schema import get_stats_relevant_attributes
 from joins.table import TableContainer
+from enum import Enum
+
+
+class QueryType(Enum):
+    TwoTableNoSelection = 1
+    TwoTableRightSelection = 2
+    MultiTableNoSelection = 3
+    SelectionOnJoinKey = 4
+    NotSupported = 20
 
 
 class ApproximateEngine:
@@ -22,37 +31,26 @@ class ApproximateEngine:
 
     def query(self, query_str):
 
-        tables_all, table_queries, join_cond, join_keys = parse_query_simple(
-            query_str)
-        equivalent_group = get_join_hyper_graph(
-            join_keys, self.equivalent_keys)
-        key_conditions, non_key_conditions = identify_conditions(
-            table_queries, join_keys)
-
-        # currently, no selection on the join key
-        assert (len(key_conditions) == 0)
-
         # print("keys: \n", self.models.keys())
 
         print(query_str)
-        # print(tables_all)
-        # print("table_queries\n", table_queries)
-        # print("join_cond", join_cond)
-        # print("join_keys", join_keys)
-        # print(equivalent_group)
-        # exit()
-        # print("key_conditions\n", key_conditions)
-        # print("non_key_conditions\n", non_key_conditions)
-        if key_conditions:
-            logger.warning("selection on join key is not supported yet.")
+        query_type, tables_all, join_cond, non_key_conditions = parse_query_type(
+            query_str, self.equivalent_keys)
+
+        if query_type == QueryType.SelectionOnJoinKey:
+            logger.warning(
+                "selection on join key is not supported yet, but coule be easily supported.")
             return
-        if not non_key_conditions:  # simple case, no selections
+        if query_type == QueryType.TwoTableNoSelection:
             return simple_card(self.models, tables_all, join_cond,
                                self.relevant_keys, self.counters)
-        else:
+        if query_type == QueryType.TwoTableRightSelection:
             return right_table_selection_card(self.models, tables_all, join_cond, non_key_conditions,
                                               self.relevant_keys, self.counters)
-        return
+        else:
+            logger.info("QueryType: %s", query_type)
+            logger.warning("not implemented yet")
+            return
 
     def integrate1d(self, model_name, l, h):
         if self.auto_grid:
@@ -109,16 +107,17 @@ def simple_card(models: dict[str, TableContainer], tables_all, join_cond, releva
 def right_table_selection_card(models: dict[str, TableContainer], tables_all, join_cond, non_key_conditions, relevant_keys, counters, grid=100):
     t11 = time.time()
     assert (len(join_cond) == 1)
-    join_cond = [i.replace(' ', '') for i in join_cond]
-    # col_models = []
-    # n_models = []
-    # conditions = [cond.replace(' ', '').split(" = ") for cond in join_cond][0]
-    join_table_and_keys = [c.split("=")
-                           for c in join_cond]  # [i.split(".") for i in
-    tbl_and_join_key_dict = {}
-    for i in join_table_and_keys[0]:
-        t_name, k_name = i.split(".")
-        tbl_and_join_key_dict[t_name] = k_name
+
+    # # col_models = []
+    # # n_models = []
+    # # conditions = [cond.replace(' ', '').split(" = ") for cond in join_cond][0]
+    # join_table_and_keys = [c.split("=")
+    #                        for c in join_cond]  # [i.split(".") for i in
+    # tbl_and_join_key_dict = {}
+    # for i in join_table_and_keys[0]:
+    #     t_name, k_name = i.split(".")
+    #     tbl_and_join_key_dict[t_name] = k_name
+    tbl_and_join_key_dict = get_tbl_and_join_key_dict(join_cond)
 
     assert (len(non_key_conditions) == 1)
 
@@ -189,3 +188,70 @@ def right_table_selection_card(models: dict[str, TableContainer], tables_all, jo
     logger.info("result: %f", result)
     logger.info("time cost for this query is %f", (time.time()-t11))
     return result
+
+
+def multiple_table_same_join_column(models: dict[str, TableContainer], tables_all, join_cond, non_key_conditions, relevant_keys, counters, grid=100):
+    pass
+
+
+def parse_query_type(query_str, equivalent_keys):
+    tables_all, table_queries, join_cond, join_keys = parse_query_simple(
+        query_str)
+    equivalent_group = get_join_hyper_graph(
+        join_keys, equivalent_keys)
+    key_conditions, non_key_conditions = identify_conditions(
+        table_queries, join_keys)
+    tbl_and_join_key_dict = get_tbl_and_join_key_dict(join_cond)
+
+    if key_conditions:
+        return QueryType.SelectionOnJoinKey, tables_all, join_cond, non_key_conditions
+
+    # currently, no selection on the join key
+    # assert (len(key_conditions) == 0)
+
+    if not non_key_conditions:  # simple case, no selections
+        if len(tables_all) == 2:
+            return QueryType.TwoTableNoSelection, tables_all, join_cond, non_key_conditions
+        else:
+            logger.info("tbl_and_join_key_dict: %s", tbl_and_join_key_dict)
+            logger.warning("not implemented yet")
+            return
+    else:
+        return QueryType.TwoTableRightSelection, tables_all, join_cond, non_key_conditions
+
+
+def get_tbl_and_join_key_dict(join_cond):
+    join_cond = [i.replace(' ', '') for i in join_cond]
+    join_table_and_keys = [c.split("=")
+                           for c in join_cond]  # [i.split(".") for i in
+    tbl_and_join_key_dict = {}
+    logger.info("join_table_and_keys %s", join_table_and_keys)
+
+    if len(join_table_and_keys) == 1:  # simple 2 table join
+        for i in join_table_and_keys[0]:
+            t_name, k_name = i.split(".")
+            tbl_and_join_key_dict[t_name] = k_name
+        return tbl_and_join_key_dict
+
+    join_key_count = {}
+    for [i1, i2] in join_table_and_keys:
+        print("join_table_and_keys", join_table_and_keys)
+        # for [i1, i2] in cond:
+        if i1 not in join_key_count:
+            join_key_count[i1] = [i2]
+        else:
+            join_key_count[i1].append(i2)
+
+        if i2 not in join_key_count:
+            join_key_count[i2] = [i1]
+        else:
+            join_key_count[i2].append(i1)
+    # max_key = max(join_key_count.keys(), key=len(join_key_count.values()))
+    # max(d.values(), key=len)
+    max_occurence = max([len(val)for val in join_key_count.values()])
+    max_keys = [k for k in join_key_count if len(
+        join_key_count[k]) == max_occurence]
+
+    print("max_keys", max_keys)
+    print("max_occurence", max_occurence)
+    exit()
