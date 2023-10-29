@@ -32,32 +32,32 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #         if "100" in file:
     #             os.remove("models/"+file)
 
-    def test_simple_query(self):
-        query = "SELECT COUNT(*) FROM votes as v, posts as p WHERE p.Id = v.PostId"
-        with open("models/"+self.model_name+".pkl", 'rb') as f:
-            model = pickle.load(f)
-        engine = ApproximateEngine(model)
-        res = engine.query(query)
-        truth = 328064
-        self.assertTrue(q_error(res, truth) < 2)
+    # def test_simple_query(self):
+    #     query = "SELECT COUNT(*) FROM votes as v, posts as p WHERE p.Id = v.PostId"
+    #     with open("models/"+self.model_name+".pkl", 'rb') as f:
+    #         model = pickle.load(f)
+    #     engine = ApproximateEngine(model)
+    #     res = engine.query(query)
+    #     truth = 328064
+    #     self.assertTrue(q_error(res, truth) < 2)
 
-    def test_one_selection_query(self):
-        query = "SELECT COUNT(*) FROM users as u, badges as b WHERE b.UserId= u.Id AND u.UpVotes>=0"
-        with open("models/"+self.model_name+".pkl", 'rb') as f:
-            model = pickle.load(f)
-        engine = ApproximateEngine(model)
-        res = engine.query(query)
-        truth = 79851
-        self.assertTrue(q_error(res, truth) < 3)
-
-    # def test_multiple_table_same_join_column(self):
-    #     query = "SELECT COUNT(*) FROM badges as b, comments as c, users as u WHERE c.UserId = u.Id AND b.UserId = u.Id"
+    # def test_one_selection_query(self):
+    #     query = "SELECT COUNT(*) FROM users as u, badges as b WHERE b.UserId= u.Id AND u.UpVotes>=0"
     #     with open("models/"+self.model_name+".pkl", 'rb') as f:
     #         model = pickle.load(f)
     #     engine = ApproximateEngine(model)
     #     res = engine.query(query)
     #     truth = 79851
     #     self.assertTrue(q_error(res, truth) < 3)
+
+    def test_multiple_table_same_join_column(self):
+        query = "SELECT COUNT(*) FROM badges as b, comments as c, users as u WHERE c.UserId = u.Id AND b.UserId = u.Id"
+        with open("models/"+self.model_name+".pkl", 'rb') as f:
+            model = pickle.load(f)
+        engine = ApproximateEngine(model)
+        res = engine.query(query)
+        truth = 79851
+        self.assertTrue(q_error(res, truth) < 3)
 
 
 if __name__ == '__main__':

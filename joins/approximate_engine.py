@@ -15,8 +15,9 @@ from enum import Enum
 class QueryType(Enum):
     TwoTableNoSelection = 1
     TwoTableRightSelection = 2
-    MultiTableNoSelection = 3
-    SelectionOnJoinKey = 4
+    MultiTableSingleJoinKeyNoSelection = 3
+    MultiTableMultiJoinKeyNoSelection = 4
+    SelectionOnJoinKey = 5
     NotSupported = 20
 
 
@@ -47,6 +48,9 @@ class ApproximateEngine:
         if query_type == QueryType.TwoTableRightSelection:
             return right_table_selection_card(self.models, tables_all, join_cond, non_key_conditions,
                                               self.relevant_keys, self.counters)
+        if query_type == QueryType.MultiTableSingleJoinKeyNoSelection:
+
+            return None
         else:
             logger.info("QueryType: %s", query_type)
             logger.warning("not implemented yet")
@@ -129,19 +133,7 @@ def right_table_selection_card(models: dict[str, TableContainer], tables_all, jo
     # get the non_key
     non_keys = non_key_conditions[right_table_name]
 
-    bounds = {}
-    for non_k in non_keys:
-        k = non_k.split(".")[1]
-        domain = [-np.Infinity, np.Infinity]
-        for op in non_keys[non_k]:
-            if '>' in op:
-                domain[0] = non_keys[non_k][op]
-            elif '<' in op:
-                domain[1] = non_keys[non_k][op]
-            elif '=' in op:
-                domain[0], domain[1] = non_keys[non_k][op] - \
-                    0.5, non_keys[non_k][op]+0.5
-        bounds[k] = domain
+    bounds = get_bounds(non_keys)
 
     assert (len(bounds) == 1)  # only one selection condition at this moment.
     extra_col = list(bounds.keys())[0]
@@ -191,7 +183,8 @@ def right_table_selection_card(models: dict[str, TableContainer], tables_all, jo
 
 
 def multiple_table_same_join_column(models: dict[str, TableContainer], tables_all, join_cond, non_key_conditions, relevant_keys, counters, grid=100):
-    pass
+    logger.info(query_type, tables_all, join_cond, non_key_conditions)
+    logger.info("query_type", query_type)
 
 
 def parse_query_type(query_str, equivalent_keys):
@@ -201,7 +194,8 @@ def parse_query_type(query_str, equivalent_keys):
         join_keys, equivalent_keys)
     key_conditions, non_key_conditions = identify_conditions(
         table_queries, join_keys)
-    tbl_and_join_key_dict = get_tbl_and_join_key_dict(join_cond)
+    tbl_and_join_key_dict, join_key_in_each_table = get_tbl_and_join_key_dict(
+        join_cond)
 
     if key_conditions:
         return QueryType.SelectionOnJoinKey, tables_all, join_cond, non_key_conditions
@@ -210,10 +204,13 @@ def parse_query_type(query_str, equivalent_keys):
     # assert (len(key_conditions) == 0)
 
     if not non_key_conditions:  # simple case, no selections
-        if len(tables_all) == 2:
-            return QueryType.TwoTableNoSelection, tables_all, join_cond, non_key_conditions
-        else:
-            logger.info("tbl_and_join_key_dict: %s", tbl_and_join_key_dict)
+        # a table has at most 1 join key
+        if max([len(val)for val in tbl_and_join_key_dict.values()]) == 1:
+            if len(tables_all) == 2:
+                return QueryType.TwoTableNoSelection, tables_all, join_cond, non_key_conditions
+            else:
+                return QueryType.MultiTableSingleJoinKeyNoSelection, tables_all, join_cond, non_key_conditions
+        else:  # exist table with two or more join keys
             logger.warning("not implemented yet")
             return
     else:
@@ -227,31 +224,62 @@ def get_tbl_and_join_key_dict(join_cond):
     tbl_and_join_key_dict = {}
     logger.info("join_table_and_keys %s", join_table_and_keys)
 
-    if len(join_table_and_keys) == 1:  # simple 2 table join
-        for i in join_table_and_keys[0]:
-            t_name, k_name = i.split(".")
-            tbl_and_join_key_dict[t_name] = k_name
-        return tbl_and_join_key_dict
+    # if len(join_table_and_keys) == 1:  # simple 2 table join
+    #     for i in join_table_and_keys[0]:
+    #         t_name, k_name = i.split(".")
+    #         tbl_and_join_key_dict[t_name] = k_name
+    #     return tbl_and_join_key_dict
 
-    join_key_count = {}
+    for condi in join_table_and_keys:
+        for kv in condi:
+            t_name, k_name = kv.split(".")
+            if t_name not in tbl_and_join_key_dict:
+                tbl_and_join_key_dict[t_name] = set([k_name])
+            else:
+                tbl_and_join_key_dict[t_name].add(k_name)
+
+    logger.info("tbl_and_join_key_dict %s", tbl_and_join_key_dict)
+    # exit()
+
+    join_key_in_each_table = {}
     for [i1, i2] in join_table_and_keys:
         print("join_table_and_keys", join_table_and_keys)
         # for [i1, i2] in cond:
-        if i1 not in join_key_count:
-            join_key_count[i1] = [i2]
+        if i1 not in join_key_in_each_table:
+            join_key_in_each_table[i1] = [i2]
         else:
-            join_key_count[i1].append(i2)
+            join_key_in_each_table[i1].append(i2)
 
-        if i2 not in join_key_count:
-            join_key_count[i2] = [i1]
+        if i2 not in join_key_in_each_table:
+            join_key_in_each_table[i2] = [i1]
         else:
-            join_key_count[i2].append(i1)
-    # max_key = max(join_key_count.keys(), key=len(join_key_count.values()))
+            join_key_in_each_table[i2].append(i1)
+    logger.info("join_key_in_each_table %s", join_key_in_each_table)
+    # max_key = max(join_key_in_each_table.keys(), key=len(join_key_in_each_table.values()))
     # max(d.values(), key=len)
-    max_occurence = max([len(val)for val in join_key_count.values()])
-    max_keys = [k for k in join_key_count if len(
-        join_key_count[k]) == max_occurence]
+    max_occurence = max([len(val)for val in join_key_in_each_table.values()])
+    max_keys = [k for k in join_key_in_each_table if len(
+        join_key_in_each_table[k]) == max_occurence]
 
     print("max_keys", max_keys)
     print("max_occurence", max_occurence)
-    exit()
+
+    return tbl_and_join_key_dict, join_key_in_each_table
+    # exit()
+
+
+def get_bounds(non_keys):
+    bounds = {}
+    for non_k in non_keys:
+        k = non_k.split(".")[1]
+        domain = [-np.Infinity, np.Infinity]
+        for op in non_keys[non_k]:
+            if '>' in op:
+                domain[0] = non_keys[non_k][op]
+            elif '<' in op:
+                domain[1] = non_keys[non_k][op]
+            elif '=' in op:
+                domain[0], domain[1] = non_keys[non_k][op] - \
+                    0.5, non_keys[non_k][op]+0.5
+        bounds[k] = domain
+    return bounds
