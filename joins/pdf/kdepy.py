@@ -24,13 +24,17 @@ class KdePy1D:
         self.max = None
 
     def fit(self, x, grid_size=2**10, kernel="box"):
-        x, p = FFTKDE(bw="ISJ", kernel=kernel).fit(x)(grid_size)  # "ISJ",500
-        sums = np.sum(p[:-2])*(x[2]-x[1])  # [:-2])*(x[2]-x[1])  #np.sum(
-        # print("sums is: ", sums)
-        p = p/sums
-        self.kde = PchipInterpolator(x, p)  # PchipInterpolator
         self.min = np.min(x)
         self.max = np.max(x)
+        grid_x, width = np.linspace(
+            self.min-1, self.max+1, grid_size, retstep=True)
+        p = FFTKDE(bw="ISJ", kernel=kernel).fit(x)(grid_x)  # "ISJ",500
+        # print("p is ", p)
+        sums = np.sum(p[:-1])*width  # [:-2])*(x[2]-x[1])  #np.sum(
+        # print("sums is: ", sums)
+        p = p/sums
+        # exit()
+        self.kde = PchipInterpolator(grid_x, p)  # PchipInterpolator
 
     def predict(self, x):
         return self.kde(x)
@@ -43,10 +47,61 @@ class KdePy2D:
         self.max = None
 
     def fit(self, x, grid_size=2**10, kernel="box"):
+        x_min = np.min(x, axis=0)
+        x_max = np.max(x, axis=0)
+        # print("x_min", x_min)
+        # print("x_max", x_max)
+
+        xx, width_x = np.linspace(
+            x_min[0]-1, x_max[0]+1, grid_size, retstep=True)
+        yy, width_y = np.linspace(
+            x_min[1]-1, x_max[1]+1, grid_size, retstep=True)
+        mesh = np.stack(np.meshgrid(yy, xx), -1).reshape(-1, 2)
+        mesh[:, [0, 1]] = mesh[:, [1, 0]]  # Swap indices
+        # print("mesh", mesh)
+        # print("mesh", len(mesh), len(mesh[0]))
+        # exit()
+        # print("train")
+        p = FFTKDE(bw=10, kernel=kernel).fit(
+            x)(mesh)
+        # xx, yy = np.unique(x[:, 0]), np.unique(x[:, 1])
+        # self.min = [xx[0], yy[0]]
+        # self.max = [xx[-1], yy[-1]]
+        # width_x = xx[1]-xx[0]
+        # width_y = yy[1]-yy[0]
+        sums = np.sum(p)*width_x*width_y
+        p = p/sums
+        pp = p.reshape(grid_size, grid_size).T
+        self.kde = RegularGridInterpolator((xx, yy), pp)
+        # self.kde = interp(self.min, self.max, [width_x, width_y], pp, k=5)
+
+    def predict(self, x):
+        # only support 1 point at this moment
+        return self.predict_grid([x[0]], [x[1]])
+
+    def predict_grid(self, x_grid, y_grid):
+        X, Y = np.meshgrid(x_grid, y_grid, indexing='ij')
+        return self.kde((X, Y))
+        # return self.kde((X, Y), method="slinear")
+
+
+class KdePy2DEfficient:
+    def __init__(self) -> None:
+        self.kde = None
+        self.min = None
+        self.max = None
+
+    def fit(self, x, grid_size=2**10, kernel="box"):
         # print("train")
         x, p = FFTKDE(bw=10, kernel=kernel).fit(
             x)((grid_size, grid_size))
         xx, yy = np.unique(x[:, 0]), np.unique(x[:, 1])
+        x1, px = FFTKDE(bw="ISJ", kernel=kernel).fit(x[:, 0])(grid_size)
+        y1, py = FFTKDE(bw="ISJ", kernel=kernel).fit(x[:, 1])(grid_size)
+        print("xx", xx)
+        print("x1", x1)
+        print("y1", y1)
+        exit()
         self.min = [xx[0], yy[0]]
         self.max = [xx[-1], yy[-1]]
         width_x = xx[1]-xx[0]
@@ -63,13 +118,6 @@ class KdePy2D:
 
     def predict_grid(self, x_grid, y_grid):
         X, Y = np.meshgrid(x_grid, y_grid, indexing='ij')
-        # print(X)
-        # print(Y)
-        # print(X.shape)
-        # print(Y.shape)
-        # x = X.reshape(1, -1)[0]
-        # y = Y.reshape(1, -1)[0]
-        # print(x)
         return self.kde((X, Y))
         # return self.kde((X, Y), method="slinear")
 

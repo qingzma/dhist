@@ -3,7 +3,7 @@ import pandas as pd
 
 from joins.base_logger import logger
 from joins.pdf.kde import Kde1D, Kde2D
-from joins.pdf.kdepy import KdePy1D, KdePy2D, plot1d, plot2d
+from joins.pdf.kdepy import KdePy1D, KdePy2D, KdePy2DEfficient, plot1d, plot2d
 from joins.pdf.normalizing_flow.nflow import Nflow2D
 
 
@@ -15,6 +15,7 @@ class TableContainer:
         self.file_path = None
         self.pdfs = dict()
         self.correlations = dict()
+        self.efficients = dict()
 
     def fit(self, file, join_keys, relevant_keys, exclude=None, use_2d_model=True, args=None) -> None:
         df = pd.read_csv(file, sep=',')
@@ -41,6 +42,7 @@ class TableContainer:
         # print(join_keys)
         # print(relevant_keys)
         # for t in join_keys:
+        print("name is ", self.name)
         t = self.name
         for join_key in join_keys[t]:
             if t in relevant_keys:
@@ -49,8 +51,14 @@ class TableContainer:
                     if relevant_key != join_key:
                         columns = Column2d()
                         # print(df)
-                        # print(df.columns)
-                        # print([join_key, relevant_key])
+                        print(df.columns)
+                        print("min of join key is ", df[join_key].min())
+                        print("max of join key is ", df[join_key].max())
+                        print("min of relevant key is ",
+                              df[relevant_key].min())
+                        print("max of relevant key is ",
+                              df[relevant_key].max())
+                        print([join_key, relevant_key])
                         d = df[[join_key, relevant_key]].fillna(-1)
                         # print(d)
                         # exit()
@@ -110,7 +118,7 @@ class Column2d:
         self.min = None
         self.max = None
 
-    def fit(self, df_columns, table_name, method="fft",  args=None) -> None:
+    def fit(self, df_columns, table_name, method="fft",  args=None, use_coefficient=False) -> None:
         """
         methods: ["fft", "kde","nflow"]
         """
@@ -136,10 +144,16 @@ class Column2d:
             if args.plot:
                 kde.plot()
         else:
-            kde = KdePy2D()
-            kde.fit(df_columns.to_numpy(),
-                    grid_size=args.grid, kernel=args.kernel)
-            self.pdf = kde
+            if use_coefficient:
+                kde = KdePy2DEfficient()
+                kde.fit(df_columns.to_numpy(),
+                        grid_size=args.grid, kernel=args.kernel)
+                self.pdf = kde
+            else:
+                kde = KdePy2D()
+                kde.fit(df_columns.to_numpy(),
+                        grid_size=args.grid, kernel=args.kernel)
+                self.pdf = kde
             if args.plot:
                 plot2d(kde)
 
