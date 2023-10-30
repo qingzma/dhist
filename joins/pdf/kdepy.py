@@ -23,15 +23,23 @@ class KdePy1D:
         self.min = None
         self.max = None
 
-    def fit(self, x, grid_size=2**10, kernel="box"):
-        self.min = np.min(x)
-        self.max = np.max(x)
-        grid_x, width = np.linspace(
-            self.min-1, self.max+1, grid_size, retstep=True)
-        p = FFTKDE(bw="ISJ", kernel=kernel).fit(x)(grid_x)  # "ISJ",500
+    def fit(self, x, grid_size=2**10, kernel="box", auto_grid=True):
+        p = None
+        if not auto_grid:
+            self.min = np.min(x)
+            self.max = np.max(x)
+            grid_x, width = np.linspace(
+                self.min-1, self.max+1, grid_size, retstep=True)
+            p = FFTKDE(bw="ISJ", kernel=kernel).fit(x)(grid_x)  # "ISJ",500
+        else:
+            grid_x, p = FFTKDE(bw="ISJ", kernel=kernel).fit(x)(grid_size)
+            self.min = np.min(x)
+            self.max = np.max(x)
+            width = (self.max-self.min)/grid_size
         # print("p is ", p)
-        sums = np.sum(p[:-1])*width  # [:-2])*(x[2]-x[1])  #np.sum(
+        sums = np.sum(p)*width  # [:-2])*(x[2]-x[1])  #np.sum(
         # print("sums is: ", sums)
+        # print("p is ", p)
         p = p/sums
         # exit()
         self.kde = PchipInterpolator(grid_x, p)  # PchipInterpolator
@@ -46,7 +54,7 @@ class KdePy2D:
         self.min = None
         self.max = None
 
-    def fit(self, x, grid_size=2**10, kernel="box"):
+    def fit(self, x, grid_size=2**10, kernel="box", auto_grid=True):
         x_min = np.min(x, axis=0)
         x_max = np.max(x, axis=0)
         # print("x_min", x_min)
@@ -56,19 +64,19 @@ class KdePy2D:
             x_min[0]-1, x_max[0]+1, grid_size, retstep=True)
         yy, width_y = np.linspace(
             x_min[1]-1, x_max[1]+1, grid_size, retstep=True)
-        mesh = np.stack(np.meshgrid(yy, xx), -1).reshape(-1, 2)
-        mesh[:, [0, 1]] = mesh[:, [1, 0]]  # Swap indices
-        # print("mesh", mesh)
-        # print("mesh", len(mesh), len(mesh[0]))
-        # exit()
-        # print("train")
-        p = FFTKDE(bw=10, kernel=kernel).fit(
-            x)(mesh)
-        # xx, yy = np.unique(x[:, 0]), np.unique(x[:, 1])
-        # self.min = [xx[0], yy[0]]
-        # self.max = [xx[-1], yy[-1]]
-        # width_x = xx[1]-xx[0]
-        # width_y = yy[1]-yy[0]
+        if not auto_grid:
+            mesh = np.stack(np.meshgrid(yy, xx), -1).reshape(-1, 2)
+            mesh[:, [0, 1]] = mesh[:, [1, 0]]  # Swap indices
+            p = FFTKDE(bw=10, kernel=kernel).fit(x)(mesh)
+        else:
+            x, p = FFTKDE(bw=10, kernel=kernel).fit(
+                x)((grid_size, grid_size))
+            xx, yy = np.unique(x[:, 0]), np.unique(x[:, 1])
+            self.min = [xx[0], yy[0]]
+            self.max = [xx[-1], yy[-1]]
+            width_x = xx[1]-xx[0]
+            width_y = yy[1]-yy[0]
+
         sums = np.sum(p)*width_x*width_y
         p = p/sums
         pp = p.reshape(grid_size, grid_size).T

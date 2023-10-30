@@ -22,7 +22,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
     # @classmethod
     # def setUpClass(cls):
     #     # ['biweight', 'box', 'cosine', 'epa', 'exponential', 'gaussian', 'tri', 'tricube', 'triweight']
-    #     arguments = ["--train", "--grid", "2000", "--kernel", "gaussian"]
+    #     arguments = ["--train", "--grid", "1000", "--kernel", "gaussian"]
     #     args = parse_args(arguments)
     #     train_stats(args)
 
