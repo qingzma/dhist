@@ -39,7 +39,6 @@ class ApproximateEngine:
         query_type, tables_all, join_cond, non_key_conditions, tbl_and_join_key_dict, join_key_in_each_table = parse_query_type(
             query_str, self.equivalent_keys)
         if query_type == QueryType.SINGLE_TABLE_SINGLE_JK_NO_SELECTION:
-            logger.info("tables_all %s", tables_all)
             return single_table_count(self.models[next(iter(tables_all.values()))])
 
         if query_type == QueryType.SelectionOnJoinKey:

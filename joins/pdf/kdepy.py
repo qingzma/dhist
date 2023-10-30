@@ -79,7 +79,8 @@ class KdePy2D:
 
         sums = np.sum(p)*width_x*width_y
         p = p/sums
-        pp = p.reshape(grid_size, grid_size).T
+        # TODO check whether this is correct.
+        pp = p.reshape(grid_size, grid_size)  # .T
         self.kde = RegularGridInterpolator((xx, yy), pp)
         # self.kde = interp(self.min, self.max, [width_x, width_y], pp, k=5)
 
@@ -100,25 +101,28 @@ class KdePy2DEfficient:
         self.max = None
 
     def fit(self, x, grid_size=2**10, kernel="box"):
-        # print("train")
-        x, p = FFTKDE(bw=10, kernel=kernel).fit(
-            x)((grid_size, grid_size))
-        xx, yy = np.unique(x[:, 0]), np.unique(x[:, 1])
-        x1, px = FFTKDE(bw="ISJ", kernel=kernel).fit(x[:, 0])(grid_size)
-        y1, py = FFTKDE(bw="ISJ", kernel=kernel).fit(x[:, 1])(grid_size)
-        print("xx", xx)
-        print("x1", x1)
-        print("y1", y1)
-        exit()
-        self.min = [xx[0], yy[0]]
-        self.max = [xx[-1], yy[-1]]
-        width_x = xx[1]-xx[0]
-        width_y = yy[1]-yy[0]
+        x_min = np.min(x, axis=0)
+        x_max = np.max(x, axis=0)
+        # grid_size_x = 2000
+        # grid_size_y = 3000
+
+        xx, width_x = np.linspace(
+            x_min[0]-1, x_max[0]+1, grid_size, retstep=True)
+        yy, width_y = np.linspace(
+            x_min[1]-1, x_max[1]+1, grid_size, retstep=True)
+
+        mesh = np.stack(np.meshgrid(yy, xx), -1).reshape(-1, 2)
+        mesh[:, [0, 1]] = mesh[:, [1, 0]]  # Swap indices
+        p = FFTKDE(bw=10, kernel=kernel).fit(x)(mesh)
+
         sums = np.sum(p)*width_x*width_y
         p = p/sums
-        pp = p.reshape(grid_size, grid_size).T
+
+        # TODO check whether this is correct.
+        pp = p.reshape(grid_size, grid_size)  # .T
+
         self.kde = RegularGridInterpolator((xx, yy), pp)
-        # self.kde = interp(self.min, self.max, [width_x, width_y], pp, k=5)
+        # self.kde = RegularGridInterpolator((xx, yy), p)
 
     def predict(self, x):
         # only support 1 point at this moment

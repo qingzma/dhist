@@ -19,12 +19,12 @@ class TestApproximateEngineMethod(unittest.TestCase):
         self.model_name = "model_stats_gaussian_100"
     # train needed models
 
-    # @classmethod
-    # def setUpClass(cls):
-    #     # ['biweight', 'box', 'cosine', 'epa', 'exponential', 'gaussian', 'tri', 'tricube', 'triweight']
-    #     arguments = ["--train", "--grid", "1000", "--kernel", "gaussian"]
-    #     args = parse_args(arguments)
-    #     train_stats(args)
+    @classmethod
+    def setUpClass(cls):
+        # ['biweight', 'box', 'cosine', 'epa', 'exponential', 'gaussian', 'tri', 'tricube', 'triweight']
+        arguments = ["--train", "--grid", "101", "--kernel", "gaussian"]
+        args = parse_args(arguments)
+        train_stats(args)
 
     # # remove trained models for test purposes
     # @classmethod

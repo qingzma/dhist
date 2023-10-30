@@ -118,7 +118,7 @@ class Column2d:
         self.min = None
         self.max = None
 
-    def fit(self, df_columns, table_name, method="fft",  args=None, use_coefficient=False) -> None:
+    def fit(self, df_columns, table_name, method="fft",  args=None, use_coefficient=True) -> None:
         """
         methods: ["fft", "kde","nflow"]
         """
