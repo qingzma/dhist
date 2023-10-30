@@ -535,3 +535,16 @@ OPS = {
     '=': np.equal,
     '==': np.equal
 }
+
+
+def parse_single_table_query(query):
+    tables_all, table_query, _, _ = parse_query_simple(query)
+    tbl_name = list(tables_all.values())[0]
+
+    if not table_query:
+        return tbl_name, None
+
+    cols = [c.split(".")[1] for c in tuple(table_query[tbl_name].keys())]
+    cols.sort()
+
+    return tbl_name, tuple(cols)
