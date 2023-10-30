@@ -18,6 +18,10 @@ class QueryType(Enum):
     MultiTableSingleJoinKeyNoSelection = 3
     MultiTableMultiJoinKeyNoSelection = 4
     SelectionOnJoinKey = 5
+    SINGLE_TABLE_SINGLE_JK_NO_SELECTION = 6
+    SINGLE_TABLE_SINGLE_JK_SINGLE_SELECTION = 7
+    SINGLE_TABLE_SINGLE_JK_MULTI_SELECTION = 8
+    SINGLE_TABLE_MULTI_JOIN_KEY = 9
     NotSupported = 20
 
 
@@ -31,12 +35,12 @@ class ApproximateEngine:
             models['schema'])
 
     def query(self, query_str):
-
-        # print("keys: \n", self.models.keys())
-
         logger.info("QUERY [%s]", query_str)
         query_type, tables_all, join_cond, non_key_conditions, tbl_and_join_key_dict, join_key_in_each_table = parse_query_type(
             query_str, self.equivalent_keys)
+        if query_type == QueryType.SINGLE_TABLE_SINGLE_JK_NO_SELECTION:
+            logger.info("tables_all %s", tables_all)
+            return single_table_count(self.models[next(iter(tables_all.values()))])
 
         if query_type == QueryType.SelectionOnJoinKey:
             logger.warning(
@@ -63,6 +67,10 @@ class ApproximateEngine:
 
     def integrate2d(self,):
         pass
+
+
+def single_table_count(table: TableContainer):
+    return table.size
 
 
 def simple_card(models: dict[str, TableContainer], tables_all, join_cond, relevant_keys, counters, grid=1000):
@@ -197,6 +205,9 @@ def multiple_table_same_join_column(models: dict[str, TableContainer], tables_al
 def parse_query_type(query_str, equivalent_keys):
     tables_all, table_queries, join_cond, join_keys = parse_query_simple(
         query_str)
+    if not table_queries and len(tables_all) == 1:
+        return QueryType.SINGLE_TABLE_SINGLE_JK_NO_SELECTION, tables_all, join_cond, None, None, None
+
     equivalent_group = get_join_hyper_graph(
         join_keys, equivalent_keys)
     key_conditions, non_key_conditions = identify_conditions(
