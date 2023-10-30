@@ -94,44 +94,44 @@ class KdePy2D:
         # return self.kde((X, Y), method="slinear")
 
 
-class KdePy2DEfficient:
-    def __init__(self) -> None:
-        self.kde = None
-        self.min = None
-        self.max = None
+# class KdePy2DEfficient:
+#     def __init__(self) -> None:
+#         self.kde = None
+#         self.min = None
+#         self.max = None
 
-    def fit(self, x, grid_size=2**10, kernel="box"):
-        x_min = np.min(x, axis=0)
-        x_max = np.max(x, axis=0)
-        # grid_size_x = 2000
-        # grid_size_y = 3000
+#     def fit(self, x, grid_size=2**10, kernel="box"):
+#         x_min = np.min(x, axis=0)
+#         x_max = np.max(x, axis=0)
+#         # grid_size_x = 2000
+#         # grid_size_y = 3000
 
-        xx, width_x = np.linspace(
-            x_min[0]-1, x_max[0]+1, grid_size, retstep=True)
-        yy, width_y = np.linspace(
-            x_min[1]-1, x_max[1]+1, grid_size, retstep=True)
+#         xx, width_x = np.linspace(
+#             x_min[0]-1, x_max[0]+1, grid_size, retstep=True)
+#         yy, width_y = np.linspace(
+#             x_min[1]-1, x_max[1]+1, grid_size, retstep=True)
 
-        mesh = np.stack(np.meshgrid(yy, xx), -1).reshape(-1, 2)
-        mesh[:, [0, 1]] = mesh[:, [1, 0]]  # Swap indices
-        p = FFTKDE(bw=10, kernel=kernel).fit(x)(mesh)
+#         mesh = np.stack(np.meshgrid(yy, xx), -1).reshape(-1, 2)
+#         mesh[:, [0, 1]] = mesh[:, [1, 0]]  # Swap indices
+#         p = FFTKDE(bw=10, kernel=kernel).fit(x)(mesh)
 
-        sums = np.sum(p)*width_x*width_y
-        p = p/sums
+#         sums = np.sum(p)*width_x*width_y
+#         p = p/sums
 
-        # TODO check whether this is correct.
-        pp = p.reshape(grid_size, grid_size)  # .T
+#         # TODO check whether this is correct.
+#         pp = p.reshape(grid_size, grid_size)  # .T
 
-        self.kde = RegularGridInterpolator((xx, yy), pp)
-        # self.kde = RegularGridInterpolator((xx, yy), p)
+#         self.kde = RegularGridInterpolator((xx, yy), pp)
+#         # self.kde = RegularGridInterpolator((xx, yy), p)
 
-    def predict(self, x):
-        # only support 1 point at this moment
-        return self.predict_grid([x[0]], [x[1]])
+#     def predict(self, x):
+#         # only support 1 point at this moment
+#         return self.predict_grid([x[0]], [x[1]])
 
-    def predict_grid(self, x_grid, y_grid):
-        X, Y = np.meshgrid(x_grid, y_grid, indexing='ij')
-        return self.kde((X, Y))
-        # return self.kde((X, Y), method="slinear")
+#     def predict_grid(self, x_grid, y_grid):
+#         X, Y = np.meshgrid(x_grid, y_grid, indexing='ij')
+#         return self.kde((X, Y))
+#         # return self.kde((X, Y), method="slinear")
 
 
 def plot1d(kde: KdePy1D):

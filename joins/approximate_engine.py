@@ -320,3 +320,58 @@ def intergrate_1d_multi_table_same_join_key(models: list[Column], grid_size=1000
 
     result = np.sum(pred0)
     return result
+
+
+def selectivity_array_single_column(column, x_grid, grid_width):
+    return column.pdf.predict(x_grid)*grid_width
+
+
+def selectivity_array_two_columns(column, key_grid, non_key_grid, key_grid_width, non_key_grid_width):
+    grid = column.pdf.predict_grid(
+        key_grid, non_key_grid)*non_key_grid_width.reshape(len(key_grid), len(non_key_grid))
+    return np.sum(grid, axis=0)*key_grid_width
+
+
+def selectivity_grid_two_join_key(column, key1_grid, key2_grid, key1_grid_width, key2_grid_width):
+    return column.pdf.predict_grid(
+        key1_grid, key2_grid)*key1_grid_width*key2_grid_width
+
+
+def combine_selectivity_array(sg1, sg2):
+    return np.multiply(sg1, sg2)
+
+
+def combine_selectivity_grid_with_two_arrays(arr1, grid, arr2):
+    return np.multiply(np.multiply(arr1[np.newaxis, :], grid), arr2.T[:, np.newaxis])
+
+
+def grid_multiply_array(grid, arr):
+    tmp = np.multiply(grid, arr.T[:, np.newaxis])
+    return np.sum(tmp, axis=0)
+
+
+def array_multiply_grid(arr, grid):
+    tmp = np.multiply(arr[np.newaxis, :], grid)
+    return np.sum(tmp, axis=0)
+
+
+if __name__ == '__main__':
+    b = np.array([
+        [1, 2],
+        [3, 4],
+        [5, 6],])
+    a = np.array([1, 2])
+    c = np.array([1, 2, 3])
+    res = combine_selectivity_grid_with_two_arrays(a, b, c)
+    minused = res - np.array([[1,  4],
+                              [6, 16],
+                              [15, 36]])
+    assert (minused.all() == 0)
+
+    res = array_multiply_grid(a, b)
+    minused = res - np.array([9,  24])
+    assert (minused.all() == 0)
+
+    res = grid_multiply_array(b, c)
+    minused = res - np.array([22, 28])
+    assert (minused.all() == 0)
