@@ -34,7 +34,7 @@ class ApproximateEngine:
 
         # print("keys: \n", self.models.keys())
 
-        print(query_str)
+        logger.info("QUERY [%s]", query_str)
         query_type, tables_all, join_cond, non_key_conditions, tbl_and_join_key_dict, join_key_in_each_table = parse_query_type(
             query_str, self.equivalent_keys)
 
@@ -65,8 +65,8 @@ class ApproximateEngine:
         pass
 
 
-def simple_card(models: dict[str, TableContainer], tables_all, join_cond, relevant_keys, counters, grid=10000):
-    t11 = time.time()
+def simple_card(models: dict[str, TableContainer], tables_all, join_cond, relevant_keys, counters, grid=1000):
+    # t11 = time.time()
     assert (len(join_cond) == 1)
     col_models = []
     n_models = []
@@ -100,27 +100,20 @@ def simple_card(models: dict[str, TableContainer], tables_all, join_cond, releva
     result = width*np.sum(np.multiply(pred1, pred2))*n1*n2  # *width*n1*n2
     # result = integrate.quad(lambda x: mdl1.pdf.predict(
     #     x)*mdl2.pdf.predict(x), mins, maxs)[0]*n1*n2
-    logger.info("result: %f", result)
+    # logger.info("result: %f", result)
     # logger.info("time cost for this query is %f", (t3-t2))
     # logger.info("time cost for this query is %f", (time.time()-t3))
-    logger.info("time cost for this query is %f", (time.time()-t11))
+    # logger.info("time cost for this query is %f", (time.time()-t11))
     return result
 
 
 def right_table_selection_card(models: dict[str, TableContainer], tables_all, join_cond, non_key_conditions, relevant_keys, counters, grid=100):
-    t11 = time.time()
+    # t11 = time.time()
     assert (len(join_cond) == 1)
 
-    # # col_models = []
-    # # n_models = []
-    # # conditions = [cond.replace(' ', '').split(" = ") for cond in join_cond][0]
-    # join_table_and_keys = [c.split("=")
-    #                        for c in join_cond]  # [i.split(".") for i in
-    # tbl_and_join_key_dict = {}
-    # for i in join_table_and_keys[0]:
-    #     t_name, k_name = i.split(".")
-    #     tbl_and_join_key_dict[t_name] = k_name
-    tbl_and_join_key_dict = get_tbl_and_join_key_dict(join_cond)
+    tbl_and_join_key_dict, join_key_in_each_table = get_tbl_and_join_key_dict(
+        join_cond)
+    # logger.info("tbl_and_join_key_dict %s", tbl_and_join_key_dict)
 
     assert (len(non_key_conditions) == 1)
 
@@ -137,9 +130,8 @@ def right_table_selection_card(models: dict[str, TableContainer], tables_all, jo
     assert (len(bounds) == 1)  # only one selection condition at this moment.
     extra_col = list(bounds.keys())[0]
 
-    mdl1, mdl2 = models[left_table_name].pdfs[tbl_and_join_key_dict[left_table_name]
-                                              ], models[right_table_name].correlations[tbl_and_join_key_dict[right_table_name]][extra_col]
-
+    mdl1 = models[left_table_name].pdfs[tbl_and_join_key_dict[left_table_name][0]]
+    mdl2 = models[right_table_name].correlations[tbl_and_join_key_dict[right_table_name][0]][extra_col]
     mins = max(mdl1.min, mdl2.min[0])
     maxs = min(mdl1.max, mdl2.max[0])
     assert (mins < maxs)
@@ -153,41 +145,41 @@ def right_table_selection_card(models: dict[str, TableContainer], tables_all, jo
 
     grid_x_size = 300
     grid_y_size = 200
-    t2 = time.time()
+    # t2 = time.time()
     x_grid = np.linspace(mins, maxs, grid_x_size)
     width_x = x_grid[1] - x_grid[0]
     y_grid = np.linspace(bound[0], bound[1], grid_y_size)
     width_y = y_grid[1] - y_grid[0]
 
-    t3 = time.time()
+    # t3 = time.time()
     pred1 = mdl1.pdf.predict(x_grid)
-    t4 = time.time()
+    # t4 = time.time()
 
     pred2 = mdl2.pdf.predict_grid(x_grid, y_grid)
-    t5 = time.time()
+    # t5 = time.time()
 
     pred1 = np.array([pred1 for _ in range(grid_y_size)]
                      ).reshape(grid_x_size, grid_y_size)
 
     result = np.sum(np.multiply(pred1, pred2))*width_x*width_y*n1*n2
-    t6 = time.time()
-    logger.info("time cost for grid %f", (t3-t2))
-    logger.info("time cost for 1d predict %f", (t4-t3))
-    logger.info("time cost for 2d predict is %f", (t5-t4))
-    logger.info("time cost for integral is %f", (t6-t5))
+    # t6 = time.time()
+    # logger.info("time cost for grid %f", (t3-t2))
+    # logger.info("time cost for 1d predict %f", (t4-t3))
+    # logger.info("time cost for 2d predict is %f", (t5-t4))
+    # logger.info("time cost for integral is %f", (t6-t5))
 
-    logger.info("result: %f", result)
-    logger.info("time cost for this query is %f", (time.time()-t11))
+    # logger.info("result: %f", result)
+    # logger.info("time cost for this query is %f", (time.time()-t11))
     return result
 
 
 def multiple_table_same_join_column(models: dict[str, TableContainer], tables_all, join_cond, non_key_conditions, tbl_and_join_key_dict, join_key_in_each_table, relevant_keys, counters, grid=100):
     # logger.info(query_type, tables_all, join_cond, non_key_conditions)
-    logger.info("tables_all %s", tables_all)
-    logger.info("join_cond %s", join_cond)
-    logger.info("non_key_conditions %s", non_key_conditions)
-    logger.info("tbl_and_join_key_dict %s", tbl_and_join_key_dict)
-    logger.info("join_key_in_each_table %s", join_key_in_each_table)
+    # logger.info("tables_all %s", tables_all)
+    # logger.info("join_cond %s", join_cond)
+    # logger.info("non_key_conditions %s", non_key_conditions)
+    # logger.info("tbl_and_join_key_dict %s", tbl_and_join_key_dict)
+    # logger.info("join_key_in_each_table %s", join_key_in_each_table)
 
     same_col_join_model_container = []
     cnt = 1
@@ -195,11 +187,10 @@ def multiple_table_same_join_column(models: dict[str, TableContainer], tables_al
         col = tbl_and_join_key_dict[t][0]
         same_col_join_model_container.append(models[t].pdfs[col])
         cnt *= models[t].size
-    logger.info("models %s", same_col_join_model_container)
-    logger.info("cnt %s", cnt)
+    # logger.info("models %s", same_col_join_model_container)
+    # logger.info("cnt %s", cnt)
     result = cnt * \
         intergrate_1d_multi_table_same_join_key(same_col_join_model_container)
-    logger.info("result %s", result)
     return result
 
 
@@ -223,7 +214,7 @@ def parse_query_type(query_str, equivalent_keys):
         # a table has at most 1 join key
         if max([len(val)for val in tbl_and_join_key_dict.values()]) == 1:
             if len(tables_all) == 2:
-                return QueryType.TwoTableNoSelection, tables_all, join_cond, non_key_conditions
+                return QueryType.TwoTableNoSelection, tables_all, join_cond, non_key_conditions, tbl_and_join_key_dict, join_key_in_each_table
             else:
                 return QueryType.MultiTableSingleJoinKeyNoSelection, tables_all, join_cond, non_key_conditions, tbl_and_join_key_dict, join_key_in_each_table
         else:  # exist table with two or more join keys
@@ -311,11 +302,11 @@ def intergrate_1d_multi_table_same_join_key(models: list[Column], grid_size=1000
     xs, width = np.linspace(mins, maxs, grid_size, retstep=True)
     predictions = []
     for m in models:
-        predictions.append(m.pdf.predict(xs))
+        predictions.append(m.pdf.predict(xs)*width)
     pred0 = predictions[0]
     if len(predictions) > 1:
         for p in predictions[1:]:
-            pred0 = np.multiply(pred0, p)*width
+            pred0 = np.multiply(pred0, p)
 
-    result = np.sum(pred0)*width
+    result = np.sum(pred0)
     return result
