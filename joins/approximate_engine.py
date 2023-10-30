@@ -34,6 +34,19 @@ class ApproximateEngine:
         self.join_keys, self.relevant_keys, self.counters = get_stats_relevant_attributes(
             models['schema'])
 
+    def query_with_pushed_down(self, query_str):
+        logger.info("QUERY [%s]", query_str)
+        tables_all, table_query, join_cond, join_keys = parse_query_simple(
+            query_str)
+        logger.info("tables_all: %s", tables_all)
+        logger.info("table_query: %s", table_query)
+        logger.info("join_cond: %s", join_cond)
+        logger.info("join_keys: %s", join_keys)
+        conditions = generate_push_down_conditions(
+            tables_all, table_query, join_cond, join_keys)
+
+        logger.info("conditions: %s", conditions)
+
     def query(self, query_str):
         logger.info("QUERY [%s]", query_str)
         query_type, tables_all, join_cond, non_key_conditions, tbl_and_join_key_dict, join_key_in_each_table = parse_query_type(
@@ -353,6 +366,64 @@ def grid_multiply_array(grid, arr):
 def array_multiply_grid(arr, grid):
     tmp = np.multiply(arr[np.newaxis, :], grid)
     return np.sum(tmp, axis=0)
+
+
+class SingleTablePushedDownCondition:
+    def __init__(self, tbl: str, join_keys: list[str], non_key: str, non_key_condition: dict[str, dict], to_join, key_conditions=None) -> None:
+        self.tbl = tbl
+        # currently only support at most 2 join keys in a single table
+        assert (len(join_keys) <= 2)
+        self.join_keys = join_keys
+        self.non_key = non_key
+        self.non_key_condition = non_key_condition
+        # selection on join key is not supported, but could be easily supported.
+        assert (key_conditions is None)
+
+        self.to_join = to_join
+
+    def __str__(self) -> str:
+        return f"SingleTablePushedDownCondition[{self.tbl}]--join_keys[{','.join(self.join_keys)}]--non_key[{self.non_key}]--condition[{self.non_key_condition[0]}, {self.non_key_condition[1]}]"
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+
+def generate_push_down_conditions(tables_all, table_query, join_cond, join_keys):
+    conditions = {}
+    for tbl in join_keys:
+        print(tbl)
+        print(join_keys[tbl])
+        join_keyss = join_keys[tbl]
+        if tbl in table_query:
+            single_table_conditions = []
+            for non_key in table_query[tbl]:
+                condition = [-np.Infinity, np.Infinity]
+                for op in table_query[tbl][non_key]:
+                    val = table_query[tbl][non_key][op]
+                    if '<=' in op or '<' in op:
+                        condition[1] = val
+                    elif '>=' in op or '>' in op:
+                        condition[0] = val
+                    elif '==' in op or '=' in op:
+                        condition = [val-0.5, val+0.5]
+                    else:
+                        logger.error("unexpected operation")
+
+                to_join = {}
+                k = tbl+'.'+non_key
+                for join_condition in join_cond:
+                    if k in join_condition:
+                        to_j = join_condition.replace(
+                            k, "").replace("=", "").replace(" ", "")
+                        to_tbl, to_k = to_j.split(".")
+                        if to_tbl not in to_join:
+                            to_join[to_join] = []
+                        to_join[to_join].append(to_k)
+                con = SingleTablePushedDownCondition(
+                    tbl, join_keyss, non_key, condition, to_join, None)
+                single_table_conditions.append(con)
+        conditions[tbl] = single_table_conditions
+    return conditions
 
 
 if __name__ == '__main__':
