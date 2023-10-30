@@ -1,4 +1,5 @@
 import time
+from enum import Enum
 
 import numpy as np
 import scipy.integrate as integrate
@@ -8,8 +9,7 @@ from joins.join_graph import get_join_hyper_graph
 from joins.parser import parse_query_simple
 from joins.schema_base import identify_conditions, identify_key_values
 from joins.stats.schema import get_stats_relevant_attributes
-from joins.table import TableContainer
-from enum import Enum
+from joins.table import Column, TableContainer
 
 
 class QueryType(Enum):
@@ -35,7 +35,7 @@ class ApproximateEngine:
         # print("keys: \n", self.models.keys())
 
         print(query_str)
-        query_type, tables_all, join_cond, non_key_conditions = parse_query_type(
+        query_type, tables_all, join_cond, non_key_conditions, tbl_and_join_key_dict, join_key_in_each_table = parse_query_type(
             query_str, self.equivalent_keys)
 
         if query_type == QueryType.SelectionOnJoinKey:
@@ -49,8 +49,7 @@ class ApproximateEngine:
             return right_table_selection_card(self.models, tables_all, join_cond, non_key_conditions,
                                               self.relevant_keys, self.counters)
         if query_type == QueryType.MultiTableSingleJoinKeyNoSelection:
-
-            return None
+            return multiple_table_same_join_column(self.models, tables_all, join_cond, non_key_conditions, tbl_and_join_key_dict, join_key_in_each_table, self.relevant_keys, self.counters)
         else:
             logger.info("QueryType: %s", query_type)
             logger.warning("not implemented yet")
@@ -182,9 +181,26 @@ def right_table_selection_card(models: dict[str, TableContainer], tables_all, jo
     return result
 
 
-def multiple_table_same_join_column(models: dict[str, TableContainer], tables_all, join_cond, non_key_conditions, relevant_keys, counters, grid=100):
-    logger.info(query_type, tables_all, join_cond, non_key_conditions)
-    logger.info("query_type", query_type)
+def multiple_table_same_join_column(models: dict[str, TableContainer], tables_all, join_cond, non_key_conditions, tbl_and_join_key_dict, join_key_in_each_table, relevant_keys, counters, grid=100):
+    # logger.info(query_type, tables_all, join_cond, non_key_conditions)
+    logger.info("tables_all %s", tables_all)
+    logger.info("join_cond %s", join_cond)
+    logger.info("non_key_conditions %s", non_key_conditions)
+    logger.info("tbl_and_join_key_dict %s", tbl_and_join_key_dict)
+    logger.info("join_key_in_each_table %s", join_key_in_each_table)
+
+    same_col_join_model_container = []
+    cnt = 1
+    for t in tbl_and_join_key_dict:
+        col = tbl_and_join_key_dict[t][0]
+        same_col_join_model_container.append(models[t].pdfs[col])
+        cnt *= models[t].size
+    logger.info("models %s", same_col_join_model_container)
+    logger.info("cnt %s", cnt)
+    result = cnt * \
+        intergrate_1d_multi_table_same_join_key(same_col_join_model_container)
+    logger.info("result %s", result)
+    return result
 
 
 def parse_query_type(query_str, equivalent_keys):
@@ -198,7 +214,7 @@ def parse_query_type(query_str, equivalent_keys):
         join_cond)
 
     if key_conditions:
-        return QueryType.SelectionOnJoinKey, tables_all, join_cond, non_key_conditions
+        return QueryType.SelectionOnJoinKey, tables_all, join_cond, non_key_conditions, tbl_and_join_key_dict, join_key_in_each_table
 
     # currently, no selection on the join key
     # assert (len(key_conditions) == 0)
@@ -209,12 +225,12 @@ def parse_query_type(query_str, equivalent_keys):
             if len(tables_all) == 2:
                 return QueryType.TwoTableNoSelection, tables_all, join_cond, non_key_conditions
             else:
-                return QueryType.MultiTableSingleJoinKeyNoSelection, tables_all, join_cond, non_key_conditions
+                return QueryType.MultiTableSingleJoinKeyNoSelection, tables_all, join_cond, non_key_conditions, tbl_and_join_key_dict, join_key_in_each_table
         else:  # exist table with two or more join keys
             logger.warning("not implemented yet")
             return
     else:
-        return QueryType.TwoTableRightSelection, tables_all, join_cond, non_key_conditions
+        return QueryType.TwoTableRightSelection, tables_all, join_cond, non_key_conditions, tbl_and_join_key_dict, join_key_in_each_table
 
 
 def get_tbl_and_join_key_dict(join_cond):
@@ -222,7 +238,7 @@ def get_tbl_and_join_key_dict(join_cond):
     join_table_and_keys = [c.split("=")
                            for c in join_cond]  # [i.split(".") for i in
     tbl_and_join_key_dict = {}
-    logger.info("join_table_and_keys %s", join_table_and_keys)
+    # logger.info("join_table_and_keys %s", join_table_and_keys)
 
     # if len(join_table_and_keys) == 1:  # simple 2 table join
     #     for i in join_table_and_keys[0]:
@@ -237,13 +253,15 @@ def get_tbl_and_join_key_dict(join_cond):
                 tbl_and_join_key_dict[t_name] = set([k_name])
             else:
                 tbl_and_join_key_dict[t_name].add(k_name)
+    for t_name in tbl_and_join_key_dict:
+        tbl_and_join_key_dict[t_name] = list(tbl_and_join_key_dict[t_name])
 
-    logger.info("tbl_and_join_key_dict %s", tbl_and_join_key_dict)
+    # logger.info("tbl_and_join_key_dict %s", tbl_and_join_key_dict)
     # exit()
 
     join_key_in_each_table = {}
     for [i1, i2] in join_table_and_keys:
-        print("join_table_and_keys", join_table_and_keys)
+        # print("join_table_and_keys", join_table_and_keys)
         # for [i1, i2] in cond:
         if i1 not in join_key_in_each_table:
             join_key_in_each_table[i1] = [i2]
@@ -254,15 +272,14 @@ def get_tbl_and_join_key_dict(join_cond):
             join_key_in_each_table[i2] = [i1]
         else:
             join_key_in_each_table[i2].append(i1)
-    logger.info("join_key_in_each_table %s", join_key_in_each_table)
-    # max_key = max(join_key_in_each_table.keys(), key=len(join_key_in_each_table.values()))
-    # max(d.values(), key=len)
-    max_occurence = max([len(val)for val in join_key_in_each_table.values()])
-    max_keys = [k for k in join_key_in_each_table if len(
-        join_key_in_each_table[k]) == max_occurence]
+    # logger.info("join_key_in_each_table %s", join_key_in_each_table)
 
-    print("max_keys", max_keys)
-    print("max_occurence", max_occurence)
+    # max_occurence = max([len(val)for val in join_key_in_each_table.values()])
+    # max_keys = [k for k in join_key_in_each_table if len(
+    #     join_key_in_each_table[k]) == max_occurence]
+
+    # print("max_keys", max_keys)
+    # print("max_occurence", max_occurence)
 
     return tbl_and_join_key_dict, join_key_in_each_table
     # exit()
@@ -283,3 +300,22 @@ def get_bounds(non_keys):
                     0.5, non_keys[non_k][op]+0.5
         bounds[k] = domain
     return bounds
+
+
+def intergrate_1d_multi_table_same_join_key(models: list[Column], grid_size=10000):
+    mins = [m.min for m in models if isinstance(m, Column)]
+    maxs = [m.max for m in models if isinstance(m, Column)]
+    mins = max(mins)-0.5
+    maxs = min(maxs)+0.5
+
+    xs, width = np.linspace(mins, maxs, grid_size, retstep=True)
+    predictions = []
+    for m in models:
+        predictions.append(m.pdf.predict(xs))
+    pred0 = predictions[0]
+    if len(predictions) > 1:
+        for p in predictions[1:]:
+            pred0 = np.multiply(pred0, p)*width
+
+    result = np.sum(pred0)*width
+    return result

@@ -14,13 +14,13 @@ class TestApproximateEngineMethod(unittest.TestCase):
 
     def __init__(self, methodName: str = "runTest") -> None:
         super().__init__(methodName)
-        self.model_name = "model_stats_gaussian_100"
+        self.model_name = "model_stats_gaussian_1000"
     # train needed models
 
     # @classmethod
     # def setUpClass(cls):
     #     # ['biweight', 'box', 'cosine', 'epa', 'exponential', 'gaussian', 'tri', 'tricube', 'triweight']
-    #     arguments = ["--train", "--grid", "100", "--kernel", "gaussian"]
+    #     arguments = ["--train", "--grid", "2000", "--kernel", "gaussian"]
     #     args = parse_args(arguments)
     #     train_stats(args)
 
@@ -56,7 +56,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = ApproximateEngine(model)
         res = engine.query(query)
-        truth = 79851
+        truth = 15900001
         self.assertTrue(q_error(res, truth) < 3)
 
 

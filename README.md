@@ -44,3 +44,9 @@ https://github.com/tommyod/KDEpy
 1. kernel = box or gaussian
 2. coutour plot log
 3. 1d bw selection. lead to negative density. (Interpolate error! select the most appropriate one!) (a) manual bw to 500. (b), granularity to 2\*\*12. how to auto decide it?
+
+# shortcuts
+
+```
+docker run -p 5432:5432 -d ceb1
+```
