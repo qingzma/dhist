@@ -145,10 +145,11 @@ class Column2d:
                 kde.plot()
         else:
             if use_coefficient:
-                kde = KdePy2DEfficient()
-                kde.fit(df_columns.to_numpy(),
-                        grid_size=args.grid, kernel=args.kernel)
-                self.pdf = kde
+                pass
+                # kde = KdePy2DEfficient()
+                # kde.fit(df_columns.to_numpy(),
+                #         grid_size=args.grid, kernel=args.kernel)
+                # self.pdf = kde
             else:
                 kde = KdePy2D()
                 kde.fit(df_columns.to_numpy(),

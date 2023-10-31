@@ -1,4 +1,5 @@
 import logging
+import sys
 import time
 
 logging.basicConfig(
@@ -14,3 +15,6 @@ logger = logging.getLogger(__name__)
 # disable matplotlib logging
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
 logging.getLogger('numexpr').setLevel(logging.WARNING)
+
+stream_handler = logging.StreamHandler(sys.stdout)
+logger.addHandler(stream_handler)

@@ -9,7 +9,7 @@ from joins.join_graph import get_join_hyper_graph
 from joins.parser import parse_query_simple
 from joins.schema_base import identify_conditions, identify_key_values
 from joins.stats.schema import get_stats_relevant_attributes
-from joins.table import Column, TableContainer
+from joins.table import Column, Column2d, TableContainer
 
 
 class QueryType(Enum):
@@ -38,6 +38,10 @@ class ApproximateEngine:
         logger.info("QUERY [%s]", query_str)
         tables_all, table_query, join_cond, join_keys = parse_query_simple(
             query_str)
+        logger.info("tables_all %s", tables_all)
+        logger.info("table_query %s", table_query)
+        logger.info("join_cond %s", join_cond)
+        logger.info("join_keys %s", join_keys)
         conditions = generate_push_down_conditions(
             tables_all, table_query, join_cond, join_keys)
 
@@ -339,8 +343,13 @@ def selectivity_array_single_column(column, x_grid, grid_width):
 
 def selectivity_array_two_columns(column, key_grid, non_key_grid, key_grid_width, non_key_grid_width):
     grid = column.pdf.predict_grid(
-        key_grid, non_key_grid)*non_key_grid_width.reshape(len(key_grid), len(non_key_grid))
-    return np.sum(grid, axis=0)*key_grid_width
+        key_grid, non_key_grid)
+    # print(grid)
+    # print(len(grid), len(grid[0]))
+    gg = grid*non_key_grid_width  # .reshape(len(key_grid), len(non_key_grid))
+    pred = np.sum(gg, axis=1)*key_grid_width
+    # print("pred shape is ", len(pred))
+    return pred
 
 
 def selectivity_grid_two_join_key(column, key1_grid, key2_grid, key1_grid_width, key2_grid_width):
@@ -389,7 +398,42 @@ class SingleTablePushedDownCondition:
 
 
 def generate_push_down_conditions(tables_all, table_query, join_cond, join_keys):
+    logger.info("tables_all %s", tables_all)
+    logger.info("table_query %s", table_query)
+    logger.info("join_cond %s", join_cond)
+    logger.info("join_keys %s", join_keys)
     conditions = {}
+    if len(tables_all) == 1:
+        to_join = {}
+        default_primary_key = ["Id"]
+        tbl = list(tables_all.values())[0]
+        if table_query and tbl in table_query:
+            # push down single table condition
+            single_table_conditions = []
+            for non_key in table_query[tbl]:
+                condition = [-np.Infinity, np.Infinity]
+                for op in table_query[tbl][non_key]:
+                    val = table_query[tbl][non_key][op]
+                    if '<=' in op or '<' in op:
+                        condition[1] = val
+                    elif '>=' in op or '>' in op:
+                        condition[0] = val
+                    elif '==' in op or '=' in op:
+                        condition = [val-0.5, val+0.5]
+                    else:
+                        logger.error("unexpected operation")
+
+                con = SingleTablePushedDownCondition(
+                    tbl, default_primary_key, non_key, condition, to_join, None)
+                single_table_conditions.append(con)
+        else:
+            single_table_conditions = []
+            con = SingleTablePushedDownCondition(
+                tbl, default_primary_key, None, None, to_join, None)
+            single_table_conditions.append(con)
+        conditions[tbl] = single_table_conditions
+        return conditions
+
     for tbl in join_keys:
         # print(tbl)
         # print(join_keys[tbl])
@@ -443,8 +487,9 @@ def process_push_down_conditions(models, conditions):
     for tbl in conditions:
         predictions_within_table = []
         for condition in conditions[tbl]:
-            predictions_within_table.append(
-                process_push_down_condition(models, condition))
+            pred_p = process_push_down_condition(models, condition)
+            assert (pred_p is not None)
+            predictions_within_table.append(pred_p)
         p = merge_single_table_predictions(
             conditions, predictions_within_table)
         ps[tbl] = p
@@ -452,10 +497,32 @@ def process_push_down_conditions(models, conditions):
     return pred
 
 
-def process_push_down_condition(models: dict[str, TableContainer], condition: SingleTablePushedDownCondition):
+def process_push_down_condition(models: dict[str, TableContainer], condition: SingleTablePushedDownCondition, grid_size_x=100, grid_size_y=200):
     logger.debug("processing condition %s", condition)
+    assert (len(condition.join_keys) == 1)
+    jk = condition.join_keys[0].split(".")[1]
+    if condition.join_keys and condition.non_key:
+        n_key = condition.non_key.split(".")[1]
+        # logger.info("pdfs %s",
+        #             models[condition.tbl].pdfs.keys())
+        # logger.info("correlations %s",
+        #             models[condition.tbl].correlations[jk][n_key])
+        model: Column2d = models[condition.tbl].correlations[jk][n_key]
+        # logger.info("min %s",
+        #             model.min)
+        jk_domain = [model.min[0], model.max[0]]
+        nk_domain_data = [model.min[1], model.max[1]]
+        nk_domain_query = condition.non_key_condition
+        nk_domain = merge_domain(nk_domain_data, nk_domain_query)
+        grid_x, width_x = np.linspace(*jk_domain, grid_size_x, retstep=True)
+        grid_y, width_y = np.linspace(*nk_domain, grid_size_y, retstep=True)
+        # pred = model.pdf.predict_grid(grid_x, grid_y)
+        pred = selectivity_array_two_columns(
+            model, grid_x, grid_y, width_x, width_y)
+        # logger.info("pred is %s", pred)
+        return pred
 
-    return [1.0, 2.0]
+    return
 
 
 def merge_single_table_predictions(conditions, predictions_within_table):
@@ -464,6 +531,20 @@ def merge_single_table_predictions(conditions, predictions_within_table):
 
 def merge_predictions(ps, conditions):
     return 1.0
+
+
+def merge_domain(l1, l2):
+    # if l2[0] > l1[0]:
+    #     l1[0] = l2[0]
+    # if l2[1] < l1[1]:
+    #     l1[1] = l2[1]
+    return [max(l1[0], l2[0]), min(l1[1], l2[1])]
+
+
+class Domain:
+    def __init__(self, mins=-np.Infinity, maxs=np.Infinity) -> None:
+        self.min = mins
+        self.max = maxs
 
 
 if __name__ == '__main__':

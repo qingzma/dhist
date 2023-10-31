@@ -16,6 +16,56 @@ from joins.tools import q_error
 
 
 class TestApproximateEngineMethodUniteTest(unittest.TestCase):
+    def test_single_table_query(self):
+        query_str = "SELECT COUNT(*) FROM badges as b"
+        tables_all, table_query, join_cond, join_keys = parse_query_simple(
+            query_str)
+        conditions = generate_push_down_conditions(
+            tables_all, table_query, join_cond, join_keys)
+        # logger.info("condition is %s", conditions)
+        self.assertEqual(len(conditions), 1)
+        self.assertEqual(conditions["badges"][0].join_keys, ["Id"])
+        self.assertIsNone(conditions['badges']
+                          [0].non_key)
+        self.assertIsNone(conditions['badges']
+                          [0].non_key_condition)
+        self.assertDictEqual(conditions['badges']
+                             [0].to_join, {})
+
+    def test_single_table_query1(self):
+        query_str = "SELECT COUNT(*) FROM badges as b where b.col <= 20"
+        tables_all, table_query, join_cond, join_keys = parse_query_simple(
+            query_str)
+        conditions = generate_push_down_conditions(
+            tables_all, table_query, join_cond, join_keys)
+        logger.info("condition is %s", conditions)
+        self.assertEqual(len(conditions), 1)
+        self.assertEqual(conditions["badges"][0].join_keys, ["Id"])
+        self.assertEqual(conditions['badges']
+                         [0].non_key, "badges.col")
+        self.assertEqual(conditions['badges']
+                         [0].non_key_condition, [-np.Infinity, 20])
+        self.assertDictEqual(conditions['badges']
+                             [0].to_join, {})
+
+    def test_single_table_query2(self):
+        query_str = "SELECT COUNT(*) FROM badges as b where b.col <= 20 AND b.col2 = 1"
+        tables_all, table_query, join_cond, join_keys = parse_query_simple(
+            query_str)
+        conditions = generate_push_down_conditions(
+            tables_all, table_query, join_cond, join_keys)
+        # logger.info("condition is %s", conditions)
+        self.assertEqual(len(conditions["badges"]), 2)
+        self.assertEqual(conditions["badges"][0].join_keys, ["Id"])
+        self.assertEqual(conditions['badges']
+                         [0].non_key, "badges.col")
+        self.assertEqual(conditions['badges']
+                         [0].non_key_condition, [-np.Infinity, 20])
+        self.assertEqual(conditions['badges']
+                         [1].non_key_condition, [0.5, 1.5])
+        self.assertDictEqual(conditions['badges']
+                             [0].to_join, {})
+
     def test_multiple_condition_query(self):
         query_str = "SELECT COUNT(*) FROM badges as b, comments as c, users as u WHERE c.UserId = u.Id AND b.UserId = u.Id AND b.Date<='2014-09-11 14:33:06'::timestamp AND c.Score>=0 AND c.Score<=10"
         tables_all, table_query, join_cond, join_keys = parse_query_simple(
@@ -26,8 +76,8 @@ class TestApproximateEngineMethodUniteTest(unittest.TestCase):
         self.assertEqual(len(conditions['comments']), 1)
         self.assertEqual(conditions['comments']
                          [0].join_keys, ["comments.UserId"])
-        self.assertEqual(conditions['comments']
-                         [0].join_keys, ["comments.UserId"])
+        # self.assertEqual(conditions['comments']
+        #                  [0].join_keys, ["comments.UserId"])
         self.assertEqual(conditions['comments']
                          [0].to_join, {'users': ['Id']})
         self.assertEqual(conditions['comments']
@@ -81,3 +131,4 @@ class TestApproximateEngineMethodUniteTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+    # TestApproximateEngineMethodUniteTest().test_single_table_query()
