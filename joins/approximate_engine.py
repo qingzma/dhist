@@ -45,7 +45,7 @@ class ApproximateEngine:
         conditions = generate_push_down_conditions(
             tables_all, table_query, join_cond, join_keys)
 
-        pred = process_push_down_conditions(self.models, conditions)
+        pred = process_push_down_conditions(self.models, conditions, join_cond)
 
         return pred
 
@@ -481,7 +481,7 @@ def generate_push_down_conditions(tables_all, table_query, join_cond, join_keys)
     return conditions
 
 
-def process_push_down_conditions(models, conditions):
+def process_push_down_conditions(models, conditions, join_cond):
     logger.info("conditions: %s", conditions)
     ps = {}
     for tbl in conditions:
@@ -493,51 +493,73 @@ def process_push_down_conditions(models, conditions):
         p = merge_single_table_predictions(
             conditions, predictions_within_table)
         ps[tbl] = p
-    pred = merge_predictions(ps, conditions)
+    pred = merge_predictions(ps, conditions, join_cond)
     return pred
 
 
-def process_push_down_condition(models: dict[str, TableContainer], condition: SingleTablePushedDownCondition, grid_size_x=100, grid_size_y=200):
+def process_push_down_condition(models: dict[str, TableContainer], condition: SingleTablePushedDownCondition, grid_size_x_2d=100, grid_size_y_2d=200, grid_size_1d=1000):
     logger.debug("processing condition %s", condition)
     assert (len(condition.join_keys) == 1)
     jk = condition.join_keys[0].split(".")[1]
+
+    # SingleTablePushedDownCondition[comments]--join_keys[comments.UserId]--non_key[comments.Score]--condition[0, 10]--to_join[{'users': ['Id']}]]
     if condition.join_keys and condition.non_key:
         n_key = condition.non_key.split(".")[1]
-        # logger.info("pdfs %s",
-        #             models[condition.tbl].pdfs.keys())
-        # logger.info("correlations %s",
-        #             models[condition.tbl].correlations[jk][n_key])
         model: Column2d = models[condition.tbl].correlations[jk][n_key]
-        # logger.info("min %s",
-        #             model.min)
+
         jk_domain = [model.min[0], model.max[0]]
         nk_domain_data = [model.min[1], model.max[1]]
         nk_domain_query = condition.non_key_condition
         nk_domain = merge_domain(nk_domain_data, nk_domain_query)
-        grid_x, width_x = np.linspace(*jk_domain, grid_size_x, retstep=True)
-        grid_y, width_y = np.linspace(*nk_domain, grid_size_y, retstep=True)
-        # pred = model.pdf.predict_grid(grid_x, grid_y)
+        grid_x, width_x = np.linspace(*jk_domain, grid_size_x_2d, retstep=True)
+        grid_y, width_y = np.linspace(*nk_domain, grid_size_y_2d, retstep=True)
+
         pred = selectivity_array_two_columns(
             model, grid_x, grid_y, width_x, width_y)
-        # logger.info("pred is %s", pred)
+
         return pred
 
+    # SingleTablePushedDownCondition[users]--join_keys[users.Id]--non_key[None]--condition[None, None]--to_join[{'comments': ['UserId'], 'badges': ['UserId']}]]
+    if condition.join_keys and condition.non_key is None:
+        model: Column2d = models[condition.tbl].pdfs[jk]
+        jk_domain = [model.min, model.max]
+        grid_x, width_x = np.linspace(*jk_domain, grid_size_1d, retstep=True)
+        pred = selectivity_array_single_column(model, grid_x, width_x)
+        return pred
     return
 
 
 def merge_single_table_predictions(conditions, predictions_within_table):
+    logger.info("in merge table prediction")
+    logger.info("len is %s", len(predictions_within_table))
+    if len(predictions_within_table) == 1:
+        return predictions_within_table
+
+    logger.warning("this merge method is not implemented yet.")
+
     return [1.0, 2.0]
 
 
-def merge_predictions(ps, conditions):
-    return 1.0
+def merge_predictions(ps, conditions, join_cond):
+    pred = None
+    join_cond_copy = join_cond.copy()
+    logger.info("in merge_predictions")
+    logger.info("len is %s", len(ps))
+    while len(join_cond_copy) > 0:
+        join_cond = join_cond_copy.pop()
+        tk1, tk2 = join_cond.replace(" ", "").split("=")
+        t1, k1 = tk1.split(".")
+        t2, k2 = tk2.split(".")
+        logger.info("t1, k1, %s,%s", t1, k1)
+        if pred is None:
+            pred = ps[t1]
+        else:
+            pred = combine_selectivity_array(ps[t1], pred)
+    pred = np.sum(pred)
+    return pred
 
 
 def merge_domain(l1, l2):
-    # if l2[0] > l1[0]:
-    #     l1[0] = l2[0]
-    # if l2[1] < l1[1]:
-    #     l1[1] = l2[1]
     return [max(l1[0], l2[0]), min(l1[1], l2[1])]
 
 
