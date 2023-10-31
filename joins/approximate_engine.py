@@ -46,7 +46,7 @@ class ApproximateEngine:
             tables_all, table_query, join_cond, join_keys)
 
         join_keys_lists, join_keys_domain = calculate_push_down_join_keys_domain(
-            conditions, join_cond, self.models)
+            conditions, join_cond, self.models, tables_all)
 
         n = get_cartesian_cardinality(self.counters, tables_all)
         pred = process_push_down_conditions(
@@ -597,10 +597,12 @@ def merge_predictions(ps, conditions, join_cond, join_keys_lists, join_keys_doma
     return pred
 
 
-def calculate_push_down_join_keys_domain(conditions, join_cond, models: dict[str, TableContainer]):
+def calculate_push_down_join_keys_domain(conditions, join_cond, models: dict[str, TableContainer], tabls_all):
     # note, selection on join key is not supported yet.
-
-    assert (join_cond is not None)
+    if join_cond is None:
+        # tbl = list(tabls_all.values())[0]
+        return None, None
+    # assert (join_cond is not None)
     # if join_cond is None:
     #     k = list(ps.keys())[0]
     #     return np.sum(ps[k])

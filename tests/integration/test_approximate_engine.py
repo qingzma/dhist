@@ -35,20 +35,20 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #         if "100" in file:
     #             os.remove("models/"+file)
 
-    # def test_single_table_no_selection(self):
-    #     query = "SELECT COUNT(*) FROM badges as b"
-    #     with open("models/"+self.model_name+".pkl", 'rb') as f:
-    #         model = pickle.load(f)
-    #     engine = ApproximateEngine(model)
-    #     t1 = time.time()
-    #     res = engine.query_with_pushed_down(
-    #         query) if self.use_pushed_down else engine.query(query)
-    #     t2 = time.time()
-    #     truth = 79851
-    #     logger.info("result %.6E", res)
-    #     logger.info("truth %.6E", truth)
-    #     logger.info("time cost is %.5f s.", t2-t1)
-    #     self.assertTrue(q_error(res, truth) < 1.01)
+    def test_single_table_no_selection(self):
+        query = "SELECT COUNT(*) FROM badges as b"
+        with open("models/"+self.model_name+".pkl", 'rb') as f:
+            model = pickle.load(f)
+        engine = ApproximateEngine(model)
+        t1 = time.time()
+        res = engine.query_with_pushed_down(
+            query) if self.use_pushed_down else engine.query(query)
+        t2 = time.time()
+        truth = 79851
+        logger.info("result %.6E", res)
+        logger.info("truth %.6E", truth)
+        logger.info("time cost is %.5f s.", t2-t1)
+        self.assertTrue(q_error(res, truth) < 1.01)
 
     def test_simple_query(self):
         query = "SELECT COUNT(*) FROM votes as v, posts as p WHERE p.Id = v.PostId"
