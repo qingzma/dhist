@@ -503,7 +503,7 @@ def process_push_down_conditions(models, conditions, join_cond, join_keys_lists,
 
         # get grid width for this single table
         p = merge_single_table_predictions(
-            conditions, predictions_within_table)
+            conditions, predictions_within_table,)
         ps[tbl] = p
     pred = merge_predictions(ps, conditions, join_cond,
                              join_keys_lists, join_keys_domain, grid_size_1d)
@@ -520,11 +520,26 @@ def process_push_down_condition(models: dict[str, TableContainer], condition: Si
         return 1
 
     # need another single talbe case
+    # SingleTablePushedDownCondition[posts]--join_keys[posts.Id]--non_key[posts.AnswerCount]--condition[0, 4]--to_join[{}]]
+    if not condition.to_join:
+        n_key = condition.non_key.split(".")[1]
+        model: Column2d = models[condition.tbl].correlations[jk][n_key]
+        jk_domain = [model.min[0], model.max[0]]
+        nk_domain_data = [model.min[1], model.max[1]]
+        nk_domain_query = condition.non_key_condition
+        nk_domain = merge_domain(nk_domain_data, nk_domain_query)
+        grid_x, width_x = np.linspace(*jk_domain, grid_size_x_2d, retstep=True)
+        grid_y, width_y = np.linspace(*nk_domain, grid_size_y_2d, retstep=True)
+
+        pred = selectivity_array_two_columns(
+            model, grid_x, grid_y, width_x, width_y)
+
+        return pred
 
     idx = get_idx_in_lists(
         condition.join_keys[0], join_keys_lists)  # TODO, here only one join key is supported
-    # logger.info("key is %s", condition.join_keys[0])
-    # logger.info("join_keys_lists %s", join_keys_lists)
+    logger.info("key is %s", condition.join_keys[0])
+    logger.info("join_keys_lists %s", join_keys_lists)
     # exit()
     assert (idx >= 0)
     jk_domain = join_keys_domain[idx]
@@ -561,13 +576,19 @@ def merge_single_table_predictions(conditions, predictions_within_table):
     if len(predictions_within_table) == 1:
         return predictions_within_table
 
+    pred = predictions_within_table[0]
+
+    for pred_i in predictions_within_table[1:]:
+        pred = np.multiply(pred_i, pred)
+    return pred
+
     logger.warning("this merge method is not implemented yet.")
 
     return
 
 
 def merge_predictions(ps, conditions, join_cond, join_keys_lists, join_keys_domain, grid_size_1d):
-    if join_cond is None:
+    if not join_cond:
         k = list(ps.keys())[0]
         return np.sum(ps[k])
     pred = None
@@ -588,7 +609,10 @@ def merge_predictions(ps, conditions, join_cond, join_keys_lists, join_keys_doma
             logger.info('--sums is %s', np.sum(pred))
         else:
             pred = combine_selectivity_array(ps[t1], pred)
-
+    logger.info("join_keys_lists %s", join_keys_lists)
+    # if not join_keys_lists:
+    #     # single table
+    #     return
     idx = get_idx_in_lists(tk1, join_keys_lists)
     assert (idx >= 0)
     domain = join_keys_domain[idx]
