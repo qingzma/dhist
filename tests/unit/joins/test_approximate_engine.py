@@ -5,125 +5,78 @@ import unittest
 
 import numpy as np
 
-from joins.approximate_engine import ApproximateEngine
+from joins.approximate_engine import (array_multiply_grid,
+                                      combine_selectivity_grid_with_two_arrays,
+                                      generate_push_down_conditions,
+                                      grid_multiply_array, parse_query_simple)
 from joins.args import parse_args
 from joins.base_logger import logger
 from joins.stats.train_stats import train_stats
 from joins.tools import q_error
 
 
-class TestApproximateEngineMethod(unittest.TestCase):
+class TestApproximateEngineMethodUniteTest(unittest.TestCase):
+    def test_multiple_condition_query(self):
+        query_str = "SELECT COUNT(*) FROM badges as b, comments as c, users as u WHERE c.UserId = u.Id AND b.UserId = u.Id AND b.Date<='2014-09-11 14:33:06'::timestamp AND c.Score>=0 AND c.Score<=10"
+        tables_all, table_query, join_cond, join_keys = parse_query_simple(
+            query_str)
+        conditions = generate_push_down_conditions(
+            tables_all, table_query, join_cond, join_keys)
+        self.assertEqual(len(conditions), 3)
+        self.assertEqual(len(conditions['comments']), 1)
+        self.assertEqual(conditions['comments']
+                         [0].join_keys, ["comments.UserId"])
+        self.assertEqual(conditions['comments']
+                         [0].join_keys, ["comments.UserId"])
+        self.assertEqual(conditions['comments']
+                         [0].to_join, {'users': ['Id']})
+        self.assertEqual(conditions['comments']
+                         [0].non_key, "comments.Score")
 
-    def __init__(self, methodName: str = "runTest") -> None:
-        super().__init__(methodName)
-        self.model_name = "model_stats_gaussian_100"
-        self.use_pushed_down = True
-    # train needed models
+    def test_multiple_condition_query1(self):
+        query_str = "SELECT COUNT(*) FROM badges as b, comments as c, users as u " + \
+            "WHERE c.UserId = u.Id AND b.UserId = u.Id AND b.Date<='2014-09-11 14:33:06'::timestamp " +\
+            "AND c.Score>=0 AND c.Score<=10 AND c.hh<201"
+        tables_all, table_query, join_cond, join_keys = parse_query_simple(
+            query_str)
+        conditions = generate_push_down_conditions(
+            tables_all, table_query, join_cond, join_keys)
+        # print("conditions", conditions)
+        self.assertEqual(len(conditions), 3)
+        self.assertEqual(len(conditions['comments']), 2)
+        self.assertEqual(conditions['comments']
+                         [0].join_keys, ["comments.UserId"])
+        self.assertEqual(conditions['comments']
+                         [0].join_keys, ["comments.UserId"])
+        self.assertEqual(conditions['comments']
+                         [0].to_join, {'users': ['Id']})
+        self.assertEqual(conditions['comments']
+                         [0].non_key, "comments.Score")
+        self.assertEqual(conditions['comments']
+                         [0].non_key_condition, [0, 10])
+        self.assertEqual(conditions['comments']
+                         [1].non_key_condition, [-np.Infinity, 201])
 
-    # @classmethod
-    # def setUpClass(cls):
-    #     # ['biweight', 'box', 'cosine', 'epa', 'exponential', 'gaussian', 'tri', 'tricube', 'triweight']
-    #     arguments = ["--train", "--grid", "101", "--kernel", "gaussian"]
-    #     args = parse_args(arguments)
-    #     train_stats(args)
+    def test_combine_selectivity_grid_with_two_arrays(self):
+        b = np.array([
+            [1, 2],
+            [3, 4],
+            [5, 6],])
+        a = np.array([1, 2])
+        c = np.array([1, 2, 3])
+        res = combine_selectivity_grid_with_two_arrays(a, b, c)
+        minused = res - np.array([[1,  4],
+                                  [6, 16],
+                                  [15, 36]])
+        self.assertTrue(minused.all() == 0)
 
-    # # remove trained models for test purposes
-    # @classmethod
-    # def tearDownClass(cls):
-    #     for file in os.listdir("models"):
-    #         print("files: " + file)
-    #         if "100" in file:
-    #             os.remove("models/"+file)
+        res = array_multiply_grid(a, b)
+        minused = res - np.array([9,  24])
+        self.assertTrue(minused.all() == 0)
 
-    # def test_single_table_no_selection(self):
-    #     query = "SELECT COUNT(*) FROM badges as b"
-    #     with open("models/"+self.model_name+".pkl", 'rb') as f:
-    #         model = pickle.load(f)
-    #     engine = ApproximateEngine(model)
-    #     t1 = time.time()
-    #     res = engine.query_with_pushed_down(
-    #         query) if self.use_pushed_down else engine.query(query)
-    #     t2 = time.time()
-    #     truth = 79851
-    #     logger.info("result %.6E", res)
-    #     logger.info("truth %.6E", truth)
-    #     logger.info("time cost is %.5f s.", t2-t1)
-    #     self.assertTrue(q_error(res, truth) < 1.01)
-
-    # def test_simple_query(self):
-    #     query = "SELECT COUNT(*) FROM votes as v, posts as p WHERE p.Id = v.PostId"
-    #     with open("models/"+self.model_name+".pkl", 'rb') as f:
-    #         model = pickle.load(f)
-    #     engine = ApproximateEngine(model)
-    #     t1 = time.time()
-    #     res = engine.query_with_pushed_down(
-    #         query) if self.use_pushed_down else engine.query(query)
-    #     t2 = time.time()
-    #     truth = 328064
-    #     logger.info("result %.6E", res)
-    #     logger.info("truth %.6E", truth)
-    #     logger.info("time cost is %.5f s.", t2-t1)
-    #     self.assertTrue(q_error(res, truth) < 2)
-
-    # def test_one_selection_query(self):
-    #     query = "SELECT COUNT(*) FROM users as u, badges as b WHERE b.UserId= u.Id AND u.UpVotes>=0"
-    #     with open("models/"+self.model_name+".pkl", 'rb') as f:
-    #         model = pickle.load(f)
-    #     engine = ApproximateEngine(model)
-    #     t1 = time.time()
-    #     res = engine.query_with_pushed_down(
-    #         query) if self.use_pushed_down else engine.query(query)
-    #     t2 = time.time()
-    #     truth = 79851
-    #     logger.info("result %.6E", res)
-    #     logger.info("truth %.6E", truth)
-    #     logger.info("time cost is %.5f s.", t2-t1)
-    #     self.assertTrue(q_error(res, truth) < 3)
-
-    # def test_multiple_table_same_join_column(self):
-    #     query = "SELECT COUNT(*) FROM badges as b, comments as c, users as u WHERE c.UserId = u.Id AND b.UserId = u.Id"
-    #     with open("models/"+self.model_name+".pkl", 'rb') as f:
-    #         model = pickle.load(f)
-    #     engine = ApproximateEngine(model)
-    #     t1 = time.time()
-    #     res = engine.query_with_pushed_down(
-    #         query) if self.use_pushed_down else engine.query(query)
-    #     t2 = time.time()
-    #     truth = 15900001
-    #     logger.info("result %.6E", res)
-    #     logger.info("truth %.6E", truth)
-    #     logger.info("time cost is %.5f s.", t2-t1)
-    #     self.assertTrue(q_error(res, truth) < 3)
-
-    # def test_single(self):
-    #     query = "SELECT COUNT(*) FROM posts as p WHERE p.AnswerCount>=0 AND p.AnswerCount<=4 AND p.CommentCount>=0 AND p.CommentCount<=17"
-    #     with open("models/"+self.model_name+".pkl", 'rb') as f:
-    #         model = pickle.load(f)
-    #     engine = ApproximateEngine(model)
-    #     t1 = time.time()
-    #     res = engine.query_with_pushed_down(
-    #         query) if self.use_pushed_down else engine.query(query)
-    #     t2 = time.time()
-    #     truth = 42172
-    #     logger.info("result %.6E", res)
-    #     logger.info("truth %.6E", truth)
-    #     logger.info("time cost is %.5f s.", t2-t1)
-    #     self.assertTrue(q_error(res, truth) < 3)
-
-    def test_multiple(self):
-        query = "SELECT COUNT(*) FROM badges as b, comments as c, users as u WHERE c.UserId = u.Id AND b.UserId = u.Id AND b.Date<='2014-09-11 14:33:06'::timestamp AND c.Score>=0 AND c.Score<=10"
-        with open("models/"+self.model_name+".pkl", 'rb') as f:
-            model = pickle.load(f)
-        engine = ApproximateEngine(model)
-        t1 = time.time()
-        res = engine.query_with_pushed_down(
-            query) if self.use_pushed_down else engine.query(query)
-        t2 = time.time()
-        truth = 15852962
-        logger.info("result %.6E", res)
-        logger.info("truth %.6E", truth)
-        logger.info("time cost is %.5f s.", t2-t1)
-        self.assertTrue(q_error(res, truth) < 3)
+        res = grid_multiply_array(b, c)
+        minused = res - np.array([22, 28])
+        self.assertTrue(minused.all() == 0)
 
 
 if __name__ == '__main__':

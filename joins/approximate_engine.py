@@ -38,14 +38,12 @@ class ApproximateEngine:
         logger.info("QUERY [%s]", query_str)
         tables_all, table_query, join_cond, join_keys = parse_query_simple(
             query_str)
-        logger.info("tables_all: %s", tables_all)
-        logger.info("table_query: %s", table_query)
-        logger.info("join_cond: %s", join_cond)
-        logger.info("join_keys: %s", join_keys)
         conditions = generate_push_down_conditions(
             tables_all, table_query, join_cond, join_keys)
 
-        logger.info("conditions: %s", conditions)
+        pred = process_push_down_conditions(self.models, conditions)
+
+        return pred
 
     def query(self, query_str):
         logger.info("QUERY [%s]", query_str)
@@ -382,7 +380,9 @@ class SingleTablePushedDownCondition:
         self.to_join = to_join
 
     def __str__(self) -> str:
-        return f"SingleTablePushedDownCondition[{self.tbl}]--join_keys[{','.join(self.join_keys)}]--non_key[{self.non_key}]--condition[{self.non_key_condition[0]}, {self.non_key_condition[1]}]"
+        join_str = str(self.to_join)
+
+        return f"SingleTablePushedDownCondition[{self.tbl}]--join_keys[{','.join(self.join_keys)}]--non_key[{self.non_key}]--condition[{self.non_key_condition[0] if self.non_key_condition else None}, {self.non_key_condition[1] if self.non_key_condition else None}]--to_join[{join_str}]]"
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -391,10 +391,26 @@ class SingleTablePushedDownCondition:
 def generate_push_down_conditions(tables_all, table_query, join_cond, join_keys):
     conditions = {}
     for tbl in join_keys:
-        print(tbl)
-        print(join_keys[tbl])
-        join_keyss = join_keys[tbl]
+        # print(tbl)
+        # print(join_keys[tbl])
+        join_keyss = list(join_keys[tbl])
+        # print("join_keyss", join_keyss)
+        # prepare to_join condition
+        to_join = {}
+        for jk in join_keyss:
+            # logger.info("jk is %s", jk)
+            for join_condition in join_cond:
+                if jk in join_condition:
+                    to_j = join_condition.replace(
+                        jk, "").replace("=", "").replace(" ", "")
+                    # logger.info("to_j,%s", to_j)
+                    to_tbl, to_k = to_j.split(".")
+                    if to_tbl not in to_join:
+                        to_join[to_tbl] = []
+                    to_join[to_tbl].append(to_k)
+
         if tbl in table_query:
+            # push down single table condition
             single_table_conditions = []
             for non_key in table_query[tbl]:
                 condition = [-np.Infinity, np.Infinity]
@@ -409,21 +425,45 @@ def generate_push_down_conditions(tables_all, table_query, join_cond, join_keys)
                     else:
                         logger.error("unexpected operation")
 
-                to_join = {}
-                k = tbl+'.'+non_key
-                for join_condition in join_cond:
-                    if k in join_condition:
-                        to_j = join_condition.replace(
-                            k, "").replace("=", "").replace(" ", "")
-                        to_tbl, to_k = to_j.split(".")
-                        if to_tbl not in to_join:
-                            to_join[to_join] = []
-                        to_join[to_join].append(to_k)
                 con = SingleTablePushedDownCondition(
                     tbl, join_keyss, non_key, condition, to_join, None)
                 single_table_conditions.append(con)
+        else:
+            single_table_conditions = []
+            con = SingleTablePushedDownCondition(
+                tbl, join_keyss, None, None, to_join, None)
+            single_table_conditions.append(con)
         conditions[tbl] = single_table_conditions
     return conditions
+
+
+def process_push_down_conditions(models, conditions):
+    logger.info("conditions: %s", conditions)
+    ps = {}
+    for tbl in conditions:
+        predictions_within_table = []
+        for condition in conditions[tbl]:
+            predictions_within_table.append(
+                process_push_down_condition(models, condition))
+        p = merge_single_table_predictions(
+            conditions, predictions_within_table)
+        ps[tbl] = p
+    pred = merge_predictions(ps, conditions)
+    return pred
+
+
+def process_push_down_condition(models: dict[str, TableContainer], condition: SingleTablePushedDownCondition):
+    logger.debug("processing condition %s", condition)
+
+    return [1.0, 2.0]
+
+
+def merge_single_table_predictions(conditions, predictions_within_table):
+    return [1.0, 2.0]
+
+
+def merge_predictions(ps, conditions):
+    return 1.0
 
 
 if __name__ == '__main__':
