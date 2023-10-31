@@ -490,14 +490,14 @@ def generate_push_down_conditions(tables_all, table_query, join_cond, join_keys)
     return conditions
 
 
-def process_push_down_conditions(models, conditions, join_cond, join_keys_lists, join_keys_domain, grid_size_x_2d=1000, grid_size_y_2d=2000, grid_size_1d=2000):
+def process_push_down_conditions(models, conditions, join_cond, join_keys_lists, join_keys_domain, grid_size_x=2000, grid_size_y=1000):
     logger.info("conditions: %s", conditions)
     ps = {}
     for tbl in conditions:
         predictions_within_table = []
         for condition in conditions[tbl]:
             pred_p = process_push_down_condition(
-                models, condition, grid_size_x_2d, grid_size_y_2d, grid_size_1d, join_keys_lists, join_keys_domain)
+                models, condition, grid_size_x, grid_size_y, join_keys_lists, join_keys_domain)
             assert (pred_p is not None)
             predictions_within_table.append(pred_p)
 
@@ -506,11 +506,11 @@ def process_push_down_conditions(models, conditions, join_cond, join_keys_lists,
             conditions, predictions_within_table,)
         ps[tbl] = p
     pred = merge_predictions(ps, conditions, join_cond,
-                             join_keys_lists, join_keys_domain, grid_size_1d)
+                             join_keys_lists, join_keys_domain, grid_size_x)
     return pred
 
 
-def process_push_down_condition(models: dict[str, TableContainer], condition: SingleTablePushedDownCondition, grid_size_x_2d, grid_size_y_2d, grid_size_1d, join_keys_lists, join_keys_domain):
+def process_push_down_condition(models: dict[str, TableContainer], condition: SingleTablePushedDownCondition, grid_size_x, grid_size_y, join_keys_lists, join_keys_domain):
     logger.debug("processing condition %s", condition)
     assert (len(condition.join_keys) == 1)
     jk = condition.join_keys[0].split(".")[1]
@@ -528,8 +528,8 @@ def process_push_down_condition(models: dict[str, TableContainer], condition: Si
         nk_domain_data = [model.min[1], model.max[1]]
         nk_domain_query = condition.non_key_condition
         nk_domain = merge_domain(nk_domain_data, nk_domain_query)
-        grid_x, width_x = np.linspace(*jk_domain, grid_size_x_2d, retstep=True)
-        grid_y, width_y = np.linspace(*nk_domain, grid_size_y_2d, retstep=True)
+        grid_x, width_x = np.linspace(*jk_domain, grid_size_x, retstep=True)
+        grid_y, width_y = np.linspace(*nk_domain, grid_size_y, retstep=True)
 
         pred = selectivity_array_two_columns(
             model, grid_x, grid_y, width_x, width_y)
@@ -552,8 +552,8 @@ def process_push_down_condition(models: dict[str, TableContainer], condition: Si
         nk_domain_data = [model.min[1], model.max[1]]
         nk_domain_query = condition.non_key_condition
         nk_domain = merge_domain(nk_domain_data, nk_domain_query)
-        grid_x, width_x = np.linspace(*jk_domain, grid_size_x_2d, retstep=True)
-        grid_y, width_y = np.linspace(*nk_domain, grid_size_y_2d, retstep=True)
+        grid_x, width_x = np.linspace(*jk_domain, grid_size_x, retstep=True)
+        grid_y, width_y = np.linspace(*nk_domain, grid_size_y, retstep=True)
 
         pred = selectivity_array_two_columns(
             model, grid_x, grid_y, width_x, width_y)
@@ -564,7 +564,7 @@ def process_push_down_condition(models: dict[str, TableContainer], condition: Si
     if condition.join_keys and condition.non_key is None:
         model: Column2d = models[condition.tbl].pdfs[jk]
         # jk_domain = [model.min, model.max]
-        grid_x, width_x = np.linspace(*jk_domain, grid_size_1d, retstep=True)
+        grid_x, width_x = np.linspace(*jk_domain, grid_size_x, retstep=True)
         pred = selectivity_array_single_column(model, grid_x, width_x)
         return pred
     return
