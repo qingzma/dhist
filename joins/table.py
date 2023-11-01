@@ -130,6 +130,7 @@ class Column2d:
         """
         methods: ["fft", "kde","nflow"]
         """
+        self.size = df_columns.shape[0]
         # use float32 for pytorch compatibility
         df_columns = df_columns.astype('float32')
         logger.debug("fit the 2d pdf...")

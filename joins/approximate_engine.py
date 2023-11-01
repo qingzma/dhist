@@ -33,8 +33,8 @@ class ApproximateEngine:
             models['schema'])
         self.join_keys, self.relevant_keys, self.counters = get_stats_relevant_attributes(
             models['schema'])
-        self.grid_size_x = 1000
-        self.grid_size_y = 1000
+        self.grid_size_x = 200
+        self.grid_size_y = 100
 
     def query_with_pushed_down(self, query_str):
         logger.info("QUERY [%s]", query_str)
@@ -360,7 +360,7 @@ def selectivity_array_two_columns(column, key_grid, non_key_grid, key_grid_width
     grid = column.pdf.predict_grid(
         key_grid, non_key_grid)
     # print(grid)
-    # print(len(grid), len(grid[0]))
+    # print("grid shape is ", len(grid), len(grid[0]))
     gg = grid*non_key_grid_width  # .reshape(len(key_grid), len(non_key_grid))
     pred = np.sum(gg, axis=1)  # *key_grid_width
     # print("pred shape is ", len(pred))
@@ -413,10 +413,10 @@ class SingleTablePushedDownCondition:
 
 
 def generate_push_down_conditions(tables_all, table_query, join_cond, join_keys):
-    logger.info("tables_all %s", tables_all)
-    logger.info("table_query %s", table_query)
-    logger.info("join_cond %s", join_cond)
-    logger.info("join_keys %s", join_keys)
+    # logger.info("tables_all %s", tables_all)
+    # logger.info("table_query %s", table_query)
+    # logger.info("join_cond %s", join_cond)
+    # logger.info("join_keys %s", join_keys)
     conditions = {}
     if len(tables_all) == 1:
         to_join = {}
@@ -672,14 +672,15 @@ def calculate_push_down_join_keys_domain(conditions, join_cond, models: dict[str
     return join_keys, join_keys_domain
 
 
-def process_single_table_query(models: dict[str, TableContainer], conditions: list[SingleTablePushedDownCondition], grid_size_x, grid_size_y):
-    logger.info("conditions: %s", conditions)
-    logger.info("len: %s", len(conditions))
+def process_single_table_query(models: dict[str, TableContainer], conditions: list[SingleTablePushedDownCondition], grid_size_x, grid_size_y, use_column_model=True):
+    # logger.info("conditions: %s", conditions)
+    # logger.info("len: %s", len(conditions))
     assert (len(conditions) == 1)
     tbl = list(conditions.keys())[0]
     conds = conditions[tbl]
-    logger.info("conds: %s", conds)
+    # logger.info("conds: %s", conds)
     if len(conds) == 1:
+
         cond = conds[0]
         # no selection, simple cardinality, return n
         # [SingleTablePushedDownCondition[badges]--join_keys[badges.Id]--non_key[None]--condition[None, None]--to_join[{}]]]
@@ -687,21 +688,84 @@ def process_single_table_query(models: dict[str, TableContainer], conditions: li
             return models[tbl].size
 
         # one selection
-        logger.info("models[tbl].pdfs %s", models[tbl].pdfs.keys())
-        model: Column = models[tbl].pdfs[cond.non_key.split(".")[1]]
-        logger.info("model is %s", model)
-        domain_data = [model.min, model.max]
-        domain_query = cond.non_key_condition
-        domain = merge_domain(domain_data, domain_query)
+        if use_column_model:
+            # logger.info("models[tbl].pdfs %s", models[tbl].pdfs.keys())
+            model: Column = models[tbl].pdfs[cond.non_key.split(".")[1]]
+            # logger.info("model is %s", model)
+            domain_data = [model.min, model.max]
+            domain_query = cond.non_key_condition
+            domain_query[0] = domain_query[0]-0.5
+            domain_query[1] = domain_query[1]+0.5
+            domain = merge_domain(domain_data, domain_query)
 
-        grid_x, width = np.linspace(*domain, grid_size_x, retstep=True)
-        pred = selectivity_array_single_column(model, grid_x, width)
-        return np.sum(pred)*width*model.size
-    elif len(conds) == 2:
-        pass
-    elif len(conds) > 2:
-        pass
+            grid_x, width = np.linspace(*domain, grid_size_x, retstep=True)
+            pred = selectivity_array_single_column(model, grid_x, width)
+            return np.sum(pred)*width*model.size
+        else:
+            model: Column2d = models[tbl].correlations["Id"][cond.non_key.split(".")[
+                1]]
+            jk_domain = [model.min[0]-0.5, model.max[0]+0.5]
+            nk_domain_data = [model.min[1]-0.5, model.max[1]+0.5]
+            nk_domain_query = cond.non_key_condition
+            nk_domain_query[0] = nk_domain_query[0]-0.5
+            nk_domain_query[1] = nk_domain_query[1]+0.5
+            nk_domain = merge_domain(nk_domain_data, nk_domain_query)
+            # logger.info("key domain %s", jk_domain)
+            # logger.info("non_key domain %s", nk_domain)
 
+            grid_x, width_x = np.linspace(
+                *jk_domain, grid_size_x, retstep=True)
+            grid_y, width_y = np.linspace(
+                *nk_domain, grid_size_y, retstep=True)
+            # logger.info("widthx is  %s", width_x)
+            # logger.info("widthy is  %s", width_y)
+
+            pred = selectivity_array_two_columns(
+                model, grid_x, grid_y, width_x, width_y)
+            return np.sum(pred)*width_x*model.size
+
+    elif len(conds) > 1:
+        # tbl = list(conditions.keys())[0]
+        cond0 = conds[0]
+        jk = cond0.join_keys[0].split(".")[1]
+        jk_model = models[tbl].pdfs[jk]
+        jk_domain = [jk_model.min, jk_model.max]
+        # logger.info("x range is %s", jk_domain)
+        grid_x, width_x = np.linspace(
+            *jk_domain, grid_size_x, retstep=True)
+        pred_x = selectivity_array_single_column(jk_model, grid_x, width_x)
+        pred_xy = None
+        for cond in conds:
+            # logger.info("cond is %s", cond)
+            assert (cond.non_key is not None)
+            n_key = cond.non_key.split(".")[1]
+
+            model2d: Column2d = models[tbl].correlations[jk][n_key]
+
+            nk_domain_data = [model2d.min[1], model2d.max[1]]
+            nk_domain_query = cond.non_key_condition
+            nk_domain = merge_domain(nk_domain_data, nk_domain_query)
+
+            grid_y, width_y = np.linspace(
+                *nk_domain, grid_size_y, retstep=True)
+            if pred_xy is None:
+                pred_xy = selectivity_array_two_columns(
+                    model2d, grid_x, grid_y, width_x, width_y)
+                # logger.info("y range is %s", nk_domain)
+                # logger.info("width is  %s", width_x)
+                # logger.info("temp p1 is %s", np.sum(pred_xy)*width_x)
+                pred_xy = np.divide(pred_xy, pred_x)
+                # logger.info("temp p2 is %s", np.sum(pred_xy)*width_x)
+            else:
+                pred = selectivity_array_two_columns(
+                    model2d, grid_x, grid_y, width_x, width_y)
+                # logger.info("temp p3 is %s", np.sum(pred)*width_x)
+                pred = np.divide(pred, pred_x)
+                pred_xy = combine_selectivity_array(pred_xy, pred)
+                # logger.info("final shape is %s", len(pred_xy))
+                # logger.info("final shape is %s", pred_xy[0])
+        pred_xy = combine_selectivity_array(pred_xy, pred_x)
+        return np.sum(pred_xy)*width_x*jk_model.size
     return
 
 

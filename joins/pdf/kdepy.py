@@ -58,17 +58,17 @@ class KdePy2D:
         self.min = None
         self.max = None
 
-    def fit(self, x, grid_size=2**10, kernel="box", auto_grid=True):
+    def fit(self, x, grid_size=2**10, kernel="box", auto_grid=False):
         x_min = np.min(x, axis=0)
         x_max = np.max(x, axis=0)
         # print("x_min", x_min)
         # print("x_max", x_max)
 
-        xx, width_x = np.linspace(
-            x_min[0]-1, x_max[0]+1, grid_size, retstep=True)
-        yy, width_y = np.linspace(
-            x_min[1]-1, x_max[1]+1, grid_size, retstep=True)
         if not auto_grid:
+            xx, width_x = np.linspace(
+                x_min[0]-1, x_max[0]+1, grid_size, retstep=True)
+            yy, width_y = np.linspace(
+                x_min[1]-1, x_max[1]+1, grid_size, retstep=True)
             mesh = np.stack(np.meshgrid(yy, xx), -1).reshape(-1, 2)
             mesh[:, [0, 1]] = mesh[:, [1, 0]]  # Swap indices
             p = FFTKDE(bw=10, kernel=kernel).fit(x)(mesh)
