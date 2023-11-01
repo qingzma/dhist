@@ -728,6 +728,13 @@ def process_single_table_query(models: dict[str, TableContainer], conditions: li
         # tbl = list(conditions.keys())[0]
         cond0 = conds[0]
         jk = cond0.join_keys[0].split(".")[1]
+        # jk = None
+        # if 'Id' not in models[tbl].pdfs.keys():
+        #     for jkk in models[tbl].pdfs.keys():
+        #         if 'Id' in jkk:
+        #             jk = jkk
+        #             break
+        # logger.info("keys is %s", models[tbl].pdfs.keys())
         jk_model = models[tbl].pdfs[jk]
         jk_domain = [jk_model.min, jk_model.max]
         # logger.info("x range is %s", jk_domain)
@@ -736,26 +743,35 @@ def process_single_table_query(models: dict[str, TableContainer], conditions: li
         pred_x = selectivity_array_single_column(jk_model, grid_x, width_x)
         pred_xy = None
         for cond in conds:
-            # logger.info("cond is %s", cond)
+            logger.info("cond is %s", cond)
             assert (cond.non_key is not None)
             n_key = cond.non_key.split(".")[1]
 
+            # logger.info("n_key is %s", models[tbl].correlations[jk])
+            # logger.info("n_key is %s", models[tbl].correlations[jk])
             model2d: Column2d = models[tbl].correlations[jk][n_key]
 
             nk_domain_data = [model2d.min[1], model2d.max[1]]
             nk_domain_query = cond.non_key_condition
+            nk_domain_query[0] = nk_domain_query[0]-0.5
+            nk_domain_query[1] = nk_domain_query[1]+0.5
             nk_domain = merge_domain(nk_domain_data, nk_domain_query)
+            # nk_domain = [-0.5, 0.5]
 
             grid_y, width_y = np.linspace(
                 *nk_domain, grid_size_y, retstep=True)
             if pred_xy is None:
                 pred_xy = selectivity_array_two_columns(
                     model2d, grid_x, grid_y, width_x, width_y)
-                # logger.info("y range is %s", nk_domain)
+                pred_xy = np.divide(pred_xy, pred_x)
+                # logger.info("111max, min and  average are %s, %s, %s ",
+                #             np.max(pred_xy), np.min(pred_xy), np.average(pred_xy))
+                logger.info("y range is %s", nk_domain)
                 # logger.info("width is  %s", width_x)
                 # logger.info("temp p1 is %s", np.sum(pred_xy)*width_x)
                 pred_xy = np.divide(pred_xy, pred_x)
-                # logger.info("temp p2 is %s", np.sum(pred_xy)*width_x)
+                # logger.info("2max, min and  average are %s, %s, %s ",
+                #             np.max(pred_xy), np.min(pred_xy), np.average(pred_xy))
             else:
                 pred = selectivity_array_two_columns(
                     model2d, grid_x, grid_y, width_x, width_y)

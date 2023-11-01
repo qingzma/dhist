@@ -14,7 +14,7 @@ def gen_stats_light_schema(hdf_path):
     schema.add_table(Table('badges',
                            primary_key=["Id"],
                            attributes=['Id', 'UserId', 'Date'],
-                           irrelevant_attributes=['Id'],
+                           irrelevant_attributes=[],  # ['Id'],
                            no_compression=[],
                            csv_file_location=hdf_path.format('badges'),
                            table_size=79851))
@@ -25,7 +25,7 @@ def gen_stats_light_schema(hdf_path):
                            attributes=['Id', 'PostId', 'VoteTypeId',
                                        'CreationDate', 'UserId', 'BountyAmount'],
                            csv_file_location=hdf_path.format('votes'),
-                           irrelevant_attributes=['Id'],
+                           irrelevant_attributes=[],  # ['Id'],
                            no_compression=['VoteTypeId'],
                            table_size=328064))
 
@@ -35,7 +35,7 @@ def gen_stats_light_schema(hdf_path):
                            attributes=['Id', 'PostHistoryTypeId',
                                        'PostId', 'CreationDate', 'UserId'],
                            csv_file_location=hdf_path.format('postHistory'),
-                           irrelevant_attributes=['Id'],
+                           irrelevant_attributes=[],  # ['Id'],
                            no_compression=['PostHistoryTypeId'],
                            table_size=303187))
 
@@ -65,7 +65,7 @@ def gen_stats_light_schema(hdf_path):
                            attributes=['Id', 'PostId', 'Score',
                                        'CreationDate', 'UserId'],
                            csv_file_location=hdf_path.format('comments'),
-                           irrelevant_attributes=["Id"],
+                           irrelevant_attributes=[],  # ["Id"],
                            no_compression=[],
                            table_size=174305))
 
@@ -75,14 +75,14 @@ def gen_stats_light_schema(hdf_path):
                            attributes=['Id', 'CreationDate',
                                        'PostId', 'RelatedPostId', 'LinkTypeId'],
                            csv_file_location=hdf_path.format('postLinks'),
-                           irrelevant_attributes=["Id"],
+                           irrelevant_attributes=[],  # ["Id"],
                            no_compression=[],
                            table_size=11102))
 
     # tags
     schema.add_table(Table('tags', attributes=['Id', 'Count', 'ExcerptPostId'],
                            csv_file_location=hdf_path.format('tags'),
-                           irrelevant_attributes=["Id"],
+                           irrelevant_attributes=[],  # ["Id"],
                            no_compression=[],
                            table_size=1032))
 
