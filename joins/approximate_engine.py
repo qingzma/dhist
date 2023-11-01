@@ -33,8 +33,8 @@ class ApproximateEngine:
             models['schema'])
         self.join_keys, self.relevant_keys, self.counters = get_stats_relevant_attributes(
             models['schema'])
-        self.grid_size_x = 200
-        self.grid_size_y = 100
+        self.grid_size_x = 400
+        self.grid_size_y = 200
 
     def query_with_pushed_down(self, query_str):
         logger.info("QUERY [%s]", query_str)
@@ -769,7 +769,7 @@ def process_single_table_query(models: dict[str, TableContainer], conditions: li
                 logger.info("y range is %s", nk_domain)
                 # logger.info("width is  %s", width_x)
                 # logger.info("temp p1 is %s", np.sum(pred_xy)*width_x)
-                pred_xy = np.divide(pred_xy, pred_x)
+                # pred_xy = np.divide(pred_xy, pred_x)
                 # logger.info("2max, min and  average are %s, %s, %s ",
                 #             np.max(pred_xy), np.min(pred_xy), np.average(pred_xy))
             else:
