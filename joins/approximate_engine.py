@@ -33,6 +33,8 @@ class ApproximateEngine:
             models['schema'])
         self.join_keys, self.relevant_keys, self.counters = get_stats_relevant_attributes(
             models['schema'])
+        self.grid_size_x = 1000
+        self.grid_size_y = 1000
 
     def query_with_pushed_down(self, query_str):
         logger.info("QUERY [%s]", query_str)
@@ -45,6 +47,11 @@ class ApproximateEngine:
         conditions = generate_push_down_conditions(
             tables_all, table_query, join_cond, join_keys)
 
+        # single table query
+        if len(tables_all) == 1:
+            return process_single_table_query(self.models, conditions, self.grid_size_x, self.grid_size_y)
+
+        # join query
         join_keys_lists, join_keys_domain = calculate_push_down_join_keys_domain(
             conditions, join_cond, self.models, tables_all)
 
@@ -663,6 +670,39 @@ def calculate_push_down_join_keys_domain(conditions, join_cond, models: dict[str
             logger.error(
                 "unexpected behavior as the join condition appear twice")
     return join_keys, join_keys_domain
+
+
+def process_single_table_query(models: dict[str, TableContainer], conditions: list[SingleTablePushedDownCondition], grid_size_x, grid_size_y):
+    logger.info("conditions: %s", conditions)
+    logger.info("len: %s", len(conditions))
+    assert (len(conditions) == 1)
+    tbl = list(conditions.keys())[0]
+    conds = conditions[tbl]
+    logger.info("conds: %s", conds)
+    if len(conds) == 1:
+        cond = conds[0]
+        # no selection, simple cardinality, return n
+        # [SingleTablePushedDownCondition[badges]--join_keys[badges.Id]--non_key[None]--condition[None, None]--to_join[{}]]]
+        if cond.non_key is None:
+            return models[tbl].size
+
+        # one selection
+        logger.info("models[tbl].pdfs %s", models[tbl].pdfs.keys())
+        model: Column = models[tbl].pdfs[cond.non_key.split(".")[1]]
+        logger.info("model is %s", model)
+        domain_data = [model.min, model.max]
+        domain_query = cond.non_key_condition
+        domain = merge_domain(domain_data, domain_query)
+
+        grid_x, width = np.linspace(*domain, grid_size_x, retstep=True)
+        pred = selectivity_array_single_column(model, grid_x, width)
+        return np.sum(pred)*width*model.size
+    elif len(conds) == 2:
+        pass
+    elif len(conds) > 2:
+        pass
+
+    return
 
 
 def get_idx_in_lists(k, lists):

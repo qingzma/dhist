@@ -32,6 +32,13 @@ class TableContainer:
             column = Column()
             column.fit(df_col, self.name, args=args)
             self.pdfs[join_key] = column
+
+        for relev_key in relevant_keys[self.name]:
+            logger.info("col is %s", relev_key)
+            df_col = df[relev_key].fillna(-1)  # replace NULL with -1 !
+            column = Column()
+            column.fit(df_col, self.name, args=args)
+            self.pdfs[relev_key] = column
         # else:
         # replace NULL with -1 !
         # df[list(join_keys)] = df[list(join_keys)].fillna(-1)
@@ -51,14 +58,14 @@ class TableContainer:
                     if relevant_key != join_key:
                         columns = Column2d()
                         # print(df)
-                        print(df.columns)
-                        print("min of join key is ", df[join_key].min())
-                        print("max of join key is ", df[join_key].max())
-                        print("min of relevant key is ",
-                              df[relevant_key].min())
-                        print("max of relevant key is ",
-                              df[relevant_key].max())
-                        print([join_key, relevant_key])
+                        # print(df.columns)
+                        # print("min of join key is ", df[join_key].min())
+                        # print("max of join key is ", df[join_key].max())
+                        # print("min of relevant key is ",
+                        #       df[relevant_key].min())
+                        # print("max of relevant key is ",
+                        #       df[relevant_key].max())
+                        # print([join_key, relevant_key])
                         d = df[[join_key, relevant_key]].fillna(-1)
                         # print(d)
                         # exit()
@@ -89,6 +96,7 @@ class Column:
         self.min = np.min(x)
         self.max = np.max(x)
         self.name = df_column.head()
+        self.size = len(x)
         if method == "kde":
             kde = Kde1D()
             kde.fit(x,

@@ -32,7 +32,11 @@ class KdePy1D:
                 self.min-1, self.max+1, grid_size, retstep=True)
             p = FFTKDE(bw="ISJ", kernel=kernel).fit(x)(grid_x)  # "ISJ",500
         else:
-            grid_x, p = FFTKDE(bw="ISJ", kernel=kernel).fit(x)(grid_size)
+            try:
+                grid_x, p = FFTKDE(bw="ISJ", kernel=kernel).fit(x)(grid_size)
+            except ValueError:
+                print("custom bandwidth is 200")
+                grid_x, p = FFTKDE(bw=200, kernel=kernel).fit(x)(grid_size)
             self.min = np.min(x)
             self.max = np.max(x)
             width = (self.max-self.min)/grid_size
