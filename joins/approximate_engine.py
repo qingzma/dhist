@@ -88,15 +88,6 @@ class ApproximateEngine:
             logger.warning("not implemented yet")
             return
 
-    def integrate1d(self, model_name, l, h):
-        if self.auto_grid:
-            return integrate.quad(lambda x: self.models[model_name].predict(x), l, h)
-        else:
-            logger.warning("grid integral is not implemented yet")
-
-    def integrate2d(self,):
-        pass
-
 
 def single_table_count(table: TableContainer):
     return table.size
@@ -522,26 +513,26 @@ def process_push_down_condition(models: dict[str, TableContainer], condition: Si
     assert (len(condition.join_keys) == 1)
     jk = condition.join_keys[0].split(".")[1]
 
-    # SingleTablePushedDownCondition[badges]--join_keys[badges.Id]--non_key[None]--condition[None, None]--to_join[{}]]
-    if not condition.to_join and not condition.non_key_condition:
-        return 1
+    # # SingleTablePushedDownCondition[badges]--join_keys[badges.Id]--non_key[None]--condition[None, None]--to_join[{}]]
+    # if not condition.to_join and not condition.non_key_condition:
+    #     return 1
 
-    # need another single talbe case
-    # SingleTablePushedDownCondition[posts]--join_keys[posts.Id]--non_key[posts.AnswerCount]--condition[0, 4]--to_join[{}]]
-    if not condition.to_join:
-        n_key = condition.non_key.split(".")[1]
-        model: Column2d = models[condition.tbl].correlations[jk][n_key]
-        jk_domain = [model.min[0], model.max[0]]
-        nk_domain_data = [model.min[1], model.max[1]]
-        nk_domain_query = condition.non_key_condition
-        nk_domain = merge_domain(nk_domain_data, nk_domain_query)
-        grid_x, width_x = np.linspace(*jk_domain, grid_size_x, retstep=True)
-        grid_y, width_y = np.linspace(*nk_domain, grid_size_y, retstep=True)
+    # # need another single talbe case
+    # # SingleTablePushedDownCondition[posts]--join_keys[posts.Id]--non_key[posts.AnswerCount]--condition[0, 4]--to_join[{}]]
+    # if not condition.to_join:
+    #     n_key = condition.non_key.split(".")[1]
+    #     model: Column2d = models[condition.tbl].correlations[jk][n_key]
+    #     jk_domain = [model.min[0], model.max[0]]
+    #     nk_domain_data = [model.min[1], model.max[1]]
+    #     nk_domain_query = condition.non_key_condition
+    #     nk_domain = merge_domain(nk_domain_data, nk_domain_query)
+    #     grid_x, width_x = np.linspace(*jk_domain, grid_size_x, retstep=True)
+    #     grid_y, width_y = np.linspace(*nk_domain, grid_size_y, retstep=True)
 
-        pred = selectivity_array_two_columns(
-            model, grid_x, grid_y, width_x, width_y)
+    #     pred = selectivity_array_two_columns(
+    #         model, grid_x, grid_y, width_x, width_y)
 
-        return pred
+    #     return pred
 
     idx = get_idx_in_lists(
         condition.join_keys[0], join_keys_lists)  # TODO, here only one join key is supported
@@ -743,7 +734,7 @@ def process_single_table_query(models: dict[str, TableContainer], conditions: li
         pred_x = selectivity_array_single_column(jk_model, grid_x, width_x)
         pred_xy = None
         for cond in conds:
-            logger.info("cond is %s", cond)
+            # logger.info("cond is %s", cond)
             assert (cond.non_key is not None)
             n_key = cond.non_key.split(".")[1]
 
@@ -766,7 +757,7 @@ def process_single_table_query(models: dict[str, TableContainer], conditions: li
                 pred_xy = np.divide(pred_xy, pred_x)
                 # logger.info("111max, min and  average are %s, %s, %s ",
                 #             np.max(pred_xy), np.min(pred_xy), np.average(pred_xy))
-                logger.info("y range is %s", nk_domain)
+                # logger.info("y range is %s", nk_domain)
                 # logger.info("width is  %s", width_x)
                 # logger.info("temp p1 is %s", np.sum(pred_xy)*width_x)
                 # pred_xy = np.divide(pred_xy, pred_x)

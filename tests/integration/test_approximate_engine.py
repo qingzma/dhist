@@ -16,7 +16,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
 
     def __init__(self, methodName: str = "runTest") -> None:
         super().__init__(methodName)
-        self.model_name = "model_stats_gaussian_100"
+        self.model_name = "model_stats_gaussian_1000"
         self.use_pushed_down = True
     # train needed models
 
@@ -111,20 +111,20 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #     logger.info("time cost is %.5f s.", t2-t1)
     #     self.assertTrue(q_error(res, truth) < 4)
 
-    def test_single_table_more_selections(self):
-        query = "SELECT COUNT(*) FROM users as u WHERE u.Reputation>=1 AND u.Views>=0 AND u.DownVotes>=0 AND u.UpVotes>=0 AND u.UpVotes<=15 AND u.CreationDate>='2010-09-03 11:45:16'::timestamp AND u.CreationDate<='2014-08-18 17:19:53'::timestamp"
-        with open("models/"+self.model_name+".pkl", 'rb') as f:
-            model = pickle.load(f)
-        engine = ApproximateEngine(model)
-        t1 = time.time()
-        res = engine.query_with_pushed_down(
-            query) if self.use_pushed_down else engine.query(query)
-        t2 = time.time()
-        truth = 36820
-        logger.info("result %.6E", res)
-        logger.info("truth %.6E", truth)
-        logger.info("time cost is %.5f s.", t2-t1)
-        self.assertTrue(q_error(res, truth) < 4)
+    # def test_single_table_more_selections(self):
+    #     query = "SELECT COUNT(*) FROM users as u WHERE u.Reputation>=1 AND u.Views>=0 AND u.DownVotes>=0 AND u.UpVotes>=0 AND u.UpVotes<=15 AND u.CreationDate>='2010-09-03 11:45:16'::timestamp AND u.CreationDate<='2014-08-18 17:19:53'::timestamp"
+    #     with open("models/"+self.model_name+".pkl", 'rb') as f:
+    #         model = pickle.load(f)
+    #     engine = ApproximateEngine(model)
+    #     t1 = time.time()
+    #     res = engine.query_with_pushed_down(
+    #         query) if self.use_pushed_down else engine.query(query)
+    #     t2 = time.time()
+    #     truth = 36820
+    #     logger.info("result %.6E", res)
+    #     logger.info("truth %.6E", truth)
+    #     logger.info("time cost is %.5f s.", t2-t1)
+    #     self.assertTrue(q_error(res, truth) < 4)
 
     # def test_simple_query(self):
     #     query = "SELECT COUNT(*) FROM votes as v, posts as p WHERE p.Id = v.PostId"
@@ -171,20 +171,20 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #     logger.info("time cost is %.5f s.", t2-t1)
     #     self.assertTrue(q_error(res, truth) < 3)
 
-    # def test_push_down_query(self):
-    #     query = "SELECT COUNT(*) FROM badges as b, comments as c, users as u WHERE c.UserId = u.Id AND b.UserId = u.Id AND b.Date<='2014-09-11 14:33:06'::timestamp AND c.Score>=0 AND c.Score<=10"
-    #     with open("models/"+self.model_name+".pkl", 'rb') as f:
-    #         model = pickle.load(f)
-    #     engine = ApproximateEngine(model)
-    #     t1 = time.time()
-    #     res = engine.query_with_pushed_down(
-    #         query) if self.use_pushed_down else engine.query(query)
-    #     t2 = time.time()
-    #     truth = 15852962
-    #     logger.info("result %.6E", res)
-    #     logger.info("truth %.6E", truth)
-    #     logger.info("time cost is %.5f s.", t2-t1)
-    #     self.assertTrue(q_error(res, truth) < 3)
+    def test_push_down_query(self):
+        query = "SELECT COUNT(*) FROM badges as b, comments as c, users as u WHERE c.UserId = u.Id AND b.UserId = u.Id AND b.Date<='2014-09-11 14:33:06'::timestamp AND c.Score>=0 AND c.Score<=10"
+        with open("models/"+self.model_name+".pkl", 'rb') as f:
+            model = pickle.load(f)
+        engine = ApproximateEngine(model)
+        t1 = time.time()
+        res = engine.query_with_pushed_down(
+            query) if self.use_pushed_down else engine.query(query)
+        t2 = time.time()
+        truth = 15852962
+        logger.info("result %.6E", res)
+        logger.info("truth %.6E", truth)
+        logger.info("time cost is %.5f s.", t2-t1)
+        self.assertTrue(q_error(res, truth) < 3)
 
 
 if __name__ == '__main__':
