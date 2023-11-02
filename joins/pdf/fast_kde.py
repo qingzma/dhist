@@ -110,7 +110,7 @@ class FastKde2D:
         # only support 1 point at this moment
         return self.predict_grid([x[0]], [x[1]])
 
-    def predict_grid_with_y_range(self, x_grid, domain: Domain):
+    def predict_grid_with_y_range(self, x_grid, domain: Domain, b_plot=True):
         assert (self.cumulative)
         l, h = domain.min, domain.max
         if domain.left:
@@ -119,6 +119,10 @@ class FastKde2D:
             h -= 0.05
         p_l = self.predict_grid(x_grid, [l])
         p_h = self.predict_grid(x_grid, [h])
+        if b_plot:
+            plot2d(self)
+        print("----low is %s",p_l)
+        print("----high is %s",p_h)
         return np.subtract(p_h, p_l).reshape(1, -1)[0]
 
     def predict_grid(self, x_grid, y_grid):
@@ -211,16 +215,16 @@ def plot2d(kde):
 
 
 if __name__ == "__main__":
-    n = 1000000
-    data = np.concatenate((np.random.randn(n), np.random.randn(n) + 10))
-    kde1d = FastKde1D(2**12)
-    kde1d.fit(data)
-    print(min(data), max(data))
-    # x = np.linspace(-5, 15, 2**8)
-    # p = kde1d.predict(x)
-    # plt.plot(x, p, c='r')
-    # plt.show()
-    plot1d(kde1d)
+    # n = 1000000
+    # data = np.concatenate((np.random.randn(n), np.random.randn(n) + 10))
+    # kde1d = FastKde1D(2**12)
+    # kde1d.fit(data)
+    # print(min(data), max(data))
+    # # x = np.linspace(-5, 15, 2**8)
+    # # p = kde1d.predict(x)
+    # # plt.plot(x, p, c='r')
+    # # plt.show()
+    # plot1d(kde1d)
 
     # n = 300000
     # def gen_random(n): return np.random.randn(n).reshape(-1, 1)
@@ -229,10 +233,10 @@ if __name__ == "__main__":
     # data = np.concatenate((data1, data2))
     # # print(data)
 
-    # kde2d = FastKde2D(100, 100, cumulative=True)
+    # kde2d = FastKde2D(5, 10, cumulative=True)
     # kde2d.fit(data)
 
-    # xx, yy = np.linspace(-4, 4, 100), np.linspace(-4, 4, 100)
+    # xx, yy = np.linspace(-4, 4, 10), np.linspace(-4, 4, 10)
     # ps = kde2d.predict_grid(xx, yy)
     # print(ps)
     # domain = Domain(0.5, 1, True, True)
@@ -241,9 +245,12 @@ if __name__ == "__main__":
     # kde2d.predict([1, 2])
     # plot2d(kde2d)
 
-    # data = [[1, 2],
-    #         [1, 3],
-    #         [2, 3],
-    #         [4, 5]]
-    # kde = FastKde2D(4, 3)
-    # kde.fit(data)
+    data = [[1, 2],
+            [1, 3],
+            [2, 3],
+            [4, 5]]
+    kde2d = FastKde2D(3,4,cumulative=True)
+    kde2d.fit(data)
+    # domain = Domain(0.8, 4.2, True, True)
+    # kde2d.predict_grid_with_y_range(np.linspace(1.2,3.8,10),domain,b_plot=True)
+    plot2d(kde2d)

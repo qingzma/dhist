@@ -37,6 +37,7 @@ class ApproximateEngine:
             models['schema'])
         self.grid_size_x = 200
         self.grid_size_y = 200
+        self.use_cdf=use_cdf
 
     def query_with_pushed_down(self, query_str):
         logger.info("QUERY [%s]", query_str)
@@ -51,7 +52,7 @@ class ApproximateEngine:
 
         # single table query
         if len(tables_all) == 1:
-            return process_single_table_query(self.models, conditions, self.grid_size_x, self.grid_size_y)
+            return process_single_table_query(self.models, conditions, self.grid_size_x, self.grid_size_y, use_cdf=self.use_cdf)
 
         # join query
         join_keys_grid = JoinKeysGrid()
@@ -65,7 +66,7 @@ class ApproximateEngine:
 
         n = get_cartesian_cardinality(self.counters, tables_all)
         pred = process_push_down_conditions(
-            self.models, conditions, join_cond, join_keys_grid)
+            self.models, conditions, join_cond, join_keys_grid,use_cdf=self.use_cdf)
 
         logger.info("cartesian is %E", n)
         logger.info("pred is %s ", pred)
@@ -389,7 +390,7 @@ def array_multiply_grid(arr, grid):
     return np.sum(tmp, axis=0)
 
 
-def process_push_down_conditions(models, conditions, join_cond, join_keys_grid: JoinKeysGrid, grid_size_x=2000, grid_size_y=1000):
+def process_push_down_conditions(models, conditions, join_cond, join_keys_grid: JoinKeysGrid, grid_size_x=2000, grid_size_y=1000,use_cdf=False):
     logger.info("conditions: %s", conditions)
     ps = {}
     widths = {}
@@ -405,7 +406,7 @@ def process_push_down_conditions(models, conditions, join_cond, join_keys_grid: 
         # p = merge_single_table_predictions(
         #     conditions, predictions_within_table,)
         pred_p, width_p = process_single_table_push_down_condition_for_join(
-            tbl, models, conditions[tbl], join_keys_grid, grid_size_y)
+            tbl, models, conditions[tbl], join_keys_grid, grid_size_y,use_cdf=use_cdf)
         ps[tbl] = pred_p
         widths[tbl] = width_p
     pred = merge_predictions(ps, conditions, join_cond,
@@ -534,7 +535,7 @@ def merge_predictions(ps, conditions, join_cond, join_keys_grid: JoinKeysGrid, g
     return pred
 
 
-def process_single_table_query(models: dict[str, TableContainer], conditions: list[SingleTablePushedDownCondition], grid_size_x, grid_size_y, use_column_model=True):
+def process_single_table_query(models: dict[str, TableContainer], conditions: list[SingleTablePushedDownCondition], grid_size_x, grid_size_y, use_column_model=True, use_cdf=False):
     # logger.info("conditions: %s", conditions)
     # logger.info("len: %s", len(conditions))
     assert (len(conditions) == 1)
@@ -581,8 +582,12 @@ def process_single_table_query(models: dict[str, TableContainer], conditions: li
             # logger.info("widthx is  %s", width_x)
             # logger.info("widthy is  %s", width_y)
 
-            pred = selectivity_array_two_columns(
-                model, grid_x, grid_y, width_x, width_y)
+            if use_cdf:
+                pred = model.pdf.predict_grid_with_y_range(grid_x,nk_domain)
+            else:
+                pred = selectivity_array_two_columns(
+                    model, grid_x, grid_y, width_x, width_y)
+            logger.warning("sum is %s",np.sum(pred))
             return np.sum(pred)*width_x*model.size
 
     elif len(conds) > 1:
@@ -621,8 +626,15 @@ def process_single_table_query(models: dict[str, TableContainer], conditions: li
             grid_y, width_y = np.linspace(
                 nk_domain.min, nk_domain.max, grid_size_y, retstep=True)
             if pred_xy is None:
-                pred_xy = selectivity_array_two_columns(
-                    model2d, grid_x, grid_y, width_x, width_y)
+                if use_cdf:
+                    logger.warning("grid x is %s",grid_x)
+                    logger.warning("domain is %s,%s",nk_domain.min,nk_domain.max)
+                    pred_xy = model2d.pdf.predict_grid_with_y_range(grid_x,nk_domain)
+                else:
+                    pred_xy = selectivity_array_two_columns(
+                        model2d, grid_x, grid_y, width_x, width_y)
+                logger.warning("pxy is %s",pred_xy)
+                logger.warning("sum is %s",np.sum(pred_xy))
                 pred_xy = np.divide(pred_xy, pred_x, out=np.zeros_like(
                     pred_xy), where=pred_x != 0)
                 # logger.info("111max, min and  average are %s, %s, %s ",
@@ -634,9 +646,12 @@ def process_single_table_query(models: dict[str, TableContainer], conditions: li
                 # logger.info("2max, min and  average are %s, %s, %s ",
                 #             np.max(pred_xy), np.min(pred_xy), np.average(pred_xy))
             else:
-                pred = selectivity_array_two_columns(
-                    model2d, grid_x, grid_y, width_x, width_y)
-                # logger.info("temp p3 is %s", np.sum(pred)*width_x)
+                if use_cdf:
+                    pred = model2d.pdf.predict_grid_with_y_range(grid_x,nk_domain)
+                else:
+                    pred = selectivity_array_two_columns(
+                        model2d, grid_x, grid_y, width_x, width_y)
+                    # logger.info("temp p3 is %s", np.sum(pred)*width_x)
                 pred = np.divide(pred, pred_x, out=np.zeros_like(
                     pred), where=pred_x != 0)
                 pred_xy = combine_selectivity_array(pred_xy, pred)
@@ -647,7 +662,7 @@ def process_single_table_query(models: dict[str, TableContainer], conditions: li
     return
 
 
-def process_single_table_push_down_condition_for_join(tbl: str, models: dict[str, TableContainer], conditions: dict[str, list[SingleTablePushedDownCondition]], join_keys_grid: JoinKeysGrid, grid_size_y, use_column_model=True):
+def process_single_table_push_down_condition_for_join(tbl: str, models: dict[str, TableContainer], conditions: dict[str, list[SingleTablePushedDownCondition]], join_keys_grid: JoinKeysGrid, grid_size_y, use_column_model=True,use_cdf=False):
     logger.info("Table %s with conditions %s ", tbl, conditions)
     # tbl = list(conditions.keys())[0]
     cond0 = conditions[0]
@@ -686,9 +701,13 @@ def process_single_table_push_down_condition_for_join(tbl: str, models: dict[str
         grid_y, width_y = np.linspace(
             nk_domain.min, nk_domain.max, grid_size_y, retstep=True)
         if pred_xy is None:
-            pred_xy = selectivity_array_two_columns(
-                model2d, grid_x, grid_y, width_x, width_y)
-            pred_xy = np.divide(pred_xy, pred_x)
+            if use_cdf:
+                pred_xy = model2d.pdf.predict_grid_with_y_range(grid_x,nk_domain)
+            else:
+                pred_xy = selectivity_array_two_columns(
+                    model2d, grid_x, grid_y, width_x, width_y)
+            pred_xy = np.divide(pred_xy, pred_x, out=np.zeros_like(
+                    pred_xy), where=pred_x != 0)
             # logger.info("111max, min and  average are %s, %s, %s ",
             #             np.max(pred_xy), np.min(pred_xy), np.average(pred_xy))
             # logger.info("y range is %s", nk_domain)
@@ -698,10 +717,14 @@ def process_single_table_push_down_condition_for_join(tbl: str, models: dict[str
             # logger.info("2max, min and  average are %s, %s, %s ",
             #             np.max(pred_xy), np.min(pred_xy), np.average(pred_xy))
         else:
-            pred = selectivity_array_two_columns(
-                model2d, grid_x, grid_y, width_x, width_y)
-            # logger.info("temp p3 is %s", np.sum(pred)*width_x)
-            pred = np.divide(pred, pred_x)
+            if use_cdf:
+                pred = model2d.pdf.predict_grid_with_y_range(grid_x,nk_domain)
+            else:
+                pred = selectivity_array_two_columns(
+                    model2d, grid_x, grid_y, width_x, width_y)
+                # logger.info("temp p3 is %s", np.sum(pred)*width_x)
+            pred = np.divide(pred, pred_x, out=np.zeros_like(
+                    pred), where=pred_x != 0)
             pred_xy = combine_selectivity_array(pred_xy, pred)
             # logger.info("final shape is %s", len(pred_xy))
             # logger.info("final shape is %s", pred_xy[0])
