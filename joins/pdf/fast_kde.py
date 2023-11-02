@@ -97,7 +97,7 @@ class FastKde2D:
     def __init__(self, grid_size_x, grid_size_y) -> None:
         self.grid_size_x = grid_size_x
         self.grid_size_y = grid_size_y
-        self.background_noise = None
+        self.background_noise = 0
         # self.grid_width_x = None
         # self.grid_width_y = None
         self.low = None
@@ -191,8 +191,8 @@ def plot2d(kde):
     fig = plt.figure()
     ax = fig.gca()
     N = 4  # Number of contours
-    xx = np.linspace(kde.low[0], kde.high[0],  2**8)
-    yy = np.linspace(kde.low[1], kde.high[1],  2**8)
+    xx = np.linspace(kde.low[0], kde.high[0],  2**10)
+    yy = np.linspace(kde.low[1], kde.high[1],  2**10)
     p = kde.predict_grid(xx, yy)
     cfset = ax.contourf(xx, yy, p, N, cmap="Blues",
                         locator=ticker.LogLocator())
