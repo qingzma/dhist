@@ -27,6 +27,8 @@ def parse_args(args_):
         "--grid", help="grid size of model training", type=int, choices=range(5, 2**20), default=2**10)
     parser.add_argument(
         "--kernel", help="kernel function for density estimation", type=str, default='box')
+    parser.add_argument(
+        "--cdf", help="use cumulative density function (cdf) instead of pdf, to boost query processing",  action='store_true',default=False)
 
     # parser.add_argument('--log_level', type=int, default=logging.DEBUG)
 

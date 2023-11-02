@@ -162,7 +162,7 @@ class Column2d:
             if args.plot:
                 kde.plot()
         elif method == "fast":
-            kde = FastKde2D(args.grid, args.grid, cumulative=False)
+            kde = FastKde2D(args.grid, args.grid, cumulative=args.cdf)
             kde.fit(df_columns.to_numpy())
             self.pdf = kde
             if args.plot:
