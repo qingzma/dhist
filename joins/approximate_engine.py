@@ -35,8 +35,8 @@ class ApproximateEngine:
             models['schema'])
         self.join_keys, self.relevant_keys, self.counters = get_stats_relevant_attributes(
             models['schema'])
-        self.grid_size_x = 800
-        self.grid_size_y = 500
+        self.grid_size_x = 200
+        self.grid_size_y = 200
 
     def query_with_pushed_down(self, query_str):
         logger.info("QUERY [%s]", query_str)
