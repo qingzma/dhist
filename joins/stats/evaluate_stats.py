@@ -17,7 +17,7 @@ def evaluate_stats(args: ArgumentParser):
     with open(args.query, 'r', encoding="utf-8") as f:
         queries = f.readlines()
 
-    engine = ApproximateEngine(models=model)
+    engine = ApproximateEngine(models=model,use_cdf=args.cdf)
 
     latency = []
     pred = []

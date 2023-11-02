@@ -28,7 +28,7 @@ class QueryType(Enum):
 
 
 class ApproximateEngine:
-    def __init__(self,  models: dict[str, TableContainer] = None, auto_grid=True) -> None:
+    def __init__(self,  models: dict[str, TableContainer] = None, auto_grid=True, use_cdf=False) -> None:
         self.models: dict = models
         self.auto_grid = auto_grid
         self.all_keys, self.equivalent_keys, self.table_keys = identify_key_values(

@@ -18,15 +18,18 @@ class TestApproximateEngineMethod(unittest.TestCase):
         super().__init__(methodName)
         self.model_name = "model_stats_gaussian_1000"
         self.use_pushed_down = True
+        arguments = ["--train", "--grid", "1000",
+                     "--kernel", "gaussian","--cdf"]
+        self.args = parse_args(arguments)
     # train needed models
 
-    # @classmethod
-    # def setUpClass(cls):
-    #     # ['biweight', 'box', 'cosine', 'epa', 'exponential', 'gaussian', 'tri', 'tricube', 'triweight']
-    #     arguments = ["--train", "--grid", "1000",
-    #                  "--kernel", "gaussian","--cdf"]
-    #     args = parse_args(arguments)
-    #     train_stats(args)
+    @classmethod
+    def setUpClass(cls):
+        # ['biweight', 'box', 'cosine', 'epa', 'exponential', 'gaussian', 'tri', 'tricube', 'triweight']
+        arguments = ["--train", "--grid", "1000",
+                     "--kernel", "gaussian","--cdf"]
+        args = parse_args(arguments)
+        train_stats(args)
 
     # remove trained models for test purposes
     # @classmethod
@@ -40,7 +43,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
         query = "SELECT COUNT(*) FROM badges as b"
         with open("models/"+self.model_name+".pkl", 'rb') as f:
             model = pickle.load(f)
-        engine = ApproximateEngine(model)
+        engine = ApproximateEngine(model,use_cdf=self.args.cdf)
         t1 = time.time()
         res = engine.query_with_pushed_down(
             query) if self.use_pushed_down else engine.query(query)
@@ -55,7 +58,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
         query = "SELECT COUNT(*) FROM posts as p WHERE p.AnswerCount>=0 AND p.AnswerCount<=4"
         with open("models/"+self.model_name+".pkl", 'rb') as f:
             model = pickle.load(f)
-        engine = ApproximateEngine(model)
+        engine = ApproximateEngine(model,use_cdf=self.args.cdf)
         t1 = time.time()
         res = engine.query_with_pushed_down(
             query) if self.use_pushed_down else engine.query(query)
@@ -70,7 +73,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
         query = "SELECT COUNT(*) FROM posts as p WHERE p.AnswerCount>=0 AND p.AnswerCount<=4 AND p.CommentCount>=0 AND p.CommentCount<=17"
         with open("models/"+self.model_name+".pkl", 'rb') as f:
             model = pickle.load(f)
-        engine = ApproximateEngine(model)
+        engine = ApproximateEngine(model,use_cdf=self.args.cdf)
         t1 = time.time()
         res = engine.query_with_pushed_down(
             query) if self.use_pushed_down else engine.query(query)
@@ -85,7 +88,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
         query = "SELECT COUNT(*) FROM users as u WHERE u.DownVotes<=0 AND u.UpVotes>=0 AND u.UpVotes<=123"
         with open("models/"+self.model_name+".pkl", 'rb') as f:
             model = pickle.load(f)
-        engine = ApproximateEngine(model)
+        engine = ApproximateEngine(model,use_cdf=self.args.cdf)
         t1 = time.time()
         res = engine.query_with_pushed_down(
             query) if self.use_pushed_down else engine.query(query)
@@ -100,7 +103,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
         query = "SELECT COUNT(*) FROM users as u WHERE u.Reputation>=1 AND u.Reputation<=487 AND u.UpVotes<=27 AND u.CreationDate>='2010-10-22 22:40:35'::timestamp AND u.CreationDate<='2014-09-10 17:01:31'::timestamp"
         with open("models/"+self.model_name+".pkl", 'rb') as f:
             model = pickle.load(f)
-        engine = ApproximateEngine(model)
+        engine = ApproximateEngine(model,use_cdf=self.args.cdf)
         t1 = time.time()
         res = engine.query_with_pushed_down(
             query) if self.use_pushed_down else engine.query(query)
@@ -115,7 +118,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
         query = "SELECT COUNT(*) FROM users as u WHERE u.Reputation>=1 AND u.Views>=0 AND u.DownVotes>=0 AND u.UpVotes>=0 AND u.UpVotes<=15 AND u.CreationDate>='2010-09-03 11:45:16'::timestamp AND u.CreationDate<='2014-08-18 17:19:53'::timestamp"
         with open("models/"+self.model_name+".pkl", 'rb') as f:
             model = pickle.load(f)
-        engine = ApproximateEngine(model)
+        engine = ApproximateEngine(model,use_cdf=self.args.cdf)
         t1 = time.time()
         res = engine.query_with_pushed_down(
             query) if self.use_pushed_down else engine.query(query)
@@ -130,7 +133,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #     query = "SELECT COUNT(*) FROM votes as v, posts as p WHERE p.Id = v.PostId"
     #     with open("models/"+self.model_name+".pkl", 'rb') as f:
     #         model = pickle.load(f)
-    #     engine = ApproximateEngine(model)
+    #     engine = ApproximateEngine(model,use_cdf=self.args.cdf)
     #     t1 = time.time()
     #     res = engine.query_with_pushed_down(
     #         query) if self.use_pushed_down else engine.query(query)
@@ -145,7 +148,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #     query = "SELECT COUNT(*) FROM users as u, badges as b WHERE b.UserId= u.Id AND u.UpVotes>=0"
     #     with open("models/"+self.model_name+".pkl", 'rb') as f:
     #         model = pickle.load(f)
-    #     engine = ApproximateEngine(model)
+    #     engine = ApproximateEngine(model,use_cdf=self.args.cdf)
     #     t1 = time.time()
     #     res = engine.query_with_pushed_down(
     #         query) if self.use_pushed_down else engine.query(query)
@@ -160,7 +163,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #     query = "SELECT COUNT(*) FROM badges as b, comments as c, users as u WHERE c.UserId = u.Id AND b.UserId = u.Id"
     #     with open("models/"+self.model_name+".pkl", 'rb') as f:
     #         model = pickle.load(f)
-    #     engine = ApproximateEngine(model)
+    #     engine = ApproximateEngine(model,use_cdf=self.args.cdf)
     #     t1 = time.time()
     #     res = engine.query_with_pushed_down(
     #         query) if self.use_pushed_down else engine.query(query)
@@ -175,7 +178,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #     query = "SELECT COUNT(*) FROM badges as b, comments as c, users as u WHERE c.UserId = u.Id AND b.UserId = u.Id AND b.Date<='2014-09-11 14:33:06'::timestamp AND c.Score>=0 AND c.Score<=10"
     #     with open("models/"+self.model_name+".pkl", 'rb') as f:
     #         model = pickle.load(f)
-    #     engine = ApproximateEngine(model)
+    #     engine = ApproximateEngine(model,use_cdf=self.args.cdf)
     #     t1 = time.time()
     #     res = engine.query_with_pushed_down(
     #         query) if self.use_pushed_down else engine.query(query)
