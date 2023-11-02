@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 from joins.base_logger import logger
+from joins.pdf.fast_kde import FastKde1D, FastKde2D
 from joins.pdf.kde import Kde1D, Kde2D
 from joins.pdf.kdepy import KdePy1D, KdePy2D, plot1d, plot2d
 from joins.pdf.normalizing_flow.nflow import Nflow2D
@@ -87,7 +88,7 @@ class Column:
         self.min = None
         self.max = None
 
-    def fit(self, df_column, table_name, method="fft", args=None) -> None:
+    def fit(self, df_column, table_name, method="fast", args=None) -> None:
         """
         methods: ["fft", "kde","nflow"]
         """
@@ -106,6 +107,12 @@ class Column:
                 kde.plot()
         elif method == "nflow":
             logger.warning("1d nflow is not implemented yet")
+        elif method == "fast":
+            kde = FastKde1D(grid_size=args.grid)
+            kde.fit(df_column.to_numpy().reshape(-1, 1))
+            self.pdf = kde
+            if args.plot:
+                plot1d(kde)
         else:
             kde = KdePy1D()
             kde.fit(df_column.to_numpy().reshape(-1, 1),
@@ -126,7 +133,7 @@ class Column2d:
         self.min = None
         self.max = None
 
-    def fit(self, df_columns, table_name, method="fft",  args=None, use_coefficient=False) -> None:
+    def fit(self, df_columns, table_name, method="fast",  args=None, use_coefficient=False) -> None:
         """
         methods: ["fft", "kde","nflow"]
         """
@@ -152,6 +159,10 @@ class Column2d:
             self.pdf = kde
             if args.plot:
                 kde.plot()
+        elif method == "fast":
+            kde = FastKde2D(args.grid, args.grid)
+            kde.fit(df_columns.to_numpy())
+            self.pdf = kde
         else:
             if use_coefficient:
                 pass

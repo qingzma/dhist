@@ -35,8 +35,8 @@ class ApproximateEngine:
             models['schema'])
         self.join_keys, self.relevant_keys, self.counters = get_stats_relevant_attributes(
             models['schema'])
-        self.grid_size_x = 400
-        self.grid_size_y = 200
+        self.grid_size_x = 800
+        self.grid_size_y = 500
 
     def query_with_pushed_down(self, query_str):
         logger.info("QUERY [%s]", query_str)
@@ -623,7 +623,8 @@ def process_single_table_query(models: dict[str, TableContainer], conditions: li
             if pred_xy is None:
                 pred_xy = selectivity_array_two_columns(
                     model2d, grid_x, grid_y, width_x, width_y)
-                pred_xy = np.divide(pred_xy, pred_x)
+                pred_xy = np.divide(pred_xy, pred_x, out=np.zeros_like(
+                    pred_xy), where=pred_x != 0)
                 # logger.info("111max, min and  average are %s, %s, %s ",
                 #             np.max(pred_xy), np.min(pred_xy), np.average(pred_xy))
                 # logger.info("y range is %s", nk_domain)
@@ -636,7 +637,8 @@ def process_single_table_query(models: dict[str, TableContainer], conditions: li
                 pred = selectivity_array_two_columns(
                     model2d, grid_x, grid_y, width_x, width_y)
                 # logger.info("temp p3 is %s", np.sum(pred)*width_x)
-                pred = np.divide(pred, pred_x)
+                pred = np.divide(pred, pred_x, out=np.zeros_like(
+                    pred), where=pred_x != 0)
                 pred_xy = combine_selectivity_array(pred_xy, pred)
                 # logger.info("final shape is %s", len(pred_xy))
                 # logger.info("final shape is %s", pred_xy[0])
