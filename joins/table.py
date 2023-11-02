@@ -1,5 +1,7 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib import ticker
 
 from joins.base_logger import logger
 from joins.pdf.fast_kde import FastKde1D, FastKde2D
@@ -160,9 +162,11 @@ class Column2d:
             if args.plot:
                 kde.plot()
         elif method == "fast":
-            kde = FastKde2D(args.grid, args.grid)
+            kde = FastKde2D(args.grid, args.grid, cumulative=False)
             kde.fit(df_columns.to_numpy())
             self.pdf = kde
+            if args.plot:
+                plot2d(kde)
         else:
             if use_coefficient:
                 pass
@@ -180,6 +184,22 @@ class Column2d:
 
     # def plot(self) -> None:
     #     logger.info("plot the pdf...")
+
+
+def plot2d(kde):
+    fig = plt.figure()
+    ax = fig.gca()
+    N = 4  # Number of contours
+    xx = np.linspace(kde.min[0], kde.max[0],  2**10)
+    yy = np.linspace(kde.min[1], kde.max[1],  2**10)
+    p = kde.predict_grid(xx, yy)
+    cfset = ax.contourf(xx, yy, p, N, cmap="Blues",
+                        locator=ticker.LogLocator())
+    cset = ax.contour(xx, yy, p, N, linewidths=0.8,
+                      colors="k", locator=ticker.LogLocator())
+    # ax.clabel(cset, inline=1, fontsize=10)
+    cbar = fig.colorbar(cfset)
+    plt.show()
 
 
 if __name__ == '__main__':

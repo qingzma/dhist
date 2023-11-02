@@ -1,19 +1,24 @@
 import numpy as np
 
 from joins.base_logger import logger
-from joins.table import TableContainer
+
+# from joins.table import TableContainer
 
 
 class Domain:
-    def __init__(self, mins=-np.Infinity, maxs=np.Infinity) -> None:
+    def __init__(self, mins=-np.Infinity, maxs=np.Infinity, left=False, right=True) -> None:
         self.min = mins
         self.max = maxs
+        self.left = left
+        self.right = right
 
     def merge_domain(self, d1):
         if d1.min > self.min:
             self.min = d1.min
+            self.left = d1.left
         if d1.max < self.max:
             self.max = d1.max
+            self.right = d1.right
 
 
 class JoinKeyGrid:
@@ -27,7 +32,7 @@ class JoinKeysGrid:
         self.join_keys_domain = []
         self.join_keys_grid: list[JoinKeyGrid] = []
 
-    def calculate_push_down_join_keys_domain(self, conditions, join_cond, models: dict[str, TableContainer], tabls_all, grid_size):
+    def calculate_push_down_join_keys_domain(self, conditions, join_cond, models: dict, tabls_all, grid_size):
         # note, selection on join key is not supported yet.
         if join_cond is None:
             # tbl = list(tabls_all.values())[0]
