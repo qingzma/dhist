@@ -204,19 +204,19 @@ def plot2d(kde):
 
 
 if __name__ == "__main__":
-    n = 1000000
-    data = np.concatenate((np.random.randn(n), np.random.randn(n) + 10))
-    kde1d = FastKde1D(2**12)
-    kde1d.fit(data)
-    print(min(data), max(data))
-    # x = np.linspace(-5, 15, 2**8)
-    # p = kde1d.predict(x)
-    # plt.plot(x, p, c='r')
-    # plt.show()
-    plot1d(kde1d)
+    # n = 1000000
+    # data = np.concatenate((np.random.randn(n), np.random.randn(n) + 10))
+    # kde1d = FastKde1D(2**12)
+    # kde1d.fit(data)
+    # print(min(data), max(data))
+    # # x = np.linspace(-5, 15, 2**8)
+    # # p = kde1d.predict(x)
+    # # plt.plot(x, p, c='r')
+    # # plt.show()
+    # plot1d(kde1d)
 
     # plt.title("Fast 2D computations\nusing binning and FFT", fontsize=12)
-    n = 300000
+    n = 30000000
     def gen_random(n): return np.random.randn(n).reshape(-1, 1)
     data1 = np.concatenate((gen_random(n), gen_random(n)), axis=1)
     data2 = np.concatenate((gen_random(n) + 1, gen_random(n) + 4), axis=1)
