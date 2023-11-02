@@ -448,7 +448,8 @@ def process_push_down_condition(models: dict[str, TableContainer], condition: Si
         nk_domain = Domain(model.min[1], model.max[1])
         nk_domain_query = Domain(*condition.non_key_condition)
         nk_domain.merge_domain(nk_domain_query)
-        grid_x, width_x = np.linspace(*jk_domain, grid_size_x, retstep=True)
+        grid_x, width_x = np.linspace(
+            jk_domain.min, jk_domain.max, grid_size_x, retstep=True)
         grid_y, width_y = np.linspace(
             nk_domain.min, nk_domain.max, grid_size_y, retstep=True)
 
@@ -461,7 +462,8 @@ def process_push_down_condition(models: dict[str, TableContainer], condition: Si
     if condition.join_keys and condition.non_key is None:
         model: Column2d = models[condition.tbl].pdfs[jk]
         # jk_domain = [model.min, model.max]
-        grid_x, width_x = np.linspace(*jk_domain, grid_size_x, retstep=True)
+        grid_x, width_x = np.linspace(
+            jk_domain.min, jk_domain.max, grid_size_x, retstep=True)
         pred = selectivity_array_single_column(model, grid_x, width_x)
         return pred
     return
@@ -512,8 +514,9 @@ def merge_predictions(ps, conditions, join_cond, join_keys_grid: JoinKeysGrid, g
     #     return
     idx = get_idx_in_lists(tk1, join_keys_grid.join_keys_lists)
     assert (idx >= 0)
-    domain = join_keys_grid.join_keys_domain[idx]
-    _, width = np.linspace(*domain, grid_size_1d, retstep=True)
+    # domain = join_keys_grid.join_keys_domain[idx]
+    # _, width = np.linspace(*domain, grid_size_1d, retstep=True)
+    width = join_keys_grid.join_keys_grid[idx].width
     pred = np.sum(pred)*width
     return pred
 

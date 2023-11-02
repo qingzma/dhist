@@ -23,7 +23,7 @@ class JoinKeyGrid:
 
 class JoinKeysGrid:
     def __init__(self) -> None:
-        self.join_keys = []
+        self.join_keys_lists = []
         self.join_keys_domain = []
         self.join_keys_grid = []
 
@@ -67,7 +67,7 @@ class JoinKeysGrid:
             else:
                 logger.error(
                     "unexpected behavior as the join condition appear twice")
-        self.join_keys = join_keys
+        self.join_keys_lists = join_keys
         self.join_keys_domain = join_keys_domain
 
         for domain in join_keys_domain:
