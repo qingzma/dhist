@@ -6,7 +6,7 @@ from matplotlib import ticker
 from joins.base_logger import logger
 from joins.pdf.fast_kde import FastKde1D, FastKde2D
 from joins.pdf.kde import Kde1D, Kde2D
-from joins.pdf.kdepy import KdePy1D, KdePy2D, plot1d, plot2d
+from joins.pdf.kdepy import KdePy1D, KdePy2D, plot1d
 from joins.pdf.normalizing_flow.nflow import Nflow2D
 
 
