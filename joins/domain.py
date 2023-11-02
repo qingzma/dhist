@@ -25,7 +25,7 @@ class JoinKeysGrid:
     def __init__(self) -> None:
         self.join_keys_lists = []
         self.join_keys_domain = []
-        self.join_keys_grid = []
+        self.join_keys_grid: list[JoinKeyGrid] = []
 
     def calculate_push_down_join_keys_domain(self, conditions, join_cond, models: dict[str, TableContainer], tabls_all, grid_size):
         # note, selection on join key is not supported yet.
@@ -73,6 +73,11 @@ class JoinKeysGrid:
         for domain in join_keys_domain:
             grid = JoinKeyGrid(domain.min, domain.max, grid_size)
             self.join_keys_grid.append(grid)
+
+    def get_join_key_grid_for_table_jk(self, jk) -> JoinKeyGrid:
+        idx = get_idx_in_lists(jk, self.join_keys_lists)
+        assert (idx >= 0)
+        return self.join_keys_grid[idx]
 
 
 def get_idx_in_lists(k, lists):
