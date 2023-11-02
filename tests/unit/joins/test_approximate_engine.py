@@ -24,7 +24,7 @@ class TestApproximateEngineMethodUniteTest(unittest.TestCase):
             tables_all, table_query, join_cond, join_keys)
         # logger.info("condition is %s", conditions)
         self.assertEqual(len(conditions), 1)
-        self.assertEqual(conditions["badges"][0].join_keys, ["Id"])
+        self.assertEqual(conditions["badges"][0].join_keys, ["badges.Id"])
         self.assertIsNone(conditions['badges']
                           [0].non_key)
         self.assertIsNone(conditions['badges']
@@ -40,7 +40,7 @@ class TestApproximateEngineMethodUniteTest(unittest.TestCase):
             tables_all, table_query, join_cond, join_keys)
         logger.info("condition is %s", conditions)
         self.assertEqual(len(conditions), 1)
-        self.assertEqual(conditions["badges"][0].join_keys, ["Id"])
+        self.assertEqual(conditions["badges"][0].join_keys, ["badges.Id"])
         self.assertEqual(conditions['badges']
                          [0].non_key, "badges.col")
         self.assertEqual(conditions['badges']
@@ -56,7 +56,7 @@ class TestApproximateEngineMethodUniteTest(unittest.TestCase):
             tables_all, table_query, join_cond, join_keys)
         # logger.info("condition is %s", conditions)
         self.assertEqual(len(conditions["badges"]), 2)
-        self.assertEqual(conditions["badges"][0].join_keys, ["Id"])
+        self.assertEqual(conditions["badges"][0].join_keys, ["badges.Id"])
         self.assertEqual(conditions['badges']
                          [0].non_key, "badges.col")
         self.assertEqual(conditions['badges']

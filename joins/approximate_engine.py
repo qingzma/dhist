@@ -5,6 +5,8 @@ import numpy as np
 import scipy.integrate as integrate
 
 from joins.base_logger import logger
+from joins.domain import (Domain, JoinKeysGrid, SingleTablePushedDownCondition,
+                          generate_push_down_conditions, get_idx_in_lists)
 from joins.join_graph import get_join_hyper_graph
 from joins.parser import parse_query_simple
 from joins.schema_base import identify_conditions, identify_key_values
@@ -52,12 +54,15 @@ class ApproximateEngine:
             return process_single_table_query(self.models, conditions, self.grid_size_x, self.grid_size_y)
 
         # join query
-        join_keys_lists, join_keys_domain = calculate_push_down_join_keys_domain(
-            conditions, join_cond, self.models, tables_all)
+        join_keys_grid = JoinKeysGrid()
+        join_keys_grid.calculate_push_down_join_keys_domain(
+            conditions, join_cond, self.models, tables_all, self.grid_size_x)
+        # join_keys_lists, join_keys_domain = calculate_push_down_join_keys_domain(
+        #     conditions, join_cond, self.models, tables_all)
 
         n = get_cartesian_cardinality(self.counters, tables_all)
         pred = process_push_down_conditions(
-            self.models, conditions, join_cond, join_keys_lists, join_keys_domain)
+            self.models, conditions, join_cond, join_keys_grid)
 
         logger.info("cartesian is %E", n)
         logger.info("pred is %s ", pred)
@@ -381,121 +386,14 @@ def array_multiply_grid(arr, grid):
     return np.sum(tmp, axis=0)
 
 
-class SingleTablePushedDownCondition:
-    def __init__(self, tbl: str, join_keys: list[str], non_key: str, non_key_condition: dict[str, dict], to_join, key_conditions=None) -> None:
-        self.tbl = tbl
-        # currently only support at most 2 join keys in a single table
-        assert (len(join_keys) <= 2)
-        self.join_keys = join_keys
-        self.non_key = non_key
-        self.non_key_condition = non_key_condition
-        # selection on join key is not supported, but could be easily supported.
-        assert (key_conditions is None)
-
-        self.to_join = to_join
-
-    def __str__(self) -> str:
-        join_str = str(self.to_join)
-
-        return f"SingleTablePushedDownCondition[{self.tbl}]--join_keys[{','.join(self.join_keys)}]--non_key[{self.non_key}]--condition[{self.non_key_condition[0] if self.non_key_condition else None}, {self.non_key_condition[1] if self.non_key_condition else None}]--to_join[{join_str}]]"
-
-    def __repr__(self) -> str:
-        return self.__str__()
-
-
-def generate_push_down_conditions(tables_all, table_query, join_cond, join_keys):
-    # logger.info("tables_all %s", tables_all)
-    # logger.info("table_query %s", table_query)
-    # logger.info("join_cond %s", join_cond)
-    # logger.info("join_keys %s", join_keys)
-    conditions = {}
-    if len(tables_all) == 1:
-        to_join = {}
-        tbl = list(tables_all.values())[0]
-        default_primary_key = [tbl+"."+"Id"]
-
-        if table_query and tbl in table_query:
-            # push down single table condition
-            single_table_conditions = []
-            for non_key in table_query[tbl]:
-                condition = [-np.Infinity, np.Infinity]
-                for op in table_query[tbl][non_key]:
-                    val = table_query[tbl][non_key][op]
-                    if '<=' in op or '<' in op:
-                        condition[1] = val
-                    elif '>=' in op or '>' in op:
-                        condition[0] = val
-                    elif '==' in op or '=' in op:
-                        condition = [val-0.5, val+0.5]
-                    else:
-                        logger.error("unexpected operation")
-
-                con = SingleTablePushedDownCondition(
-                    tbl, default_primary_key, non_key, condition, to_join, None)
-                single_table_conditions.append(con)
-        else:
-            single_table_conditions = []
-            con = SingleTablePushedDownCondition(
-                tbl, default_primary_key, None, None, to_join, None)
-            single_table_conditions.append(con)
-        conditions[tbl] = single_table_conditions
-        return conditions
-
-    for tbl in join_keys:
-        # print(tbl)
-        # print(join_keys[tbl])
-        join_keyss = list(join_keys[tbl])
-        # print("join_keyss", join_keyss)
-        # prepare to_join condition
-        to_join = {}
-        for jk in join_keyss:
-            # logger.info("jk is %s", jk)
-            for join_condition in join_cond:
-                if jk in join_condition:
-                    to_j = join_condition.replace(
-                        jk, "").replace("=", "").replace(" ", "")
-                    # logger.info("to_j,%s", to_j)
-                    to_tbl, to_k = to_j.split(".")
-                    if to_tbl not in to_join:
-                        to_join[to_tbl] = []
-                    to_join[to_tbl].append(to_k)
-
-        if tbl in table_query:
-            # push down single table condition
-            single_table_conditions = []
-            for non_key in table_query[tbl]:
-                condition = [-np.Infinity, np.Infinity]
-                for op in table_query[tbl][non_key]:
-                    val = table_query[tbl][non_key][op]
-                    if '<=' in op or '<' in op:
-                        condition[1] = val
-                    elif '>=' in op or '>' in op:
-                        condition[0] = val
-                    elif '==' in op or '=' in op:
-                        condition = [val-0.5, val+0.5]
-                    else:
-                        logger.error("unexpected operation")
-
-                con = SingleTablePushedDownCondition(
-                    tbl, join_keyss, non_key, condition, to_join, None)
-                single_table_conditions.append(con)
-        else:
-            single_table_conditions = []
-            con = SingleTablePushedDownCondition(
-                tbl, join_keyss, None, None, to_join, None)
-            single_table_conditions.append(con)
-        conditions[tbl] = single_table_conditions
-    return conditions
-
-
-def process_push_down_conditions(models, conditions, join_cond, join_keys_lists, join_keys_domain, grid_size_x=2000, grid_size_y=1000):
+def process_push_down_conditions(models, conditions, join_cond, join_keys_grid: JoinKeysGrid, grid_size_x=2000, grid_size_y=1000):
     logger.info("conditions: %s", conditions)
     ps = {}
     for tbl in conditions:
         predictions_within_table = []
         for condition in conditions[tbl]:
             pred_p = process_push_down_condition(
-                models, condition, grid_size_x, grid_size_y, join_keys_lists, join_keys_domain)
+                models, condition, grid_size_x, grid_size_y, join_keys_grid)
             assert (pred_p is not None)
             predictions_within_table.append(pred_p)
 
@@ -504,11 +402,11 @@ def process_push_down_conditions(models, conditions, join_cond, join_keys_lists,
             conditions, predictions_within_table,)
         ps[tbl] = p
     pred = merge_predictions(ps, conditions, join_cond,
-                             join_keys_lists, join_keys_domain, grid_size_x)
+                             join_keys_grid, grid_size_x)
     return pred
 
 
-def process_push_down_condition(models: dict[str, TableContainer], condition: SingleTablePushedDownCondition, grid_size_x, grid_size_y, join_keys_lists, join_keys_domain):
+def process_push_down_condition(models: dict[str, TableContainer], condition: SingleTablePushedDownCondition, grid_size_x, grid_size_y, join_keys_grid: JoinKeysGrid):
     logger.debug("processing condition %s", condition)
     assert (len(condition.join_keys) == 1)
     jk = condition.join_keys[0].split(".")[1]
@@ -535,23 +433,24 @@ def process_push_down_condition(models: dict[str, TableContainer], condition: Si
     #     return pred
 
     idx = get_idx_in_lists(
-        condition.join_keys[0], join_keys_lists)  # TODO, here only one join key is supported
+        condition.join_keys[0], join_keys_grid.join_keys_lists)  # TODO, here only one join key is supported
     logger.info("key is %s", condition.join_keys[0])
-    logger.info("join_keys_lists %s", join_keys_lists)
+    logger.info("join_keys_lists %s", join_keys_grid.join_keys_lists)
     # exit()
     assert (idx >= 0)
-    jk_domain = join_keys_domain[idx]
+    jk_domain = join_keys_grid.join_keys_domain[idx]
     # SingleTablePushedDownCondition[comments]--join_keys[comments.UserId]--non_key[comments.Score]--condition[0, 10]--to_join[{'users': ['Id']}]]
     if condition.join_keys and condition.non_key:
         n_key = condition.non_key.split(".")[1]
         model: Column2d = models[condition.tbl].correlations[jk][n_key]
 
         # jk_domain = [model.min[0], model.max[0]]
-        nk_domain_data = [model.min[1], model.max[1]]
-        nk_domain_query = condition.non_key_condition
-        nk_domain = merge_domain(nk_domain_data, nk_domain_query)
+        nk_domain = Domain(model.min[1], model.max[1])
+        nk_domain_query = Domain(*condition.non_key_condition)
+        nk_domain.merge_domain(nk_domain_query)
         grid_x, width_x = np.linspace(*jk_domain, grid_size_x, retstep=True)
-        grid_y, width_y = np.linspace(*nk_domain, grid_size_y, retstep=True)
+        grid_y, width_y = np.linspace(
+            nk_domain.min, nk_domain.max, grid_size_y, retstep=True)
 
         pred = selectivity_array_two_columns(
             model, grid_x, grid_y, width_x, width_y)
@@ -585,7 +484,7 @@ def merge_single_table_predictions(conditions, predictions_within_table):
     return
 
 
-def merge_predictions(ps, conditions, join_cond, join_keys_lists, join_keys_domain, grid_size_1d):
+def merge_predictions(ps, conditions, join_cond, join_keys_grid: JoinKeysGrid, grid_size_1d):
     if not join_cond:
         k = list(ps.keys())[0]
         return np.sum(ps[k])
@@ -607,60 +506,16 @@ def merge_predictions(ps, conditions, join_cond, join_keys_lists, join_keys_doma
             logger.info('--sums is %s', np.sum(pred))
         else:
             pred = combine_selectivity_array(ps[t1], pred)
-    logger.info("join_keys_lists %s", join_keys_lists)
+    logger.info("join_keys_lists %s", join_keys_grid.join_keys_lists)
     # if not join_keys_lists:
     #     # single table
     #     return
-    idx = get_idx_in_lists(tk1, join_keys_lists)
+    idx = get_idx_in_lists(tk1, join_keys_grid.join_keys_lists)
     assert (idx >= 0)
-    domain = join_keys_domain[idx]
+    domain = join_keys_grid.join_keys_domain[idx]
     _, width = np.linspace(*domain, grid_size_1d, retstep=True)
     pred = np.sum(pred)*width
     return pred
-
-
-def calculate_push_down_join_keys_domain(conditions, join_cond, models: dict[str, TableContainer], tabls_all):
-    # note, selection on join key is not supported yet.
-    if join_cond is None:
-        # tbl = list(tabls_all.values())[0]
-        return None, None
-    # assert (join_cond is not None)
-    # if join_cond is None:
-    #     k = list(ps.keys())[0]
-    #     return np.sum(ps[k])
-    join_keys = []
-    join_keys_domain = []
-    join_cond_copy = join_cond.copy()
-    # logger.info("in merge_predictions")
-    # logger.info("len is %s", len(ps))
-    while len(join_cond_copy) > 0:
-        join_cond = join_cond_copy.pop()
-        tk1, tk2 = join_cond.replace(" ", "").split("=")
-        t1, k1 = tk1.split(".")
-        t2, k2 = tk2.split(".")
-        domain1 = [models[t1].pdfs[k1].min, models[t1].pdfs[k1].max]
-        domain2 = [models[t2].pdfs[k2].min, models[t2].pdfs[k2].max]
-        merged = merge_domain(domain1, domain2)
-
-        # check existence and update domain
-        idx1 = get_idx_in_lists(tk1, join_keys)
-        idx2 = get_idx_in_lists(tk2, join_keys)
-        if idx1 == -1 and idx2 == -1:
-            join_key_pair = [tk1, tk2]
-            join_keys.append(join_key_pair)
-            join_keys_domain.append(merged)
-        elif idx1 >= 0:
-            join_keys[idx1].append(tk2)
-            join_keys_domain[idx1] = merge_domain(
-                join_keys_domain[idx1], merged)
-        elif idx2 >= 0:
-            join_keys[idx2].append(tk1)
-            join_keys_domain[idx2] = merge_domain(
-                join_keys_domain[idx2], merged)
-        else:
-            logger.error(
-                "unexpected behavior as the join condition appear twice")
-    return join_keys, join_keys_domain
 
 
 def process_single_table_query(models: dict[str, TableContainer], conditions: list[SingleTablePushedDownCondition], grid_size_x, grid_size_y, use_column_model=True):
@@ -683,31 +538,30 @@ def process_single_table_query(models: dict[str, TableContainer], conditions: li
             # logger.info("models[tbl].pdfs %s", models[tbl].pdfs.keys())
             model: Column = models[tbl].pdfs[cond.non_key.split(".")[1]]
             # logger.info("model is %s", model)
-            domain_data = [model.min, model.max]
-            domain_query = cond.non_key_condition
-            domain_query[0] = domain_query[0]-0.5
-            domain_query[1] = domain_query[1]+0.5
-            domain = merge_domain(domain_data, domain_query)
+            domain = Domain(model.min, model.max)
+            domain_query = Domain(
+                cond.non_key_condition[0]-0.5, cond.non_key_condition[1]+0.5)
+            domain.merge_domain(domain_query)
 
-            grid_x, width = np.linspace(*domain, grid_size_x, retstep=True)
+            grid_x, width = np.linspace(
+                domain.min, domain.max, grid_size_x, retstep=True)
             pred = selectivity_array_single_column(model, grid_x, width)
             return np.sum(pred)*width*model.size
         else:
             model: Column2d = models[tbl].correlations["Id"][cond.non_key.split(".")[
                 1]]
             jk_domain = [model.min[0]-0.5, model.max[0]+0.5]
-            nk_domain_data = [model.min[1]-0.5, model.max[1]+0.5]
-            nk_domain_query = cond.non_key_condition
-            nk_domain_query[0] = nk_domain_query[0]-0.5
-            nk_domain_query[1] = nk_domain_query[1]+0.5
-            nk_domain = merge_domain(nk_domain_data, nk_domain_query)
+            nk_domain = Domain(model.min[1]-0.5, model.max[1]+0.5)
+            nk_domain_query = Domain(
+                cond.non_key_condition[0]-0.5, cond.non_key_condition[1]+0.5)
+            nk_domain.merge_domain(nk_domain_query)
             # logger.info("key domain %s", jk_domain)
             # logger.info("non_key domain %s", nk_domain)
 
             grid_x, width_x = np.linspace(
                 *jk_domain, grid_size_x, retstep=True)
             grid_y, width_y = np.linspace(
-                *nk_domain, grid_size_y, retstep=True)
+                nk_domain.min, nk_domain.max, grid_size_y, retstep=True)
             # logger.info("widthx is  %s", width_x)
             # logger.info("widthy is  %s", width_y)
 
@@ -742,15 +596,14 @@ def process_single_table_query(models: dict[str, TableContainer], conditions: li
             # logger.info("n_key is %s", models[tbl].correlations[jk])
             model2d: Column2d = models[tbl].correlations[jk][n_key]
 
-            nk_domain_data = [model2d.min[1], model2d.max[1]]
-            nk_domain_query = cond.non_key_condition
-            nk_domain_query[0] = nk_domain_query[0]-0.5
-            nk_domain_query[1] = nk_domain_query[1]+0.5
-            nk_domain = merge_domain(nk_domain_data, nk_domain_query)
+            nk_domain = Domain(model2d.min[1], model2d.max[1])
+            nk_domain_query = Domain(
+                cond.non_key_condition[0]-0.5, cond.non_key_condition[1]+0.5)
+            nk_domain.merge_domain(nk_domain_query)
             # nk_domain = [-0.5, 0.5]
 
             grid_y, width_y = np.linspace(
-                *nk_domain, grid_size_y, retstep=True)
+                nk_domain.min, nk_domain.max, grid_size_y, retstep=True)
             if pred_xy is None:
                 pred_xy = selectivity_array_two_columns(
                     model2d, grid_x, grid_y, width_x, width_y)
@@ -776,21 +629,115 @@ def process_single_table_query(models: dict[str, TableContainer], conditions: li
     return
 
 
-def get_idx_in_lists(k, lists):
-    for idx, ls in enumerate(lists):
-        if k in ls:
-            return idx
-    return -1
+def process_single_table_push_down_condition_for_join(models: dict[str, TableContainer], conditions: list[SingleTablePushedDownCondition], grid_size_x, grid_size_y, use_column_model=True):
+    # logger.info("conditions: %s", conditions)
+    # logger.info("len: %s", len(conditions))
+    assert (len(conditions) == 1)
+    tbl = list(conditions.keys())[0]
+    conds = conditions[tbl]
+    # logger.info("conds: %s", conds)
+    if len(conds) == 1:
 
+        cond = conds[0]
+        # no selection, simple cardinality, return n
+        # [SingleTablePushedDownCondition[badges]--join_keys[badges.Id]--non_key[None]--condition[None, None]--to_join[{}]]]
+        if cond.non_key is None:
+            return models[tbl].size
 
-def merge_domain(l1, l2):
-    return [max(l1[0], l2[0]), min(l1[1], l2[1])]
+        # one selection
+        if use_column_model:
+            # logger.info("models[tbl].pdfs %s", models[tbl].pdfs.keys())
+            model: Column = models[tbl].pdfs[cond.non_key.split(".")[1]]
+            # logger.info("model is %s", model)
+            domain = Domain(model.min, model.max)
+            domain_query = Domain(
+                cond.non_key_condition[0]-0.5, cond.non_key_condition[1]+0.5)
+            domain.merge_domain(domain_query)
 
+            grid_x, width = np.linspace(
+                domain.min, domain.max, grid_size_x, retstep=True)
+            pred = selectivity_array_single_column(model, grid_x, width)
+            return np.sum(pred)*width*model.size
+        else:
+            model: Column2d = models[tbl].correlations["Id"][cond.non_key.split(".")[
+                1]]
+            jk_domain = [model.min[0]-0.5, model.max[0]+0.5]
+            nk_domain = Domain(model.min[1]-0.5, model.max[1]+0.5)
+            domain_query = Domain(
+                cond.non_key_condition[0]-0.5, cond.non_key_condition[1]+0.5)
+            nk_domain.merge_domain(domain_query)
+            # logger.info("key domain %s", jk_domain)
+            # logger.info("non_key domain %s", nk_domain)
 
-class Domain:
-    def __init__(self, mins=-np.Infinity, maxs=np.Infinity) -> None:
-        self.min = mins
-        self.max = maxs
+            grid_x, width_x = np.linspace(
+                *jk_domain, grid_size_x, retstep=True)
+            grid_y, width_y = np.linspace(
+                nk_domain.min, nk_domain.max, grid_size_y, retstep=True)
+            # logger.info("widthx is  %s", width_x)
+            # logger.info("widthy is  %s", width_y)
+
+            pred = selectivity_array_two_columns(
+                model, grid_x, grid_y, width_x, width_y)
+            return np.sum(pred)*width_x*model.size
+
+    elif len(conds) > 1:
+        # tbl = list(conditions.keys())[0]
+        cond0 = conds[0]
+        jk = cond0.join_keys[0].split(".")[1]
+        # jk = None
+        # if 'Id' not in models[tbl].pdfs.keys():
+        #     for jkk in models[tbl].pdfs.keys():
+        #         if 'Id' in jkk:
+        #             jk = jkk
+        #             break
+        # logger.info("keys is %s", models[tbl].pdfs.keys())
+        jk_model = models[tbl].pdfs[jk]
+        jk_domain = [jk_model.min, jk_model.max]
+        # logger.info("x range is %s", jk_domain)
+        grid_x, width_x = np.linspace(
+            *jk_domain, grid_size_x, retstep=True)
+        pred_x = selectivity_array_single_column(jk_model, grid_x, width_x)
+        pred_xy = None
+        for cond in conds:
+            # logger.info("cond is %s", cond)
+            assert (cond.non_key is not None)
+            n_key = cond.non_key.split(".")[1]
+
+            # logger.info("n_key is %s", models[tbl].correlations[jk])
+            # logger.info("n_key is %s", models[tbl].correlations[jk])
+            model2d: Column2d = models[tbl].correlations[jk][n_key]
+
+            nk_domain = Domain(model2d.min[1], model2d.max[1])
+            nk_domain_query = Domain(
+                cond.non_key_condition[0]-0.5, cond.non_key_condition[1]+0.5)
+            nk_domain.merge_domain(nk_domain_query)
+            # nk_domain = [-0.5, 0.5]
+
+            grid_y, width_y = np.linspace(
+                nk_domain.min, nk_domain.max, grid_size_y, retstep=True)
+            if pred_xy is None:
+                pred_xy = selectivity_array_two_columns(
+                    model2d, grid_x, grid_y, width_x, width_y)
+                pred_xy = np.divide(pred_xy, pred_x)
+                # logger.info("111max, min and  average are %s, %s, %s ",
+                #             np.max(pred_xy), np.min(pred_xy), np.average(pred_xy))
+                # logger.info("y range is %s", nk_domain)
+                # logger.info("width is  %s", width_x)
+                # logger.info("temp p1 is %s", np.sum(pred_xy)*width_x)
+                # pred_xy = np.divide(pred_xy, pred_x)
+                # logger.info("2max, min and  average are %s, %s, %s ",
+                #             np.max(pred_xy), np.min(pred_xy), np.average(pred_xy))
+            else:
+                pred = selectivity_array_two_columns(
+                    model2d, grid_x, grid_y, width_x, width_y)
+                # logger.info("temp p3 is %s", np.sum(pred)*width_x)
+                pred = np.divide(pred, pred_x)
+                pred_xy = combine_selectivity_array(pred_xy, pred)
+                # logger.info("final shape is %s", len(pred_xy))
+                # logger.info("final shape is %s", pred_xy[0])
+        pred_xy = combine_selectivity_array(pred_xy, pred_x)
+        return np.sum(pred_xy)*width_x*jk_model.size
+    return
 
 
 def get_cartesian_cardinality(counters, tables_all):
