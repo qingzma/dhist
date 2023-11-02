@@ -38,7 +38,7 @@ setup(
     # },
     zip_safe=False,
     install_requires=[
-        'numpy', 'sqlparse', 'pandas', 'scikit-learn', 'scipy',  'matplotlib',
+        'numpy', 'sqlparse', 'pandas', 'scikit-learn', 'scipy',  'matplotlib', 'KDEpy'
     ],
     test_suite='nose.collector',
     tests_require=['nose'],
