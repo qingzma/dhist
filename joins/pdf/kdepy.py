@@ -176,6 +176,7 @@ if __name__ == "__main__":
     # plot1d(kde1d)
 
     # plt.title("Fast 2D computations\nusing binning and FFT", fontsize=12)
+
     n = 16
     def gen_random(n): return np.random.randn(n).reshape(-1, 1)
     data1 = np.concatenate((gen_random(n), gen_random(n)), axis=1)

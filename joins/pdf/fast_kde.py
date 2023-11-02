@@ -28,32 +28,76 @@ def get_linspace_centered(low: float, high: float, sz: int):
 class FastKde1D:
     def __init__(self, grid_size) -> None:
         self.grid_size = grid_size
-        self.grid_width = None
+        # self.grid_width = None
         self.low = None
         self.high = None
-        self.grid = None
+        # self.grid = None
         self.size = None
         self.kde = None
+        self.background_noise = None
 
     def fit(self, x) -> None:
-        # if isinstance(x, pd.DataFrame):
-        #     self.fit_pd(x)
-        #     return
-        # if isinstance(x, np.ndarray):
-        #     self.fit_numpy(x)
-        #     return
+        if isinstance(x, pd.DataFrame):
+            self.fit_pd(x)
+            return
+        if isinstance(x, np.ndarray):
+            self.fit_numpy(x)
+            return
 
-        # if isinstance(x, list):
-        #     self.fit_numpy(x)
-        #     return
+        if isinstance(x, list):
+            self.fit_list(x)
+            return
         print("other data format is not supported yet.")
         return
+
+    def fit_pd(self, df: pd.DataFrame):
+        """_summary_
+
+        Args:
+            x (pd.DataFrame): first column be x, second column be y
+        """
+        self.size = df.size
+        self.low = df.min().to_numpy()[0]
+        self.high = df.max().to_numpy()[0]
+        column = list(df.columns)[0]
+
+        grid_x, _ = get_linspace_centered(
+            self.low, self.high, self.grid_size)
+        df[column] = pd.cut(
+            df[column], bins=grid_x, labels=grid_x[:-1])  # , labels=self.grid_x[:-1]
+
+        counts = df.groupby([column],
+                            observed=False).size().to_numpy()  # [['x', 'y']].count()  .size()
+
+        xx, wx = np.linspace(
+            self.low, self.high, self.grid_size-1, retstep=True)
+
+        ps = np.divide(counts, self.size*wx)
+
+        self.background_noise = 1/self.size/wx
+
+        self.kde = PchipInterpolator(xx, ps)
+
+    def fit_numpy(self, x: np.ndarray):
+        df = pd.DataFrame(x, columns=['x'])
+        self.fit_pd(df)
+
+    def fit_list(self, x: list):
+        dat = np.array(x)
+        self.fit_numpy(dat)
+
+    def predict(self, x):
+        res = self.kde(x)
+        # res[np.logical_and(res < self.background_noise, res > 0)] = 0
+        res[res < self.background_noise] = 0
+        return res
 
 
 class FastKde2D:
     def __init__(self, grid_size_x, grid_size_y) -> None:
         self.grid_size_x = grid_size_x
         self.grid_size_y = grid_size_y
+        self.background_noise = None
         # self.grid_width_x = None
         # self.grid_width_y = None
         self.low = None
@@ -69,7 +113,9 @@ class FastKde2D:
 
     def predict_grid(self, x_grid, y_grid):
         X, Y = np.meshgrid(x_grid, y_grid, indexing='ij')
-        return self.kde((X, Y))
+        res = self.kde((X, Y))
+        res[res < self.background_noise] = 0
+        return res
 
     def fit(self, x) -> None:
         if isinstance(x, pd.DataFrame):
@@ -80,7 +126,7 @@ class FastKde2D:
             return
 
         if isinstance(x, list):
-            self.fit_numpy(x)
+            self.fit_list(x)
             return
         print("other data format is not supported yet.")
         return
@@ -113,6 +159,7 @@ class FastKde2D:
         yy, wy = np.linspace(self.low[1], self.high[1],
                              self.grid_size_y-1, retstep=True)
         ps = np.divide(counts, self.size*wx*wy)
+        self.background_noise = 1.0/self.size/wx/wy
 
         self.kde = RegularGridInterpolator((xx, yy), ps)
 
@@ -133,6 +180,13 @@ class FastKde2D:
         self.fit_numpy(dat)
 
 
+def plot1d(kde):
+    x = np.linspace(kde.low, kde.high,  2**8)
+    p = kde.predict(x)
+    plt.plot(x, p, c='r')
+    plt.show()
+
+
 def plot2d(kde):
     fig = plt.figure()
     ax = fig.gca()
@@ -150,18 +204,16 @@ def plot2d(kde):
 
 
 if __name__ == "__main__":
-    # n = 15
-    # data = np.concatenate((np.random.randn(n), np.random.randn(n) + 10))
-    # kde1d = KdePy1D()
-    # kde1d.fit(data)
-    # print(min(data), max(data))
-    # x = np.linspace(6, 8, 2**8)
+    n = 1000000
+    data = np.concatenate((np.random.randn(n), np.random.randn(n) + 10))
+    kde1d = FastKde1D(2**12)
+    kde1d.fit(data)
+    print(min(data), max(data))
+    # x = np.linspace(-5, 15, 2**8)
     # p = kde1d.predict(x)
     # plt.plot(x, p, c='r')
-    # x, p = FFTKDE(bw="ISJ").fit(data)(2**8)
-    # plt.scatter(x, p)
     # plt.show()
-    # plot1d(kde1d)
+    plot1d(kde1d)
 
     # plt.title("Fast 2D computations\nusing binning and FFT", fontsize=12)
     n = 300000
