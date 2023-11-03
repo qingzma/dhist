@@ -627,13 +627,13 @@ def process_single_table_query(models: dict[str, TableContainer], conditions: li
                 nk_domain.min, nk_domain.max, grid_size_y, retstep=True)
             if pred_xy is None:
                 if use_cdf:
-                    logger.warning("grid x is %s",grid_x)
+                    # logger.warning("grid x is %s",grid_x)
                     logger.warning("domain is %s,%s",nk_domain.min,nk_domain.max)
                     pred_xy = model2d.pdf.predict_grid_with_y_range(grid_x,nk_domain)
                 else:
                     pred_xy = selectivity_array_two_columns(
                         model2d, grid_x, grid_y, width_x, width_y)
-                logger.warning("pxy is %s",pred_xy)
+                # logger.warning("pxy is %s",pred_xy)
                 logger.warning("sum is %s",np.sum(pred_xy))
                 pred_xy = np.divide(pred_xy, pred_x, out=np.zeros_like(
                     pred_xy), where=pred_x != 0)
