@@ -118,7 +118,7 @@ class FastKde2D:
         if not domain.right:
             h -= 0.05
         
-        ps = self.predict_grid(x_grid, np.array([l,h]))
+        ps = self.predict_grid(np.array([l,h]),x_grid)
         # p_h = self.predict_grid(x_grid, [h])
         if b_plot:
             plot2d(self)
@@ -129,8 +129,9 @@ class FastKde2D:
         return ps[:,1]-ps[:,0]
 
     def predict_grid(self, x_grid, y_grid):
-        X, Y = np.meshgrid(x_grid, y_grid, indexing='ij')
-        res = self.kde((X, Y))
+        X,Y = np.meshgrid(x_grid, y_grid,indexing='ij')
+        
+        res = self.kde((Y, X))
         res[res < self.background_noise] = 0
         return res
 
@@ -159,31 +160,47 @@ class FastKde2D:
         self.max = df.max().to_numpy()
         columns = list(df.columns)
 
+        width_x = (self.max[0]-self.min[0])/(self.grid_size_x-1)
+        width_y = (self.max[1]-self.min[1])/(self.grid_size_x-1)
         grid_x, _ = get_linspace_centered(
-            self.min[0], self.max[0], self.grid_size_x)
+            self.min[0]-0.5*width_x, self.max[0]+0.5*width_x, self.grid_size_x+1)
         grid_y, _ = get_linspace_centered(
-            self.min[1], self.max[1], self.grid_size_y)
+            self.min[1]-0.5*width_y, self.max[1]+0.5*width_y, self.grid_size_y+1)
+        print("widthx was ", width_x)
+        print("original grid_x is ", grid_x)
+        print("original grid_y is ", grid_y)
         df[columns[0]] = pd.cut(
-            df[columns[0]], bins=grid_x, labels=grid_x[:-1])  # , labels=self.grid_x[:-1]
+            df[columns[0]], bins=grid_x, )  # , labels=grid_x[:-1]
         df[columns[1]] = pd.cut(
-            df[columns[1]], bins=grid_y, labels=grid_y[:-1])  # , labels=grid_y[:-1]
+            df[columns[1]], bins=grid_y, )  # , labels=grid_y[:-1]
+        
+        counts1 = df.groupby([columns[1],columns[0]], #[columns[0],columns[1]]
+                            observed=False).size()
+        print("counts1\n",counts1)
 
-        counts = df.groupby(columns,
+        counts = df.groupby([columns[1],columns[0]],
                             observed=False).size().unstack().to_numpy()  # [['x', 'y']].count()  .size()
+        print("first row is ", counts[0,:])
+        print("counts before is\n", counts)
         if self.cumulative:
             counts = np.cumsum(counts, axis=0)
-        # print("counts is ", counts)
-        # print("sum of count is ", np.sum(counts))
+        print("counts is\n", counts)
+        print("sum of count is ", np.sum(counts))
         # print("table is ", self.size)
         xx, wx = np.linspace(
-            self.min[0], self.max[0], self.grid_size_x-1, retstep=True)
+            self.min[0], self.max[0], self.grid_size_x, retstep=True)
         yy, wy = np.linspace(self.min[1], self.max[1],
-                             self.grid_size_y-1, retstep=True)
+                             self.grid_size_y, retstep=True)
         ps = np.divide(counts, self.size*wx*wy)
-        print("sum is ", np.sum(ps[-1])*wx*wy)
+        print("width x is ", wx)
+        print("sum is ", np.sum(ps[-1,:])*wx*wy)
         self.background_noise = 1.0/self.size/wx/wy
-
-        self.kde = RegularGridInterpolator((xx, yy), ps)
+        
+        print("x_grid is ", xx)
+        print("y_grid is ", yy)
+        
+        self.kde = RegularGridInterpolator((yy, xx), ps)
+        print("self.kde.grid is ", self.kde.grid)
 
     def fit_numpy(self, x: np.ndarray):
         df = pd.DataFrame(x, columns=['x', 'y'])
@@ -229,29 +246,31 @@ if __name__ == "__main__":
     # # plt.show()
     # plot1d(kde1d)
 
-    n = 3000
-    def gen_random(n): return np.random.randn(n).reshape(-1, 1)
-    data1 = np.concatenate((gen_random(n)-0.5, gen_random(n)-0.5), axis=1)
-    data2 = np.concatenate((gen_random(n) +3.5, gen_random(n) + 7.5), axis=1)
-    data = np.concatenate((data1, data2))
-    # print(data)
+    # n = 3000
+    # def gen_random(n): return np.random.randn(n).reshape(-1, 1)
+    # data1 = np.concatenate((gen_random(n)-0.5, gen_random(n)-0.5), axis=1)
+    # data2 = np.concatenate((gen_random(n) +3.5, gen_random(n) + 7.5), axis=1)
+    # data = np.concatenate((data1, data2))
+    # # print(data)
 
-    kde2d = FastKde2D(500, 100, cumulative=True)
-    kde2d.fit(data)
+    # kde2d = FastKde2D(500, 100, cumulative=True)
+    # kde2d.fit(data)
 
-    xx, yy = np.linspace(1, 2, 5), np.linspace(4, 6, 10)
-    ps = kde2d.predict_grid(xx, yy)
-    print(ps)
-    domain = Domain(0.5, 1, True, True)
-    pss = kde2d.predict_grid_with_y_range(xx, domain)
-    print("pss is ", pss)
-    kde2d.predict([1, 2])
-    plot2d(kde2d)
+    # xx, yy = np.linspace(1, 2, 3), np.linspace(4, 6, 4)
+    # ps = kde2d.predict_grid(xx, yy)
+    # print("xx",xx)
+    # print("yy",yy)
+    # print("ps",ps)
+    # domain = Domain(0.5, 1, True, True)
+    # pss = kde2d.predict_grid_with_y_range(xx, domain)
+    # print("pss is ", pss)
+    # kde2d.predict([1, 2])
+    # plot2d(kde2d)
 
-    # data = [[1, 2],
-    #         [1, 3],
-    #         [2, 3],
-    #         [4, 5],
+    data = [[1, 2],
+            [1, 3],
+            [2, 3],
+            [4, 5],]
     #         [1, 2],
     #         [1, 3],
     #         [2, 3],
@@ -272,8 +291,8 @@ if __name__ == "__main__":
     #         [1, 3],
     #         [2, 3],
     #         [4, 5]]
-    # kde2d = FastKde2D(4,6,cumulative=True)
-    # kde2d.fit(data)
-    # domain = Domain(0.8, 4.2, True, True)
-    # kde2d.predict_grid_with_y_range([2],domain,b_plot=True)
-    # plot2d(kde2d)
+    kde2d = FastKde2D(3,4,cumulative=True)
+    kde2d.fit(data)
+    domain = Domain(3, 4.2, True, True)
+    # kde2d.predict_grid_with_y_range([1,4],domain,b_plot=True)
+    plot2d(kde2d)
