@@ -186,18 +186,19 @@ class FastKde2D:
         df[columns[1]] = pd.cut(
             df[columns[1]], bins=grid_y, )  # , labels=grid_y[:-1]
 
-        counts1 = df.groupby(columns,  # [columns[0],columns[1]]
-                             observed=False).size()
+        # counts1 = df.groupby(columns,  # [columns[0],columns[1]]
+        #                      observed=False).size()
         # print("counts1\n",counts1)
 
         counts = df.groupby(columns,
                             observed=False).size().unstack().to_numpy()  # [['x', 'y']].count()  .size()
         # print("first row is ", counts[0,:])
-        # print("counts before is\n", counts)
+        print("counts before is\n", counts)
         if self.cumulative:
             counts = np.cumsum(counts, axis=1)
-        # print("counts is\n", counts)
-        # print("sum of count is ", np.sum(counts))
+        print("counts is\n", counts)
+        print("sum of count is ", np.sum(counts))
+        print("sum of last count is ", np.sum(counts[-1, :]))
         # print("table is ", self.size)
         xx, wx = np.linspace(
             self.min[0], self.max[0], self.grid_size_x, retstep=True)
@@ -205,6 +206,9 @@ class FastKde2D:
             yy = unique_y
             # print("y grid is now ", unique_y)
             ps = np.divide(counts, self.size*wx)
+            print("sum is ", np.sum(ps[:, -1])*wx)
+            print("corresponding xx is ", xx)
+            print("corresponding yy is ", yy)
             self.background_noise = 1.0/self.size/wx
             # print("background_noise is now ", self.background_noise)
         else:
@@ -212,10 +216,11 @@ class FastKde2D:
                                  self.grid_size_y, retstep=True)
             ps = np.divide(counts, self.size*wx*wy)
             # print("width x is ", wx)
-            # print("sum is ", np.sum(ps[-1,:])*wx*wy)
+            print("sum is ", np.sum(ps[:, -1])*wx*wy)
             self.background_noise = 1.0/self.size/wx/wy
 
-        # print("x_grid is ", xx)
+        print("x_grid is ", xx)
+        print("widthx is ", wx)
         # print("y_grid is ", yy)
 
         self.kde = RegularGridInterpolator((xx, yy), ps, fill_value=0)
@@ -289,30 +294,33 @@ if __name__ == "__main__":
     data = [[1, 2],
             [1, 3],
             [2, 3],
-            [4, 5],
-            [1, 2],
-            [1, 3],
-            [2, 3],
-            [4, 5],
-            [1, 2],
-            [1, 3],
-            [2, 3],
-            [4, 5],
-            [1, 2],
-            [1, 3],
-            [2, 3],
-            [4, 5],
-            [1, 2],
-            [1, 3],
-            [2, 3],
-            [4, 5],
-            [1, 2],
-            [1, 3],
-            [2, 3],
-            [4, 5]]
+            [4, 5],]
+    # [1, 2],
+    # [1, 3],
+    # [2, 3],
+    # [4, 5],
+    # [1, 2],
+    # [1, 3],
+    # [2, 3],
+    # [4, 5],
+    # [1, 2],
+    # [1, 3],
+    # [2, 3],
+    # [4, 5],
+    # [1, 2],
+    # [1, 3],
+    # [2, 3],
+    # [4, 5],
+    # [1, 2],
+    # [1, 3],
+    # [2, 3],
+    # [4, 5]]
 
     kde2d = FastKde2D(2, 3, cumulative=False, y_is_categorical=True)
     kde2d.fit(data)
-    domain = Domain(3, 4.2, True, True)
-    # kde2d.predict_grid_with_y_range([1, 4], domain, b_plot=False)
-    plot2d(kde2d)
+    res = kde2d.predict_grid([1,  4], [5])
+    print("sum is ", np.sum(res))
+    domain = Domain(3, 5, True, True)
+    # res = kde2d.predict_grid_with_y_range([1, 2, 4], domain, b_plot=False)
+    print(res)
+    # plot2d(kde2d)
