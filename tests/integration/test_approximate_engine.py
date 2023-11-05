@@ -16,7 +16,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
 
     def __init__(self, methodName: str = "runTest") -> None:
         super().__init__(methodName)
-        self.model_name = "model_stats_gaussian_1000"
+        self.model_name = "model_stats_gaussian_100"
         self.use_pushed_down = True
         arguments = ["--train", "--grid", "1000",
                      "--kernel", "gaussian", "--cdf"]  # "--cdf"
