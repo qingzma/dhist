@@ -6,11 +6,12 @@ from joins.base_logger import logger
 
 
 class Domain:
-    def __init__(self, mins=-np.Infinity, maxs=np.Infinity, left=False, right=True) -> None:
+    def __init__(self, mins=-np.Infinity, maxs=np.Infinity, left=False, right=True, is_categorical=True) -> None:
         self.min = mins
         self.max = maxs
         self.left = left
         self.right = right
+        self.is_categorical = is_categorical
 
     def merge_domain(self, d1):
         if d1.min > self.min:
@@ -133,15 +134,23 @@ def generate_push_down_conditions(tables_all, table_query, join_cond, join_keys)
             # push down single table condition
             single_table_conditions = []
             for non_key in table_query[tbl]:
-                condition = [-np.Infinity, np.Infinity]
+                condition = Domain(-np.Infinity, np.Infinity)
                 for op in table_query[tbl][non_key]:
                     val = table_query[tbl][non_key][op]
-                    if '<=' in op or '<' in op:
-                        condition[1] = val
-                    elif '>=' in op or '>' in op:
-                        condition[0] = val
+                    if '<=' in op:
+                        condition.max = val
+                        condition.right = True
+                    elif '<' in op:
+                        condition.max = val
+                        condition.right = False
+                    elif '>=' in op:
+                        condition.min = val
+                        condition.left = True
+                    elif '>' in op:
+                        condition.min = val
+                        condition.left = False
                     elif '==' in op or '=' in op:
-                        condition = [val-0.5, val+0.5]
+                        condition = [val, val, True, True]
                     else:
                         logger.error("unexpected operation")
 
