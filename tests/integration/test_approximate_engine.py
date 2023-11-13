@@ -16,9 +16,9 @@ class TestApproximateEngineMethod(unittest.TestCase):
 
     def __init__(self, methodName: str = "runTest") -> None:
         super().__init__(methodName)
-        self.model_name = "model_stats_gaussian_100"
+        self.model_name = "model_stats_gaussian_100_cdf"
         self.use_pushed_down = True
-        arguments = ["--train", "--grid", "1000",
+        arguments = ["--train", "--grid", "100",
                      "--kernel", "gaussian", "--cdf"]  # "--cdf"
         self.args = parse_args(arguments)
     # train needed models
@@ -26,8 +26,8 @@ class TestApproximateEngineMethod(unittest.TestCase):
     # @classmethod
     # def setUpClass(cls):
     #     # ['biweight', 'box', 'cosine', 'epa', 'exponential', 'gaussian', 'tri', 'tricube', 'triweight']
-    #     arguments = ["--train", "--grid", "1000",
-    #                  "--kernel", "gaussian", ]  # "--cdf"
+    #     arguments = ["--train", "--grid", "100",
+    #                  "--kernel", "gaussian", "--cdf"]  # "--cdf"
     #     args = parse_args(arguments)
     #     train_stats(args)
 
@@ -54,23 +54,8 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #     logger.info("time cost is %.5f s.", t2-t1)
     #     self.assertTrue(q_error(res, truth) < 1.01)
 
-    # def test_single_table_1_selection(self):
-    #     query = "SELECT COUNT(*) FROM posts as p WHERE p.AnswerCount>=0 AND p.AnswerCount<=4"
-    #     with open("models/"+self.model_name+".pkl", 'rb') as f:
-    #         model = pickle.load(f)
-    #     engine = ApproximateEngine(model,use_cdf=self.args.cdf)
-    #     t1 = time.time()
-    #     res = engine.query_with_pushed_down(
-    #         query) if self.use_pushed_down else engine.query(query)
-    #     t2 = time.time()
-    #     truth = 42238
-    #     logger.info("result %.6E", res)
-    #     logger.info("truth %.6E", truth)
-    #     logger.info("time cost is %.5f s.", t2-t1)
-    #     self.assertTrue(q_error(res, truth) < 3)
-
-    def test_single_table_2_selections(self):
-        query = "SELECT COUNT(*) FROM posts as p WHERE p.AnswerCount>=0 AND p.AnswerCount<=4 AND p.CommentCount>=0 AND p.CommentCount<=17"
+    def test_single_table_1_selection(self):
+        query = "SELECT COUNT(*) FROM posts as p WHERE p.AnswerCount>=0 AND p.AnswerCount<=4"
         with open("models/"+self.model_name+".pkl", 'rb') as f:
             model = pickle.load(f)
         engine = ApproximateEngine(model, use_cdf=self.args.cdf)
@@ -78,11 +63,26 @@ class TestApproximateEngineMethod(unittest.TestCase):
         res = engine.query_with_pushed_down(
             query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
-        truth = 42172
+        truth = 42238
         logger.info("result %.6E", res)
         logger.info("truth %.6E", truth)
         logger.info("time cost is %.5f s.", t2-t1)
-        self.assertTrue(q_error(res, truth) < 5)
+        self.assertTrue(q_error(res, truth) < 3)
+
+    # def test_single_table_2_selections(self):
+    #     query = "SELECT COUNT(*) FROM posts as p WHERE p.AnswerCount>=0 AND p.AnswerCount<=4 AND p.CommentCount>=0 AND p.CommentCount<=17"
+    #     with open("models/"+self.model_name+".pkl", 'rb') as f:
+    #         model = pickle.load(f)
+    #     engine = ApproximateEngine(model, use_cdf=self.args.cdf)
+    #     t1 = time.time()
+    #     res = engine.query_with_pushed_down(
+    #         query) if self.use_pushed_down else engine.query(query)
+    #     t2 = time.time()
+    #     truth = 42172
+    #     logger.info("result %.6E", res)
+    #     logger.info("truth %.6E", truth)
+    #     logger.info("time cost is %.5f s.", t2-t1)
+    #     self.assertTrue(q_error(res, truth) < 5)
 
     # def test_single_table_2_selections_1(self):
     #     query = "SELECT COUNT(*) FROM users as u WHERE u.DownVotes<=0 AND u.UpVotes>=0 AND u.UpVotes<=123"

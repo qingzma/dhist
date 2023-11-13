@@ -34,7 +34,7 @@ def get_linspace_centered(low: float, high: float, sz: int):
 
 
 class FastKde1D:
-    def __init__(self, grid_size, cumulative=False, is_categorical=True) -> None:
+    def __init__(self, grid_size, cumulative=True, is_categorical=True) -> None:
         self.grid_size = grid_size
         # self.grid_width = None
         self.min = None
@@ -127,8 +127,22 @@ class FastKde1D:
         res[res < self.background_noise] = 0
         return res
 
-    def predict_domain(self, domain):
-        pass
+    def predict_domain(self, domain: Domain):
+        assert (self.cumulative)
+        l = domain.min
+        h = domain.max
+
+        # support  (l, h) seamlessly, [1,1] is treated as (0,2)
+        if domain.left:
+            l -= 1
+        if domain.right:
+            h += 1
+        try:
+            ps = self.predict(np.array([l, h]))
+        except Exception:
+            print("error, out of bound, pls restore lower and uppper bound.")
+            exit()
+        return ps[1]-ps[0]
 
 
 class FastKde2D:

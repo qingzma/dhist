@@ -46,6 +46,8 @@ def train_stats(args):
     model_name = f"model_{dataset}_{kernel}_{grid}"
     model_container['name'] = model_name
     model_container['schema'] = schema
+    if args.cdf:
+        model_name += "_cdf"
     model_path = os.path.join(
         model_folder, f"{model_name}.pkl")
     with open(model_path, 'wb') as f:

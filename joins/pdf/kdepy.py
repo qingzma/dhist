@@ -76,10 +76,11 @@ class KdePy2D:
             x, p = FFTKDE(bw=10, kernel=kernel).fit(
                 x)((grid_size, grid_size))
             xx, yy = np.unique(x[:, 0]), np.unique(x[:, 1])
-            self.min = [xx[0], yy[0]]
-            self.max = [xx[-1], yy[-1]]
+
             width_x = xx[1]-xx[0]
             width_y = yy[1]-yy[0]
+        self.min = [xx[0], yy[0]]
+        self.max = [xx[-1], yy[-1]]
 
         sums = np.sum(p)*width_x*width_y
         p = p/sums
@@ -177,18 +178,18 @@ if __name__ == "__main__":
 
     # plt.title("Fast 2D computations\nusing binning and FFT", fontsize=12)
 
-    n = 16
+    n = 6
     def gen_random(n): return np.random.randn(n).reshape(-1, 1)
     data1 = np.concatenate((gen_random(n), gen_random(n)), axis=1)
     data2 = np.concatenate((gen_random(n) + 1, gen_random(n) + 4), axis=1)
     data = np.concatenate((data1, data2))
-    # print(data)
+    print(data)
 
     kde2d = KdePy2D()
     kde2d.fit(data)
     xxx, p = FFTKDE(bw=1).fit(data)((2**8, 2**8))
     xx, yy = np.unique(xxx[:, 0]), np.unique(xxx[:, 1])
-    ps = kde2d.predict_grid(xx, yy)
-    print(ps)
+    # ps = kde2d.predict_grid(xx, yy)
+    # print(ps)
     kde2d.predict([1, 2])
     plot2d(kde2d)

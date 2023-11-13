@@ -21,6 +21,21 @@ class Domain:
             self.max = d1.max
             self.right = d1.right
 
+    def __str__(self) -> str:
+        low = ""
+        if self.left:
+            low += "["
+        else:
+            low += "("
+
+        high = ""
+        if self.right:
+            high += "]"
+        else:
+            high += ")"
+
+        return f"{low}{self.min}, {self.max}{high}"
+
 
 class JoinKeyGrid:
     def __init__(self, low, high, grid_size) -> None:

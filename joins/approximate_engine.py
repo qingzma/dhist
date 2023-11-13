@@ -552,14 +552,19 @@ def process_single_table_query(models: dict[str, TableContainer], conditions: li
 
         # one selection
         if use_column_model:
-            # logger.info("models[tbl].pdfs %s", models[tbl].pdfs.keys())
-            model: Column = models[tbl].pdfs[cond.non_key.split(".")[1]]
+            logger.info("models[tbl].pdfs %s", models[tbl].pdfs.keys())
+            model: Column = models[tbl].cdfs[cond.non_key.split(
+                ".")[1]] if models[tbl].use_cdf else models[tbl].pdfs[cond.non_key.split(".")[1]]
             # logger.info("model is %s", model)
             domain = Domain(model.min, model.max)
-            domain_query = Domain(
-                cond.non_key_condition[0]-0.5, cond.non_key_condition[1]+0.5)
+            domain_query = cond.non_key_condition
             domain.merge_domain(domain_query)
 
+            if models[tbl].use_cdf:
+                pred = model.pdf.predict_domain(domain)
+                # print("pred is ", pred)
+                # exit()
+                return pred*model.size
             grid_x, width = np.linspace(
                 domain.min, domain.max, grid_size_x, retstep=True)
             pred = selectivity_array_single_column(model, grid_x, width)
@@ -636,7 +641,7 @@ def process_single_table_query(models: dict[str, TableContainer], conditions: li
                 else:
                     pred_xy = selectivity_array_two_columns(
                         model2d, grid_x, grid_y, width_x, width_y)
-                logger.info("pred_xy is %s", pred_xy)
+                # logger.info("pred_xy is %s", pred_xy)
                 # logger.warning("pxy is %s",pred_xy)
                 logger.warning("sum is %s", np.sum(pred_xy))
                 pred_xy = np.divide(pred_xy, pred_x, out=np.zeros_like(
@@ -654,7 +659,7 @@ def process_single_table_query(models: dict[str, TableContainer], conditions: li
                 pred_xy = combine_selectivity_array(pred_xy, pred)
                 # logger.info("final shape is %s", len(pred_xy))
                 # logger.info("final shape is %s", pred_xy[0])
-        pred_xy = combine_selectivity_array(pred_xy, pred_x)
+            pred_xy = combine_selectivity_array(pred_xy, pred_x)
         return np.sum(pred_xy)*width_x*jk_model.size
     return
 
@@ -720,7 +725,7 @@ def process_single_table_push_down_condition_for_join(tbl: str, models: dict[str
             pred_xy = combine_selectivity_array(pred_xy, pred)
             # logger.info("final shape is %s", len(pred_xy))
             # logger.info("final shape is %s", pred_xy[0])
-    pred_xy = combine_selectivity_array(pred_xy, pred_x)
+        pred_xy = combine_selectivity_array(pred_xy, pred_x)
     # return np.sum(pred_xy)*width_x*jk_model.size
     return pred_xy, width_x
 

@@ -17,14 +17,20 @@ class TableContainer:
         self.size = None
         self.file_path = None
         self.pdfs = dict()
+        self.cdfs = dict()
         self.correlations = dict()
+        self.correlations_cdf = dict()
         self.efficients = dict()
+        self.use_cdf = False
 
     def fit(self, file, join_keys, relevant_keys, exclude=None, use_2d_model=True, args=None) -> None:
         df = pd.read_csv(file, sep=',')
         self.size = df.shape[0]
         self.file_path = file
         self.name = file.split('/')[-1].split('.')[0]
+
+        if args.cdf:
+            self.use_cdf = args.cdf
 
         # currently only support at most 1 join keys in a table
         # print("join_keys", join_keys)
@@ -41,7 +47,10 @@ class TableContainer:
             df_col = df[relev_key].fillna(-1)  # replace NULL with -1 !
             column = Column()
             column.fit(df_col, self.name, args=args)
-            self.pdfs[relev_key] = column
+            if args.cdf:
+                self.cdfs[relev_key] = column
+            else:
+                self.pdfs[relev_key] = column
         # else:
         # replace NULL with -1 !
         # df[list(join_keys)] = df[list(join_keys)].fillna(-1)
@@ -76,9 +85,14 @@ class TableContainer:
                                     self.name, args=args)
                         # if t not in self.correlations:
                         #     self.correlations[t] = dict()
-                        if join_key not in self.correlations:
-                            self.correlations[join_key] = dict()
-                        self.correlations[join_key][relevant_key] = columns
+                        if args.cdf:
+                            if join_key not in self.correlations_cdf:
+                                self.correlations_cdf[join_key] = dict()
+                            self.correlations_cdf[join_key][relevant_key] = columns
+                        else:
+                            if join_key not in self.correlations:
+                                self.correlations[join_key] = dict()
+                            self.correlations[join_key][relevant_key] = columns
         # exit()
 
 
@@ -110,7 +124,7 @@ class Column:
         elif method == "nflow":
             logger.warning("1d nflow is not implemented yet")
         elif method == "fast":
-            kde = FastKde1D(grid_size=args.grid)
+            kde = FastKde1D(grid_size=args.grid, cumulative=args.cdf)
             kde.fit(df_column.to_numpy().reshape(-1, 1))
             self.pdf = kde
             if args.plot:
