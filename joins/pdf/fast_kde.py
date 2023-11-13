@@ -180,19 +180,30 @@ class FastKde2D:
         if b_plot:
             plot2d(self)
 
-        if (abs(h-l) < 1e-5):
-            ps = self.predict_grid(x_grid, np.array([l]))
-            return ps
-        else:
+        # support  (l, h) seamlessly, [1,1] is treated as (0,2)
+        if domain.left:
+            l -= 1
+        if domain.right:
+            h += 1
+        try:
             ps = self.predict_grid(x_grid, np.array([l, h]))
-            return ps[1, :]-ps[0, :]
-            return ps[1, :]-ps[0, :]
-        # p_h = self.predict_grid(x_grid, [h])
-
-        # print("ps is ", ps)
-        # print("----low is %s: %s",l,p_l)
-        # print("----high is %s: %s",h,p_h)
-        # return np.subtract(p_h, p_l).reshape(1, -1)[0]
+        except ValueError:
+            try:
+                hh = h - 1
+                ps = self.predict_grid(x_grid, np.array([l, hh]))
+                print("try to  restore  uppper bound to fix issue.")
+            except ValueError:
+                ll = l+1
+                ps = self.predict_grid(x_grid, np.array([ll, h]))
+                print("try to  restore  lower bound to fix issue.")
+            # exit()
+        return ps[1]-ps[0]
+        # if (abs(h-l) < 1e-5):
+        #     ps = self.predict_grid(x_grid, np.array([l]))
+        #     return ps
+        # else:
+        #     ps = self.predict_grid(x_grid, np.array([l, h]))
+        #     return ps[1, :]-ps[0, :]
 
     def predict_grid(self, x_grid, y_grid, b_plot=False):
         if b_plot:

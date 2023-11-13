@@ -620,7 +620,10 @@ def process_single_table_query(models: dict[str, TableContainer], conditions: li
 
             # logger.info("n_key is %s", models[tbl].correlations[jk])
             # logger.info("n_key is %s", models[tbl].correlations[jk])
-            model2d: Column2d = models[tbl].correlations[jk][n_key]
+            # model: Column = models[tbl].cdfs[cond.non_key.split(
+            #     ".")[1]] if models[tbl].use_cdf else models[tbl].pdfs[cond.non_key.split(".")[1]]
+            model2d: Column2d = models[tbl].correlations_cdf[jk][n_key] if models[
+                tbl].use_cdf else models[tbl].correlations[jk][n_key]
 
             nk_domain = Domain(model2d.min[1], model2d.max[1], True, True)
             nk_domain_query = cond.non_key_condition

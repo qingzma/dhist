@@ -81,14 +81,26 @@ class TableContainer:
                         d = df[[join_key, relevant_key]].fillna(-1)
                         # print(d)
                         # exit()
-                        columns.fit(d,
-                                    self.name, args=args)
+
                         # if t not in self.correlations:
                         #     self.correlations[t] = dict()
                         if args.cdf:
+                            columns.fit(d,
+                                        self.name, args=args)
                             if join_key not in self.correlations_cdf:
                                 self.correlations_cdf[join_key] = dict()
                             self.correlations_cdf[join_key][relevant_key] = columns
+
+                            # args.cdf = False
+
+                            # columns_pdf = Column2d()
+                            # columns_pdf.fit(d,
+                            #                 self.name, args=args)
+                            # if join_key not in self.correlations:
+                            #     self.correlations[join_key] = dict()
+                            # self.correlations[join_key][relevant_key] = columns_pdf
+
+                            # args.cdf = True
                         else:
                             if join_key not in self.correlations:
                                 self.correlations[join_key] = dict()
