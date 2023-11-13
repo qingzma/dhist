@@ -28,7 +28,7 @@ def get_linspace_centered(low: float, high: float, sz: int):
 
 
 class FastKde1D:
-    def __init__(self, grid_size) -> None:
+    def __init__(self, grid_size, cumulative=False, y_is_categorical=False) -> None:
         self.grid_size = grid_size
         # self.grid_width = None
         self.min = None
@@ -37,6 +37,8 @@ class FastKde1D:
         self.size = None
         self.kde = None
         self.background_noise = None
+        self.cumulative = cumulative
+        self.y_is_categorical = y_is_categorical
 
     def fit(self, x) -> None:
         if isinstance(x, pd.DataFrame):
@@ -94,6 +96,9 @@ class FastKde1D:
         res[res < self.background_noise] = 0
         return res
 
+    def predict_domain(self, domain):
+        pass
+
 
 class FastKde2D:
     def __init__(self, grid_size_x, grid_size_y, cumulative=False, y_is_categorical=False) -> None:
@@ -113,32 +118,40 @@ class FastKde2D:
         return self.predict_grid([x[0]], [x[1]])
 
     def predict_grid_with_y_range(self, x_grid, domain: Domain, b_plot=False):
+        print("domain is haha \n", domain)
         assert (self.cumulative)
         l, h = domain.min, domain.max
         # if domain.is_categorical:
         #     if domain.left:
 
         # else:
-        if l == h:
-            h += 0.006
+        # if l == h:
+        #     h += 0.006
 
         # if domain.left:
         #     l -= 0.005
         # if not domain.right:
         #     h -= 0.005
-
-        ps = self.predict_grid(x_grid, np.array([l, h]))
-        # p_h = self.predict_grid(x_grid, [h])
         if b_plot:
             plot2d(self)
+
+        if (abs(h-l) < 1e-5):
+            ps = self.predict_grid(x_grid, np.array([l]))
+            return ps
+        else:
+            ps = self.predict_grid(x_grid, np.array([l, h]))
+            return ps[1, :]-ps[0, :]
+            return ps[1, :]-ps[0, :]
+        # p_h = self.predict_grid(x_grid, [h])
+
         # print("ps is ", ps)
         # print("----low is %s: %s",l,p_l)
         # print("----high is %s: %s",h,p_h)
         # return np.subtract(p_h, p_l).reshape(1, -1)[0]
-        return ps[1, :]-ps[0, :]
-        return ps[1, :]-ps[0, :]
 
-    def predict_grid(self, x_grid, y_grid):
+    def predict_grid(self, x_grid, y_grid, b_plot=False):
+        if b_plot:
+            plot2d(self)
         X, Y = np.meshgrid(x_grid, y_grid)  # ,indexing='ij'
 
         X, Y = np.meshgrid(x_grid, y_grid)  # ,indexing='ij'
@@ -261,7 +274,7 @@ def plot2d(kde, grid_size_x=2**10, grid_size_y=2**10):
     N = 4  # Number of contours
     xx = np.linspace(kde.min[0], kde.max[0],  grid_size_x)
     yy = np.linspace(kde.min[1], kde.max[1],  grid_size_y)
-    p = kde.predict_grid(xx, yy)
+    p = kde.predict_grid(xx, yy, b_plot=False)
     cfset = ax.contourf(xx, yy, p, N, cmap="Blues",
                         locator=ticker.LogLocator())
     cset = ax.contour(xx, yy, p, N, linewidths=0.8,
@@ -283,26 +296,26 @@ if __name__ == "__main__":
     # # plt.show()
     # plot1d(kde1d)
 
-    # n = 3000
-    # def gen_random(n): return np.random.randn(n).reshape(-1, 1)
-    # data1 = np.concatenate((gen_random(n)-0.5, gen_random(n)-0.5), axis=1)
-    # data2 = np.concatenate((gen_random(n) + 3.5, gen_random(n) + 7.5), axis=1)
-    # data = np.concatenate((data1, data2))
-    # # print(data)
+    n = 3000
+    def gen_random(n): return np.random.randn(n).reshape(-1, 1)
+    data1 = np.concatenate((gen_random(n)-0.5, gen_random(n)-0.5), axis=1)
+    data2 = np.concatenate((gen_random(n) + 3.5, gen_random(n) + 7.5), axis=1)
+    data = np.concatenate((data1, data2))
+    # print(data)
 
-    # kde2d = FastKde2D(500, 100, cumulative=False, y_is_categorical=False)
-    # kde2d.fit(data)
+    kde2d = FastKde2D(50, 10, cumulative=True, y_is_categorical=True)
+    kde2d.fit(data)
 
-    # xx, yy = np.linspace(1, 2, 3), np.linspace(4, 6, 4)
-    # ps = kde2d.predict_grid(xx, yy)
-    # print("xx", xx)
-    # print("yy", yy)
-    # print("ps", ps)
-    # domain = Domain(0.5, 1, True, True)
-    # # pss = kde2d.predict_grid_with_y_range(xx, domain)
-    # # print("pss is ", pss)
-    # kde2d.predict([1, 2])
-    # plot2d(kde2d)
+    xx, yy = np.linspace(1, 2, 3), np.linspace(4, 6, 4)
+    ps = kde2d.predict_grid(xx, yy)
+    print("xx", xx)
+    print("yy", yy)
+    print("ps", ps)
+    domain = Domain(0.5, 1, True, True)
+    pss = kde2d.predict_grid_with_y_range(xx, domain)
+    # print("pss is ", pss)
+    kde2d.predict([1, 2])
+    plot2d(kde2d)
 
     data = [[1, 2],
             [1, 3],
@@ -329,8 +342,8 @@ if __name__ == "__main__":
     #         [2, 3],
     #         [4, 5]]
 
-    # kde2d = FastKde2D(2,3,cumulative=True)
+    # kde2d = FastKde2D(2, 3, cumulative=True)
     # kde2d.fit(data)
     # domain = Domain(3, 4.2, True, True)
-    # kde2d.predict_grid_with_y_range([1,4],domain,b_plot=True)
+    # # kde2d.predict_grid_with_y_range([1,4],domain,b_plot=True)
     # plot2d(kde2d)
