@@ -5,7 +5,7 @@ from matplotlib import ticker
 from scipy.interpolate import (BarycentricInterpolator, CubicSpline,
                                KroghInterpolator, PchipInterpolator,
                                RegularGridInterpolator, interp2d, Akima1DInterpolator)
-from numba import njit
+# from numba import njit
 
 from joins.domain import Domain
 
@@ -34,7 +34,7 @@ def get_linspace_centered(low: float, high: float, sz: int):
 
 
 class FastKde1D:
-    def __init__(self, grid_size, cumulative=True, is_categorical=True) -> None:
+    def __init__(self, grid_size, cumulative=True, is_categorical=False) -> None:
         self.grid_size = grid_size
         # self.grid_width = None
         self.min = None
@@ -193,9 +193,15 @@ class FastKde2D:
                 ps = self.predict_grid(x_grid, np.array([l, hh]))
                 print("try to  restore  uppper bound to fix issue.")
             except ValueError:
-                ll = l+1
-                ps = self.predict_grid(x_grid, np.array([ll, h]))
-                print("try to  restore  lower bound to fix issue.")
+                try:
+                    ll = l+1
+                    ps = self.predict_grid(x_grid, np.array([ll, h]))
+                    print("try to  restore  lower bound to fix issue.")
+                except ValueError:
+                    hh = h - 1
+                    ll = l+1
+                    ps = self.predict_grid(x_grid, np.array([ll, hh]))
+                    print("try to  restore  lower bound to fix issue.")
             # exit()
         return ps[1]-ps[0]
         # if (abs(h-l) < 1e-5):

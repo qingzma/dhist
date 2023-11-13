@@ -625,6 +625,8 @@ def process_single_table_query(models: dict[str, TableContainer], conditions: li
             model2d: Column2d = models[tbl].correlations_cdf[jk][n_key] if models[
                 tbl].use_cdf else models[tbl].correlations[jk][n_key]
 
+            logger.info("model2d %s", model2d.size)
+            logger.info("model2d.min %s", model2d.min)
             nk_domain = Domain(model2d.min[1], model2d.max[1], True, True)
             nk_domain_query = cond.non_key_condition
             # nk_domain_query = Domain(
@@ -662,7 +664,7 @@ def process_single_table_query(models: dict[str, TableContainer], conditions: li
                 pred_xy = combine_selectivity_array(pred_xy, pred)
                 # logger.info("final shape is %s", len(pred_xy))
                 # logger.info("final shape is %s", pred_xy[0])
-            pred_xy = combine_selectivity_array(pred_xy, pred_x)
+        pred_xy = combine_selectivity_array(pred_xy, pred_x)
         return np.sum(pred_xy)*width_x*jk_model.size
     return
 
@@ -701,7 +703,7 @@ def process_single_table_push_down_condition_for_join(tbl: str, models: dict[str
         # nk_domain_query = Domain(
         #     cond.non_key_condition[0]-0.5, cond.non_key_condition[1]+0.5)
         nk_domain.merge_domain(nk_domain_query)
-        logger.info("domain is [%s,%s]", nk_domain.min, nk_domain.max)
+        logger.info("domain is ", nk_domain)
         # nk_domain = [-0.5, 0.5]
 
         grid_y, width_y = np.linspace(
@@ -728,7 +730,7 @@ def process_single_table_push_down_condition_for_join(tbl: str, models: dict[str
             pred_xy = combine_selectivity_array(pred_xy, pred)
             # logger.info("final shape is %s", len(pred_xy))
             # logger.info("final shape is %s", pred_xy[0])
-        pred_xy = combine_selectivity_array(pred_xy, pred_x)
+    pred_xy = combine_selectivity_array(pred_xy, pred_x)
     # return np.sum(pred_xy)*width_x*jk_model.size
     return pred_xy, width_x
 

@@ -84,9 +84,11 @@ class TableContainer:
 
                         # if t not in self.correlations:
                         #     self.correlations[t] = dict()
+                        columns.fit(d,
+                                    self.name, args=args)
                         if args.cdf:
-                            columns.fit(d,
-                                        self.name, args=args)
+                            # columns.fit(d,
+                            #             self.name, args=args)
                             if join_key not in self.correlations_cdf:
                                 self.correlations_cdf[join_key] = dict()
                             self.correlations_cdf[join_key][relevant_key] = columns
