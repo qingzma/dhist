@@ -16,17 +16,17 @@ class TestApproximateEngineMethod(unittest.TestCase):
 
     def __init__(self, methodName: str = "runTest") -> None:
         super().__init__(methodName)
-        self.model_name = "model_stats_gaussian_100"
+        self.model_name = "model_stats_gaussian_1000"
         self.use_pushed_down = True
-        arguments = ["--train", "--grid", "100",
-                     "--kernel", "gaussian",]  # "--cdf"
+        arguments = ["--train", "--grid", "1000",
+                     "--kernel", "gaussian", ]  # "--cdf"
         self.args = parse_args(arguments)
     # train needed models
 
     # @classmethod
     # def setUpClass(cls):
     #     # ['biweight', 'box', 'cosine', 'epa', 'exponential', 'gaussian', 'tri', 'tricube', 'triweight']
-    #     arguments = ["--train", "--grid", "100",
+    #     arguments = ["--train", "--grid", "1000",
     #                  "--kernel", "gaussian", ]  # "--cdf"
     #     args = parse_args(arguments)
     #     train_stats(args)
