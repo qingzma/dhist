@@ -178,7 +178,7 @@ if __name__ == "__main__":
 
     # plt.title("Fast 2D computations\nusing binning and FFT", fontsize=12)
 
-    n = 6
+    n = 6**6
     def gen_random(n): return np.random.randn(n).reshape(-1, 1)
     data1 = np.concatenate((gen_random(n), gen_random(n)), axis=1)
     data2 = np.concatenate((gen_random(n) + 1, gen_random(n) + 4), axis=1)

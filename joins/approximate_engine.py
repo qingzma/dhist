@@ -1,3 +1,5 @@
+# this is an example for p(yz|x)= p(y|x)p(z|x), assuming y and z are conditionally independent given x
+# https://stats.stackexchange.com/questions/29510/proper-way-to-combine-conditional-probability-distributions-of-the-same-random-v
 import time
 from enum import Enum
 
