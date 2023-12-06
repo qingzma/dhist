@@ -144,8 +144,23 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #     logger.info("time cost is %.5f s.", t2-t1)
     #     self.assertTrue(q_error(res, truth) < 4)
 
-    def test_single_table_with_equality_condition(self):
-        query = "SELECT COUNT(*) FROM postHistory as ph WHERE ph.PostHistoryTypeId=1 AND ph.CreationDate>='2010-09-14 11:59:07'::timestamp"
+    # def test_single_table_with_equality_condition(self):
+    #     query = "SELECT COUNT(*) FROM postHistory as ph WHERE ph.PostHistoryTypeId=1 AND ph.CreationDate>='2010-09-14 11:59:07'::timestamp"
+    #     with open("models/"+self.model_name+".pkl", 'rb') as f:
+    #         model = pickle.load(f)
+    #     engine = Engine(model, use_cdf=self.args.cdf)
+    #     t1 = time.time()
+    #     res = engine.query(
+    #         query) if self.use_pushed_down else engine.query(query)
+    #     t2 = time.time()
+    #     truth = 42308
+    #     logger.info("result %.6E", res)
+    #     logger.info("truth %.6E", truth)
+    #     logger.info("time cost is %.5f s.", t2-t1)
+    #     self.assertTrue(q_error(res, truth) < 4)
+
+    def test_single_table_large_error(self):
+        query = "SELECT COUNT(*) FROM votes as v WHERE v.BountyAmount>=0 AND v.CreationDate>='2010-07-20 00:00:00'::timestamp AND v.CreationDate<='2014-09-11 00:00:00'::timestamp"
         with open("models/"+self.model_name+".pkl", 'rb') as f:
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
@@ -153,7 +168,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
         res = engine.query(
             query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
-        truth = 42308
+        truth = 1740
         logger.info("result %.6E", res)
         logger.info("truth %.6E", truth)
         logger.info("time cost is %.5f s.", t2-t1)

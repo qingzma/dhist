@@ -38,13 +38,15 @@ def evaluate_stats(args: ArgumentParser):
         pred.append(res)
         latency.append(time.time() - t)
 
-        qerror.append(max(res/true_card, true_card/res))
+        # qerror.append(max(res/true_card, true_card/res))
+        qerror.append(res/true_card)
         ratios.append(res/true_card)
         # if (res/true_card > 10000):
         #     exit()
-        if max(res/true_card, true_card/res) > 1e20:
+        if res/true_card > 1e2:
             logger.info("-"*80)
             logger.info("true is %s, pred is %s", true_card, pred)
+            logger.info("query is %s", query)
             logger.info("-"*80)
             # exit()
         logger.info("qerror is %s", max(res/true_card, true_card/res))
@@ -52,7 +54,7 @@ def evaluate_stats(args: ArgumentParser):
     # logger.info("max of non is %s", max(cnt_non_key))
 
     qerror = np.asarray(qerror)
-    logger.info(f"qerror is {qerror}")
+    # logger.info(f"qerror is {qerror}")
     for i in [50, 90, 95, 99, 100]:
         logger.info(f"q-error {i}% percentile is {np.percentile(qerror, i)}")
 
