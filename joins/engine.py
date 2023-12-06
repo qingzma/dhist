@@ -74,6 +74,7 @@ def vec_sel_single_table_query(models: dict[str, TableContainer], conditions: li
         jk_domain = [model.min[0], model.max[0]]
         nk_domain = Domain(model.min[1], model.max[1], True, True)
         nk_domain_query = cond.non_key_condition
+        logger.info("nk_domain_query %s", nk_domain_query)
         nk_domain.merge_domain(nk_domain_query)
 
         grid_x, width_x = np.linspace(

@@ -14,6 +14,8 @@ class Domain:
         self.is_categorical = is_categorical
 
     def merge_domain(self, d1):
+        print("d1: ", d1)
+        print("type is ", type(d1))
         if d1.min > self.min:
             self.min = d1.min
             self.left = d1.left
@@ -165,7 +167,7 @@ def generate_push_down_conditions(tables_all, table_query, join_cond, join_keys)
                         condition.min = val
                         condition.left = False
                     elif '==' in op or '=' in op:
-                        condition = [val, val, True, True]
+                        condition = Domain(val, val, True, True)
                     else:
                         logger.error("unexpected operation")
 

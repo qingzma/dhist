@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from joins.approximate_engine import ApproximateEngine
+from joins.engine import Engine
 from joins.base_logger import logger
 
 
@@ -17,7 +18,7 @@ def evaluate_stats(args: ArgumentParser):
     with open(args.query, 'r', encoding="utf-8") as f:
         queries = f.readlines()
 
-    engine = ApproximateEngine(models=model,use_cdf=args.cdf)
+    engine = Engine(models=model, use_cdf=args.cdf)
 
     latency = []
     pred = []
@@ -30,7 +31,7 @@ def evaluate_stats(args: ArgumentParser):
         query = query_str.split("||")[0][:-1]
         true_card = int(query_str.split("||")[-1])
         t = time.time()
-        res = engine.query_with_pushed_down(
+        res = engine.query(
             query)
         # cnt_key.append(len(key_conditions))
         # cnt_non_key.append(len(non_key_conditions))
