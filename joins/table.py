@@ -138,7 +138,7 @@ class Column:
         elif method == "nflow":
             logger.warning("1d nflow is not implemented yet")
         elif method == "fast":
-            kde = FastKde1D(grid_size=args.grid, cumulative=args.cdf)
+            kde = FastKde1D(grid_size=args.grid, cumulative=False)
             kde.fit(df_column.to_numpy().reshape(-1, 1))
             self.pdf = kde
             if args.plot:
@@ -190,7 +190,8 @@ class Column2d:
             if args.plot:
                 kde.plot()
         elif method == "fast":
-            kde = FastKde2D(args.grid, args.grid, cumulative=args.cdf)
+            kde = FastKde2D(args.grid, args.grid,
+                            cumulative=args.cdf, y_is_categorical=False)
             kde.fit(df_columns.to_numpy())
             self.pdf = kde
             if args.plot:

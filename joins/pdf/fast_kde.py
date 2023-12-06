@@ -88,10 +88,10 @@ class FastKde1D:
 
         counts = df.groupby([column],
                             observed=False).size().to_numpy()  # [['x', 'y']].count()  .size()
-        print("counts was ", counts)
+        # print("counts was ", counts)
         if self.cumulative:
             counts = np.cumsum(counts, axis=0)
-            print("counts is ", counts)
+            # print("counts is ", counts)
             # exit()
 
         if self.is_categorical:
@@ -102,13 +102,13 @@ class FastKde1D:
             xx, wx = np.linspace(
                 self.min, self.max, self.grid_size-1, retstep=True)
             if self.cumulative:
-                ps = np.divide(counts, self.size)
-                self.background_noise = 0.5/self.size
+                ps = np.divide(counts, self.size*wx)
+                self.background_noise = 0.5/self.size/wx
             else:
                 ps = np.divide(counts, self.size*wx)
                 self.background_noise = 0.5/self.size/wx
-        print("ps is ", ps)
-        print("background noise is ", self.background_noise)
+        # print("ps is ", ps)
+        # print("background noise is ", self.background_noise)
 
         # Akima1DInterpolator, PchipInterpolator, CubicSpline
         self.kde = PchipInterpolator(xx, ps)
@@ -166,6 +166,7 @@ class FastKde2D:
         print("domain is haha \n", domain)
         assert (self.cumulative)
         l, h = domain.min, domain.max
+        # width = x_grid[1]-x_grid[0]
         # if domain.is_categorical:
         #     if domain.left:
 
@@ -190,19 +191,28 @@ class FastKde2D:
         except ValueError:
             try:
                 hh = h - 1
-                ps = self.predict_grid(x_grid, np.array([l, hh]))
-                print("try to  restore  uppper bound to fix issue.")
+                ps = 1-self.predict_grid(x_grid, np.array([l]))
+                print("try to  restore  uppper bound to fix issue. %s",
+                      Domain(l, hh, False, False))
             except ValueError:
                 try:
                     ll = l+1
-                    ps = self.predict_grid(x_grid, np.array([ll, h]))
-                    print("try to  restore  lower bound to fix issue.")
+                    ps = self.predict_grid(x_grid, np.array([h]))
+                    print("try to  restore  lower bound to fix issue. %s",
+                          Domain(ll, h, False, False))
                 except ValueError:
                     hh = h - 1
-                    ll = l+1
-                    ps = self.predict_grid(x_grid, np.array([ll, hh]))
-                    print("try to  restore  lower bound to fix issue.")
+                    ll = l + 1
+                    ps = self.predict_grid(x_grid, np.array([hh]))
+                    print("try to  restore  both bounds to fix issue, this should not happen. %s",
+                          Domain(ll, hh, False, False))
+                    # return all
+                    # width = x_grid[1]-x_grid[0]
+                    # return np.ones_like(x_grid)/width/len(x_grid)
+                    # return np.array([1])
             # exit()
+        if len(ps) == 1:
+            return ps
         return ps[1]-ps[0]
         # if (abs(h-l) < 1e-5):
         #     ps = self.predict_grid(x_grid, np.array([l]))
@@ -257,8 +267,8 @@ class FastKde2D:
             unique_y = np.unique(df[columns[1]])
             unique_y.sort()
             # print("unique y is ", unique_y)
-            grid_y = unique_y-0.5
-            grid_y = np.append(grid_y, [unique_y[-1]+0.5])
+            grid_y = unique_y-0.5*width_y
+            grid_y = np.append(grid_y, [unique_y[-1]+0.5*width_y])
         else:
             grid_y, _ = get_linspace_centered(
                 self.min[1]-0.5*width_y, self.max[1]+0.5*width_y, self.grid_size_y+1)
@@ -268,6 +278,8 @@ class FastKde2D:
         # print("original grid_y is ", grid_y)
         df[columns[0]] = pd.cut(
             df[columns[0]], bins=grid_x, )  # , labels=grid_x[:-1]
+        print("grid y is %s", grid_y)
+        # exit()
         df[columns[1]] = pd.cut(
             df[columns[1]], bins=grid_y, )  # , labels=grid_y[:-1]
 
@@ -281,10 +293,10 @@ class FastKde2D:
         counts = df.groupby(columns,
                             observed=False).size().unstack().to_numpy()  # [['x', 'y']].count()  .size()
         # print("first row is ", counts[0,:])
-        print("counts before is\n", counts)
+        # print("counts before is\n", counts)
         if self.cumulative:
             counts = np.cumsum(counts, axis=1)
-        print("counts is\n", counts)
+        # print("counts is\n", counts)
         print("sum of count is ", np.sum(counts))
         print("sum of last count is ", np.sum(counts[-1, :]))
         # print("table is ", self.size)
@@ -295,20 +307,20 @@ class FastKde2D:
             # print("y grid is now ", unique_y)
             ps = np.divide(counts, self.size*wx)
             print("sum is ", np.sum(ps[:, -1])*wx)
-            print("corresponding xx is ", xx)
-            print("corresponding yy is ", yy)
+            # print("corresponding xx is ", xx)
+            # print("corresponding yy is ", yy)
             self.background_noise = 0.5/self.size/wx
             # print("background_noise is now ", self.background_noise)
         else:
             yy, wy = np.linspace(self.min[1], self.max[1],
                                  self.grid_size_y, retstep=True)
-            ps = np.divide(counts, self.size*wx*wy)
+            ps = np.divide(counts, self.size*wx)
             # print("width x is ", wx)
-            print("sum is ", np.sum(ps[:, -1])*wx*wy)
-            self.background_noise = 0.5/self.size/wx/wy
+            print("sum is ", np.sum(ps[:, -1])*wx)
+            self.background_noise = 0.5/self.size/wx
 
-        print("x_grid is ", xx)
-        print("widthx is ", wx)
+        # print("x_grid is ", xx)
+        # print("widthx is ", wx)
         # print("y_grid is ", yy)
 
         self.kde = RegularGridInterpolator((xx, yy), ps, fill_value=0)

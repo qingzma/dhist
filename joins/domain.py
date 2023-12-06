@@ -128,7 +128,7 @@ class SingleTablePushedDownCondition:
     def __str__(self) -> str:
         join_str = str(self.to_join)
 
-        return f"SingleTablePushedDownCondition[{self.tbl}]--join_keys[{','.join(self.join_keys)}]--non_key[{self.non_key}]--condition[{self.non_key_condition[0] if self.non_key_condition else None}, {self.non_key_condition[1] if self.non_key_condition else None}]--to_join[{join_str}]]"
+        return f"SingleTablePushedDownCondition[{self.tbl}]--join_keys[{','.join(self.join_keys)}]--non_key[{self.non_key}]--condition{self.non_key_condition }--to_join[{join_str}]]"
 
     def __repr__(self) -> str:
         return self.__str__()
