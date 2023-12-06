@@ -48,12 +48,15 @@ def vec_sel_single_table_query(models: dict[str, TableContainer], conditions: li
     assert (len(conditions) == 1)
     tbl = list(conditions.keys())[0]
     conds = conditions[tbl]
+
+    # sz_min = np.Infinity
     # logger.info("conds: %s", conds)
     if len(conds) == 1:
         cond = conds[0]
         # no selection, simple cardinality, return n
         # [SingleTablePushedDownCondition[badges]--join_keys[badges.Id]--non_key[None]--condition[None, None]--to_join[{}]]]
         if cond.non_key is None:
+            sz_min = models[tbl].size
             return np.array([1.0])  # [models[tbl].size]
 
         # one selection
@@ -86,7 +89,7 @@ def vec_sel_single_table_query(models: dict[str, TableContainer], conditions: li
         # logger.info("pred is %s", pred)
         # logger.info("sum is %s", np.sum(pred))
         # logger.info("sums is %s", np.sum(pred)*width_x)
-        return pred*width_x
+        return pred*width_x  # , model.size
     # multiple selection
     cond0 = conds[0]
     jk = cond0.join_keys[0].split(".")[1]
@@ -105,6 +108,10 @@ def vec_sel_single_table_query(models: dict[str, TableContainer], conditions: li
         pred_xys.append(sel)
         logger.info("sub selectivity is %s", np.sum(sel))
 
+        # logger.info("size is %s", sz)
+        # if sz < sz_min:
+        #     sz_min = sz
+
     # logger.info("predx is %s", np.sum(pred_x))
     pred = np.ones_like(pred_x)
     for pred_xyi in pred_xys:
@@ -112,7 +119,7 @@ def vec_sel_single_table_query(models: dict[str, TableContainer], conditions: li
 
     # logger.info("width x is %s", width_x)
     res = width_x*vec_sel_multiply(pred, pred_x)
-    return res
+    return res  # , sz_min
 
 
 def vec_sel_single_column(column, x_grid):

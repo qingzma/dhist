@@ -78,7 +78,16 @@ class TableContainer:
                         # print("max of relevant key is ",
                         #       df[relevant_key].max())
                         # print([join_key, relevant_key])
-                        d = df[[join_key, relevant_key]].fillna(-1)
+                        # .dropna()  # fillna(-1)
+                        # d = df[[join_key, relevant_key]].dropna()
+                        d = df[[join_key, relevant_key]]
+                        # dd = d[d[relevant_key].notna()]
+                        # logger.info("d is %s", dd)
+                        # logger.info("key is %s", np.unique(d[join_key]))
+                        # logger.info("key is %s", np.unique(d[relevant_key]))
+                        # logger.info("key is %s", np.unique(df[join_key]))
+                        # logger.info("key is %s", np.unique(df[relevant_key]))
+                        # not_null_size = d.shape[0]
                         # print(d)
                         # exit()
 
