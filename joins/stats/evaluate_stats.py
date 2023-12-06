@@ -25,6 +25,7 @@ def evaluate_stats(args: ArgumentParser):
     qerror = []
     ratios = []
 
+    bad_queries = []
     cnt_key = []
     cnt_non_key = []
     for query_str in queries:  # [:10]
@@ -43,23 +44,29 @@ def evaluate_stats(args: ArgumentParser):
         ratios.append(res/true_card)
         # if (res/true_card > 10000):
         #     exit()
-        if res/true_card > 1e2:
+        if res/true_card > 1e2 or res/true_card < 0.5:
+            bad_queries.append(query)
             logger.info("-"*80)
-            logger.info("true is %s, pred is %s", true_card, pred)
+            logger.info("true is %s, pred is %s", true_card, res)
             logger.info("query is %s", query)
             logger.info("-"*80)
             # exit()
-        logger.info("qerror is %s", max(res/true_card, true_card/res))
+        # logger.info("qerror is %s", max(res/true_card, true_card/res))
     # logger.info("max is %s", max(cnt_key))
     # logger.info("max of non is %s", max(cnt_non_key))
 
     qerror = np.asarray(qerror)
     # logger.info(f"qerror is {qerror}")
-    for i in [50, 90, 95, 99, 100]:
+    for i in [1, 50, 90, 95, 99, 100]:
         logger.info(f"q-error {i}% percentile is {np.percentile(qerror, i)}")
 
     logger.info(f"average latency per query is {np.mean(latency)}")
     logger.info(f"total estimation time is {np.sum(latency)}")
+
+    logger.info("bad queries\n")
+    logger.info("-"*100)
+    for q in bad_queries:
+        logger.info(q)
 
     logbins = np.logspace(np.log10(min(ratios)),
                           np.log10(max(ratios)), 100)

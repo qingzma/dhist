@@ -29,7 +29,7 @@ class Engine:
         self.use_cdf = use_cdf
 
     def query(self, query_str):
-        logger.info("QUERY [%s]", query_str)
+        logger.debug("QUERY [%s]", query_str)
         tables_all, table_query, join_cond, join_keys = parse_query_simple(
             query_str)
         conditions = generate_push_down_conditions(
@@ -106,7 +106,7 @@ def vec_sel_single_table_query(models: dict[str, TableContainer], conditions: li
         sel = vec_sel_single_table_query(
             models, {tbl: [condi]}, grid_size_x, use_column_model=False)
         pred_xys.append(sel)
-        logger.info("sub selectivity is %s", np.sum(sel))
+        logger.debug("sub selectivity is %s", np.sum(sel))
 
         # logger.info("size is %s", sz)
         # if sz < sz_min:
