@@ -14,8 +14,8 @@ class Domain:
         self.is_categorical = is_categorical
 
     def merge_domain(self, d1):
-        print("d1: ", d1)
-        print("type is ", type(d1))
+        # print("d1: ", d1)
+        # print("type is ", type(d1))
         if d1.min > self.min:
             self.min = d1.min
             self.left = d1.left

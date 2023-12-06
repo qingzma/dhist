@@ -74,8 +74,9 @@ def vec_sel_single_table_query(models: dict[str, TableContainer], conditions: li
         jk_domain = [model.min[0], model.max[0]]
         nk_domain = Domain(model.min[1], model.max[1], True, True)
         nk_domain_query = cond.non_key_condition
-        logger.info("nk_domain_query %s", nk_domain_query)
+        # logger.info("nk_domain_query %s", nk_domain_query)
         nk_domain.merge_domain(nk_domain_query)
+        # logger.info("nk_domain %s", nk_domain)
 
         grid_x, width_x = np.linspace(
             *jk_domain, grid_size_x, retstep=True)
@@ -106,16 +107,11 @@ def vec_sel_single_table_query(models: dict[str, TableContainer], conditions: li
 
     # logger.info("predx is %s", np.sum(pred_x))
     pred = np.ones_like(pred_x)
-    # pred_method1 = np.ones_like(pred_x)
     for pred_xyi in pred_xys:
         pred = vec_sel_multiply(pred, vec_sel_divide(pred_xyi, pred_x))/width_x
-        # pred_method1 = vec_sel_multiply(pred_method1, pred_xyi)*width_x
-        # logger.info("changed to %s", np.sum(pred))
-        # logger.info("method 1 :changed to %s", np.sum(pred_method1))
 
     # logger.info("width x is %s", width_x)
     res = width_x*vec_sel_multiply(pred, pred_x)
-    # logger.info("changed to final %s", np.sum(res))
     return res
 
 
