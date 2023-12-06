@@ -101,7 +101,7 @@ def vec_sel_single_table_query(models: dict[str, TableContainer], conditions: li
         sel = vec_sel_single_table_query(
             models, {tbl: [condi]}, grid_size_x, use_column_model=False)
         pred_xys.append(sel)
-        logger.info("sub selectivity is %s", np.sum(sel))
+        # logger.info("sub selectivity is %s", np.sum(sel))
 
     # logger.info("predx is %s", np.sum(pred_x))
     pred = np.ones_like(pred_x)

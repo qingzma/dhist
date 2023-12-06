@@ -163,7 +163,7 @@ class FastKde2D:
         return self.predict_grid([x[0]], [x[1]])
 
     def predict_grid_with_y_range(self, x_grid, domain: Domain, b_plot=False):
-        print("domain is haha \n", domain)
+        # print("domain is haha \n", domain)
         assert (self.cumulative)
         l, h = domain.min, domain.max
         # width = x_grid[1]-x_grid[0]
@@ -192,24 +192,21 @@ class FastKde2D:
             try:
                 hh = h - 1
                 ps = 1-self.predict_grid(x_grid, np.array([l]))
-                print("try to  restore  uppper bound to fix issue. %s",
-                      Domain(l, hh, False, False))
+                # print("try to  restore  uppper bound to fix issue. %s",
+                #       Domain(l, hh, False, False))
             except ValueError:
                 try:
                     ll = l+1
                     ps = self.predict_grid(x_grid, np.array([h]))
-                    print("try to  restore  lower bound to fix issue. %s",
-                          Domain(ll, h, False, False))
+                    # print("try to  restore  lower bound to fix issue. %s",
+                    #       Domain(ll, h, False, False))
                 except ValueError:
                     hh = h - 1
                     ll = l + 1
+                    # TODO need to optimize this part, avoid multiple try.
                     ps = self.predict_grid(x_grid, np.array([hh]))
-                    print("try to  restore  both bounds to fix issue, this should not happen. %s",
-                          Domain(ll, hh, False, False))
-                    # return all
-                    # width = x_grid[1]-x_grid[0]
-                    # return np.ones_like(x_grid)/width/len(x_grid)
-                    # return np.array([1])
+                    # print("try to  restore  both bounds to fix issue, this should not happen. %s",
+                    #       Domain(ll, hh, False, False))
             # exit()
         if len(ps) == 1:
             return ps
@@ -278,7 +275,7 @@ class FastKde2D:
         # print("original grid_y is ", grid_y)
         df[columns[0]] = pd.cut(
             df[columns[0]], bins=grid_x, )  # , labels=grid_x[:-1]
-        print("grid y is %s", grid_y)
+        # print("grid y is %s", grid_y)
         # exit()
         df[columns[1]] = pd.cut(
             df[columns[1]], bins=grid_y, )  # , labels=grid_y[:-1]
