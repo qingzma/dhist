@@ -31,7 +31,7 @@ python run.py --dataset stats \
 #### 2.2.1 single table query
 
 ```
-python run.py --evaluate --model models/model_stats_gaussian_2000.pkl --query workloads/stats_CEB/sub_plan_queries/stats_CEB_single_table_sub_query.sql
+python run.py --evaluate --model models/model_stats_gaussian_1000_cdf.pkl --query workloads/stats_CEB/sub_plan_queries/stats_CEB_single_table_sub_query.sql
 ```
 
 ### 2.2.2 sub-plan query
