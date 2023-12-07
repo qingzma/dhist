@@ -163,7 +163,7 @@ class FastKde2D:
         return self.predict_grid([x[0]], [x[1]])
 
     def predict_grid_with_y_range(self, x_grid, domain: Domain, b_plot=False):
-        # print("domain is  \n", domain)
+        print("domain is  \n", domain)
         assert (self.cumulative)
         l, h = domain.min, domain.max
         # width = x_grid[1]-x_grid[0]
@@ -183,26 +183,26 @@ class FastKde2D:
 
         # support  (l, h) seamlessly, [1,1] is treated as (0,2)
         if domain.left:
-            l -= 0.01
+            l -= 0.5
         if domain.right:
-            h += 0.01
+            h += 0.5
         try:
             ps = self.predict_grid(x_grid, np.array([l, h]))
         except ValueError:
             try:
-                hh = h - 0.01
+                hh = h - 0.5
                 ps = self.predict_grid(x_grid, np.array([l, self.max]))
                 # print("try to  restore  uppper bound to fix issue. %s",
                 #       Domain(l, hh, False, False))
             except ValueError:
                 try:
-                    ll = l+0.01
+                    ll = l+0.05
                     ps = self.predict_grid(x_grid, np.array([h]))
                     # print("try to  restore  lower bound to fix issue. %s",
                     #       Domain(ll, h, False, False))
                 except ValueError:
-                    hh = h - 0.01
-                    ll = l + 0.01
+                    hh = h - 0.5
+                    ll = l + 0.5
                     # TODO need to optimize this part, avoid multiple try.
                     ps = self.predict_grid(x_grid, np.array([hh]))
                     # print("try to  restore  both bounds to fix issue, this should not happen. %s",
