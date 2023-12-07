@@ -189,8 +189,23 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #     logger.info("time cost is %.5f s.", t2-t1)
     #     self.assertTrue(q_error(res, truth) < 4)
 
-    def test_single_table_small_error_strong_correlation(self):
-        query = "SELECT COUNT(*) FROM posts as p WHERE p.AnswerCount>=0 AND p.FavoriteCount>=0"
+    # def test_single_table_small_error_strong_correlation(self):
+    #     query = "SELECT COUNT(*) FROM posts as p WHERE p.AnswerCount>=0 AND p.FavoriteCount>=0"
+    #     with open("models/"+self.model_name+".pkl", 'rb') as f:
+    #         model = pickle.load(f)
+    #     engine = Engine(model, use_cdf=self.args.cdf)
+    #     t1 = time.time()
+    #     res = engine.query(
+    #         query) if self.use_pushed_down else engine.query(query)
+    #     t2 = time.time()
+    #     truth = 13246
+    #     logger.info("result %.6E", res)
+    #     logger.info("truth %.6E", truth)
+    #     logger.info("time cost is %.5f s.", t2-t1)
+    #     self.assertTrue(q_error(res, truth) < 4)
+
+    def test_simple_query(self):
+        query = "SELECT COUNT(*) FROM votes as v, posts as p WHERE p.Id = v.PostId"
         with open("models/"+self.model_name+".pkl", 'rb') as f:
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
@@ -198,26 +213,11 @@ class TestApproximateEngineMethod(unittest.TestCase):
         res = engine.query(
             query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
-        truth = 13246
+        truth = 328064
         logger.info("result %.6E", res)
         logger.info("truth %.6E", truth)
         logger.info("time cost is %.5f s.", t2-t1)
-        self.assertTrue(q_error(res, truth) < 4)
-
-    # def test_simple_query(self):
-    #     query = "SELECT COUNT(*) FROM votes as v, posts as p WHERE p.Id = v.PostId"
-    #     with open("models/"+self.model_name+".pkl", 'rb') as f:
-    #         model = pickle.load(f)
-    #     engine = Engine(model,use_cdf=self.args.cdf)
-    #     t1 = time.time()
-    #     res = engine.query(
-    #         query) if self.use_pushed_down else engine.query(query)
-    #     t2 = time.time()
-    #     truth = 328064
-    #     logger.info("result %.6E", res)
-    #     logger.info("truth %.6E", truth)
-    #     logger.info("time cost is %.5f s.", t2-t1)
-    #     self.assertTrue(q_error(res, truth) < 2)
+        self.assertTrue(q_error(res, truth) < 2)
 
     # def test_one_selection_query(self):
     #     query = "SELECT COUNT(*) FROM users as u, badges as b WHERE b.UserId= u.Id AND u.UpVotes>=0"

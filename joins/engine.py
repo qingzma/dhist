@@ -43,8 +43,27 @@ class Engine:
             n = self.models[tbl].size
             return np.sum(vec_sel)*n
 
+        # join query
+        join_keys_grid = JoinKeysGrid()
+        join_keys_grid.calculate_push_down_join_keys_domain(
+            conditions, join_cond, self.models, tables_all, self.grid_size_x)
 
-def vec_sel_single_table_query(models: dict[str, TableContainer], conditions: list[SingleTablePushedDownCondition], grid_size_x, use_column_model=False):
+        # only a single join key is allowed in a table
+        assert (len(join_keys_grid.join_keys_domain) == 1)
+        # join_keys_lists, join_keys_domain = calculate_push_down_join_keys_domain(
+        #     conditions, join_cond, self.models, tables_all)
+
+        n = get_cartesian_cardinality(self.counters, tables_all)
+        pred = vec_sel_multi_table_query(
+            self.models, conditions, join_cond, join_keys_grid)
+
+        logger.info("cartesian is %E", n)
+        logger.info("pred is %s ", pred)
+
+        return pred*n
+
+
+def vec_sel_single_table_query(models: dict[str, TableContainer], conditions: list[SingleTablePushedDownCondition], grid_size_x=None, use_column_model=False, join_key_grid=None):
     assert (len(conditions) == 1)
     tbl = list(conditions.keys())[0]
     conds = conditions[tbl]
@@ -56,7 +75,7 @@ def vec_sel_single_table_query(models: dict[str, TableContainer], conditions: li
         # no selection, simple cardinality, return n
         # [SingleTablePushedDownCondition[badges]--join_keys[badges.Id]--non_key[None]--condition[None, None]--to_join[{}]]]
         if cond.non_key is None:
-            sz_min = models[tbl].size
+            # sz_min = models[tbl].size
             return np.array([1.0])  # [models[tbl].size]
 
         # one selection
@@ -122,6 +141,30 @@ def vec_sel_single_table_query(models: dict[str, TableContainer], conditions: li
     return res  # , sz_min
 
 
+def vec_sel_multi_table_query(models, conditions, join_cond, join_keys_grid: JoinKeysGrid, grid_size_x=2000, grid_size_y=1000):
+    logger.info("conditions: %s", conditions)
+    ps = {}
+    widths = {}
+    for tbl in conditions:
+        predictions_within_table = []
+        # for condition in conditions[tbl]:
+        #     pred_p = process_single_table_push_down_condition_for_join(
+        #         tbl, models, condition, join_keys_grid, grid_size_y)
+        #     assert (pred_p is not None)
+        #     predictions_within_table.append(pred_p)
+
+        # # get grid width for this single table
+        # p = merge_single_table_predictions(
+        #     conditions, predictions_within_table,)
+        pred_p = vec_sel_single_table_query(
+            models, {tbl: conditions[tbl]}, join_keys_grid)
+        ps[tbl] = pred_p
+        # widths[tbl] = width_p
+    # pred = merge_predictions(ps, conditions, join_cond,
+    #                          join_keys_grid, grid_size_x)
+    return ps
+
+
 def vec_sel_single_column(column, x_grid):
     return column.pdf.predict(x_grid)
 
@@ -134,3 +177,11 @@ def vec_sel_divide(sel1, sel2):
     # for 0 division, force to zero
     return np.divide(sel1, sel2,  out=np.zeros_like(
         sel1), where=sel2 != 0)
+
+
+def get_cartesian_cardinality(counters, tables_all):
+    tables = list(tables_all.values())
+    n = 1
+    for tbl in tables:
+        n *= counters[tbl]
+    return n
