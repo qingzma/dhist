@@ -37,11 +37,18 @@ class Domain:
             high += ")"
 
         return f"{low}{self.min}, {self.max}{high}"
+    
+    def __repr__(self) -> str:
+        return self.__str__()
 
 
 class JoinKeyGrid:
     def __init__(self, low, high, grid_size) -> None:
         self.grid, self.width = np.linspace(low, high, grid_size, retstep=True)
+    def __str__(self) -> str:
+        return f"[{self.grid[0]}, {self.grid[-1]}]-with-width-[{self.width}]"
+    def __repr__(self) -> str:
+        return self.__str__()
 
 
 class JoinKeysGrid:
