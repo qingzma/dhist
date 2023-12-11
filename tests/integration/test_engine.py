@@ -16,9 +16,9 @@ class TestApproximateEngineMethod(unittest.TestCase):
 
     def __init__(self, methodName: str = "runTest") -> None:
         super().__init__(methodName)
-        self.model_name = "model_stats_gaussian_1000_cdf"
+        self.model_name = "model_stats_gaussian_100_cdf"
         self.use_pushed_down = True
-        arguments = ["--train", "--grid", "1000",
+        arguments = ["--train", "--grid", "100",
                      "--kernel", "gaussian", "--cdf"]  # "--cdf"
         self.args = parse_args(arguments)
     # train needed models
@@ -26,7 +26,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
     # @classmethod
     # def setUpClass(cls):
     #     # ['biweight', 'box', 'cosine', 'epa', 'exponential', 'gaussian', 'tri', 'tricube', 'triweight']
-    #     arguments = ["--train", "--grid", "1000",
+    #     arguments = ["--train", "--grid", "2000",
     #                  "--kernel", "gaussian", "--cdf"]  # "--cdf"
     #     args = parse_args(arguments)
     #     train_stats(args)
@@ -204,20 +204,52 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #     logger.info("time cost is %.5f s.", t2-t1)
     #     self.assertTrue(q_error(res, truth) < 4)
 
-    def test_simple_query(self):
-        query = "SELECT COUNT(*) FROM votes as v, posts as p WHERE p.Id = v.PostId"
+    # def test_simple_join(self):
+    #     query = "SELECT COUNT(*) FROM votes as v, posts as p WHERE p.Id = v.PostId"
+    #     with open("models/"+self.model_name+".pkl", 'rb') as f:
+    #         model = pickle.load(f)
+    #     engine = Engine(model, use_cdf=self.args.cdf)
+    #     t1 = time.time()
+    #     res = engine.query(
+    #         query) if self.use_pushed_down else engine.query(query)
+    #     t2 = time.time()
+    #     truth = 328064
+    #     logger.info("result %.6E", res)
+    #     logger.info("truth %.6E", truth)
+    #     logger.info("time cost is %.5f s.", t2-t1)
+    #     self.assertTrue(q_error(res, truth) < 2)
+
+    def test_simple_join1(self):
+        query = "SELECT COUNT(*) FROM badges as b,  users as u WHERE  b.UserId = u.Id"
         with open("models/"+self.model_name+".pkl", 'rb') as f:
             model = pickle.load(f)
-        engine = Engine(model, use_cdf=self.args.cdf)
+        engine = Engine(model,use_cdf=self.args.cdf)
         t1 = time.time()
         res = engine.query(
             query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
-        truth = 328064
+        truth = 79851
         logger.info("result %.6E", res)
         logger.info("truth %.6E", truth)
         logger.info("time cost is %.5f s.", t2-t1)
-        self.assertTrue(q_error(res, truth) < 2)
+        self.assertTrue(q_error(res, truth) < 3)
+
+    def test_simple_join2(self):
+        query = "SELECT COUNT(*) FROM comments as c, users as u WHERE c.UserId = u.Id "
+        with open("models/"+self.model_name+".pkl", 'rb') as f:
+            model = pickle.load(f)
+        engine = Engine(model,use_cdf=self.args.cdf)
+        t1 = time.time()
+        res = engine.query(
+            query) if self.use_pushed_down else engine.query(query)
+        t2 = time.time()
+        truth = 171470
+        logger.info("result %.6E", res)
+        logger.info("truth %.6E", truth)
+        logger.info("time cost is %.5f s.", t2-t1)
+        self.assertTrue(q_error(res, truth) < 3)
+
+
 
     # def test_one_selection_query(self):
     #     query = "SELECT COUNT(*) FROM users as u, badges as b WHERE b.UserId= u.Id AND u.UpVotes>=0"

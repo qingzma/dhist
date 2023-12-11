@@ -212,15 +212,29 @@ def generate_push_down_conditions(tables_all, table_query, join_cond, join_keys)
             # push down single table condition
             single_table_conditions = []
             for non_key in table_query[tbl]:
-                condition = [-np.Infinity, np.Infinity]
+                condition = Domain(-np.Infinity, np.Infinity,True,True)
                 for op in table_query[tbl][non_key]:
                     val = table_query[tbl][non_key][op]
-                    if '<=' in op or '<' in op:
-                        condition[1] = val
-                    elif '>=' in op or '>' in op:
-                        condition[0] = val
+                    if '<=' in op:
+                        condition.max = val
+                        condition.right = True
+                    elif '<' in op:
+                        condition.max = val
+                        condition.right = False
+                    elif '>=' in op:
+                        condition.min = val
+                        condition.left = True
+                    elif '>' in op:
+                        condition.min = val
+                        condition.left = False
                     elif '==' in op or '=' in op:
-                        condition = [val-0.5, val+0.5]
+                        condition = Domain(val, val, True, True)
+                    # if '<=' in op or '<' in op:
+                    #     condition[1] = val
+                    # elif '>=' in op or '>' in op:
+                    #     condition[0] = val
+                    # elif '==' in op or '=' in op:
+                    #     condition = [val-0.5, val+0.5]
                     else:
                         logger.error("unexpected operation")
 
