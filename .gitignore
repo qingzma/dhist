@@ -1,8 +1,8 @@
-logs/*
+
 .vscode/
 __pycache__/
 data/stats/*
-models/*.pkl
+
 *.egg-info/
 
 *.pyc
