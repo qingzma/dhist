@@ -47,6 +47,7 @@ class Engine:
         conditions = generate_push_down_conditions(
             tables_all, table_query, join_cond, join_keys
         )
+        logger.info("conditions %s", conditions)
 
         # single table query
         if len(tables_all) == 1:
@@ -62,9 +63,11 @@ class Engine:
         join_keys_grid.calculate_push_down_join_keys_domain(
             conditions, join_cond, self.models, tables_all, self.grid_size_x
         )
-        # logger.info("join_keys_grid %s", join_keys_grid.join_keys_domain)
+        logger.info("join_keys_grid %s", join_keys_grid.join_keys_domain)
 
         # only a single join key is allowed in a table
+        if len(join_keys_grid.join_keys_domain) > 1:
+            return 1.0  # TODO support this
         assert len(join_keys_grid.join_keys_domain) == 1
         # join_keys_lists, join_keys_domain = calculate_push_down_join_keys_domain(
         #     conditions, join_cond, self.models, tables_all)
@@ -94,7 +97,7 @@ def vec_sel_single_table_query(
 
     # sz_min = np.Infinity
 
-    # logger.info("conds: %s", conds)
+    logger.info("conds: %s", conds)
     if len(conds) == 1:
         cond = conds[0]
 
@@ -138,7 +141,13 @@ def vec_sel_single_table_query(
                 * join_keys_grid.join_keys_grid[0].width
             )
 
-        model: Column2d = models[tbl].correlations_cdf["Id"][cond.non_key.split(".")[1]]
+        model: Column2d = (
+            models[tbl].correlations_cdf["Id"][cond.non_key.split(".")[1]]
+            if not force_return_vec_sel_key
+            else models[tbl].correlations_cdf[force_return_vec_sel_key][
+                cond.non_key.split(".")[1]
+            ]
+        )
         jk_domain = [model.min[0], model.max[0]]
         nk_domain = Domain(model.min[1], model.max[1], True, True)
         nk_domain_query = cond.non_key_condition
@@ -157,6 +166,7 @@ def vec_sel_single_table_query(
             )  # TODO  done !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # grid_y, width_y = np.linspace(
         #     nk_domain.min, nk_domain.max, grid_size_y, retstep=True)
+        # logger.info("grid x is %s", grid_x)
         pred = model.pdf.predict_grid_with_y_range(grid_x, nk_domain)
         # logger.info("pred is %s", pred)
         # logger.info("sum is %s", np.sum(pred))
@@ -178,9 +188,18 @@ def vec_sel_single_table_query(
     pred_xys = []
 
     for condi in conds:
-        sel = vec_sel_single_table_query(
-            models, {tbl: [condi]}, grid_size_x, use_column_model=False
-        )
+        if not join_keys_grid:
+            sel = vec_sel_single_table_query(
+                models, {tbl: [condi]}, grid_size_x, use_column_model=False
+            )
+        else:
+            sel = vec_sel_single_table_query(
+                models,
+                {tbl: [condi]},
+                use_column_model=False,
+                join_keys_grid=join_keys_grid,
+                force_return_vec_sel_key=force_return_vec_sel_key,
+            )
         pred_xys.append(sel)
         # logger.debug("sub selectivity is %s", np.sum(sel))
 

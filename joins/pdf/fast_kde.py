@@ -2,9 +2,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib import ticker
-from scipy.interpolate import (BarycentricInterpolator, CubicSpline,
-                               KroghInterpolator, PchipInterpolator,
-                               RegularGridInterpolator, interp2d, Akima1DInterpolator)
+from scipy.interpolate import (
+    BarycentricInterpolator,
+    CubicSpline,
+    KroghInterpolator,
+    PchipInterpolator,
+    RegularGridInterpolator,
+    interp2d,
+    Akima1DInterpolator,
+)
+
 # from numba import njit
 
 from joins.domain import Domain
@@ -26,9 +33,9 @@ def get_linspace_centered(low: float, high: float, sz: int):
     Returns:
         grid, width: grid and width
     """
-    grid_width_x = (high-low)/sz
-    x_low_in_grid = low - 0.5*grid_width_x
-    x_high_in_grid = high + 0.5*grid_width_x
+    grid_width_x = (high - low) / sz
+    x_low_in_grid = low - 0.5 * grid_width_x
+    x_high_in_grid = high + 0.5 * grid_width_x
     grid_x = np.linspace(x_low_in_grid, x_high_in_grid, sz)
     return grid_x, grid_width_x
 
@@ -47,7 +54,7 @@ class FastKde1D:
         self.is_categorical = is_categorical
         if is_categorical:
             # when categorical is on, must use cumulative mode, otherwise wrong density as no 0 values.
-            assert (cumulative)
+            assert cumulative
 
     def fit(self, x) -> None:
         if isinstance(x, pd.DataFrame):
@@ -77,17 +84,20 @@ class FastKde1D:
         if self.is_categorical:
             unique_x = np.unique(df[column])
             unique_x.sort()
-            grid_x = unique_x-0.5
-            grid_x = np.append(grid_x, [unique_x[-1]+0.5])
+            grid_x = unique_x - 0.5
+            grid_x = np.append(grid_x, [unique_x[-1] + 0.5])
         else:
-            width_x = (self.max-self.min)/(self.grid_size-1)
+            width_x = (self.max - self.min) / (self.grid_size - 1)
             grid_x, _ = get_linspace_centered(
-                self.min-0.5*width_x, self.max+0.5*width_x, self.grid_size)
+                self.min - 0.5 * width_x, self.max + 0.5 * width_x, self.grid_size
+            )
         df[column] = pd.cut(
-            df[column], bins=grid_x, labels=grid_x[:-1])  # , labels=self.grid_x[:-1]
+            df[column], bins=grid_x, labels=grid_x[:-1]
+        )  # , labels=self.grid_x[:-1]
 
-        counts = df.groupby([column],
-                            observed=False).size().to_numpy()  # [['x', 'y']].count()  .size()
+        counts = (
+            df.groupby([column], observed=False).size().to_numpy()
+        )  # [['x', 'y']].count()  .size()
         # print("counts was ", counts)
         if self.cumulative:
             counts = np.cumsum(counts, axis=0)
@@ -96,17 +106,16 @@ class FastKde1D:
 
         if self.is_categorical:
             xx = unique_x
-            ps = np.divide(counts, 1.0*self.size)
-            self.background_noise = 0.5/self.size
+            ps = np.divide(counts, 1.0 * self.size)
+            self.background_noise = 0.5 / self.size
         else:
-            xx, wx = np.linspace(
-                self.min, self.max, self.grid_size-1, retstep=True)
+            xx, wx = np.linspace(self.min, self.max, self.grid_size - 1, retstep=True)
             if self.cumulative:
-                ps = np.divide(counts, self.size*wx)
-                self.background_noise = 0.5/self.size/wx
+                ps = np.divide(counts, self.size * wx)
+                self.background_noise = 0.5 / self.size / wx
             else:
-                ps = np.divide(counts, self.size*wx)
-                self.background_noise = 0.5/self.size/wx
+                ps = np.divide(counts, self.size * wx)
+                self.background_noise = 0.5 / self.size / wx
         # print("ps is ", ps)
         # print("background noise is ", self.background_noise)
 
@@ -114,7 +123,7 @@ class FastKde1D:
         self.kde = PchipInterpolator(xx, ps)
 
     def fit_numpy(self, x: np.ndarray):
-        df = pd.DataFrame(x, columns=['x'])
+        df = pd.DataFrame(x, columns=["x"])
         self.fit_pd(df)
 
     def fit_list(self, x: list):
@@ -128,7 +137,7 @@ class FastKde1D:
         return res
 
     def predict_domain(self, domain: Domain):
-        assert (self.cumulative)
+        assert self.cumulative
         l = domain.min
         h = domain.max
 
@@ -142,11 +151,13 @@ class FastKde1D:
         except Exception:
             print("error, out of bound, pls restore lower and uppper bound.")
             exit()
-        return ps[1]-ps[0]
+        return ps[1] - ps[0]
 
 
 class FastKde2D:
-    def __init__(self, grid_size_x, grid_size_y, cumulative=False, y_is_categorical=False) -> None:
+    def __init__(
+        self, grid_size_x, grid_size_y, cumulative=False, y_is_categorical=False
+    ) -> None:
         self.grid_size_x = grid_size_x
         self.grid_size_y = grid_size_y
         self.background_noise = 0
@@ -163,8 +174,8 @@ class FastKde2D:
         return self.predict_grid([x[0]], [x[1]])
 
     def predict_grid_with_y_range(self, x_grid, domain: Domain, b_plot=False):
-        # print("domain is  \n", domain)
-        assert (self.cumulative)
+        print("domain is  \n", domain)
+        assert self.cumulative
         l, h = domain.min, domain.max
         # width = x_grid[1]-x_grid[0]
         # if domain.is_categorical:
@@ -196,13 +207,18 @@ class FastKde2D:
                 #       Domain(l, hh, False, False))
             except ValueError:
                 try:
-                    ll = l+0.05
+                    ll = l + 0.5
                     ps = self.predict_grid(x_grid, np.array([h]))
                     # print("try to  restore  lower bound to fix issue. %s",
                     #       Domain(ll, h, False, False))
                 except ValueError:
                     hh = h - 0.5
                     ll = l + 0.5
+                    print("min is %s", self.min)
+                    print("max is %s", self.max)
+                    print("hh %s", hh)
+                    print("min of grid is %s", x_grid[0])
+                    print("max of grid is %s", x_grid[-1])
                     # TODO need to optimize this part, avoid multiple try.
                     ps = self.predict_grid(x_grid, np.array([hh]))
                     # print("try to  restore  both bounds to fix issue, this should not happen. %s",
@@ -210,7 +226,7 @@ class FastKde2D:
             # exit()
         if len(ps) == 1:
             return ps
-        return ps[1]-ps[0]
+        return ps[1] - ps[0]
         # if (abs(h-l) < 1e-5):
         #     ps = self.predict_grid(x_grid, np.array([l]))
         #     return ps
@@ -255,30 +271,40 @@ class FastKde2D:
         self.max = df.max().to_numpy()
         columns = list(df.columns)
 
-        width_x = (self.max[0]-self.min[0])/(self.grid_size_x-1)
-        width_y = (self.max[1]-self.min[1])/(self.grid_size_x-1)
+        width_x = (self.max[0] - self.min[0]) / (self.grid_size_x - 1)
+        width_y = (self.max[1] - self.min[1]) / (self.grid_size_x - 1)
         grid_x, _ = get_linspace_centered(
-            self.min[0]-0.5*width_x, self.max[0]+0.5*width_x, self.grid_size_x+1)
+            self.min[0] - 0.5 * width_x,
+            self.max[0] + 0.5 * width_x,
+            self.grid_size_x + 1,
+        )
 
         if self.y_is_categorical:
             unique_y = np.unique(df[columns[1]])
             unique_y.sort()
             # print("unique y is ", unique_y)
-            grid_y = unique_y-0.5*width_y
-            grid_y = np.append(grid_y, [unique_y[-1]+0.5*width_y])
+            grid_y = unique_y - 0.5 * width_y
+            grid_y = np.append(grid_y, [unique_y[-1] + 0.5 * width_y])
         else:
             grid_y, _ = get_linspace_centered(
-                self.min[1]-0.5*width_y, self.max[1]+0.5*width_y, self.grid_size_y+1)
+                self.min[1] - 0.5 * width_y,
+                self.max[1] + 0.5 * width_y,
+                self.grid_size_y + 1,
+            )
         # print("unique y is ", unique_y)
         # print("widthx was ", width_x)
         # print("original grid_x is ", grid_x)
         # print("original grid_y is ", grid_y)
         df[columns[0]] = pd.cut(
-            df[columns[0]], bins=grid_x, )  # , labels=grid_x[:-1]
+            df[columns[0]],
+            bins=grid_x,
+        )  # , labels=grid_x[:-1]
         # print("grid y is %s", grid_y)
         # exit()
         df[columns[1]] = pd.cut(
-            df[columns[1]], bins=grid_y, )  # , labels=grid_y[:-1]
+            df[columns[1]],
+            bins=grid_y,
+        )  # , labels=grid_y[:-1]
 
         # counts1 = df.groupby(columns,  # [columns[0],columns[1]]
         #                      observed=False).size()
@@ -287,8 +313,9 @@ class FastKde2D:
         #                      observed=False).size()
         # print("counts1\n",counts1)
 
-        counts = df.groupby(columns,
-                            observed=False).size().unstack().to_numpy()  # [['x', 'y']].count()  .size()
+        counts = (
+            df.groupby(columns, observed=False).size().unstack().to_numpy()
+        )  # [['x', 'y']].count()  .size()
         # print("first row is ", counts[0,:])
         # print("counts before is\n", counts)
         if self.cumulative:
@@ -297,24 +324,24 @@ class FastKde2D:
         print("sum of count is ", np.sum(counts))
         print("sum of last count is ", np.sum(counts[-1, :]))
         # print("table is ", self.size)
-        xx, wx = np.linspace(
-            self.min[0], self.max[0], self.grid_size_x, retstep=True)
+        xx, wx = np.linspace(self.min[0], self.max[0], self.grid_size_x, retstep=True)
         if self.y_is_categorical:
             yy = unique_y
             # print("y grid is now ", unique_y)
-            ps = np.divide(counts, self.size*wx)
-            print("sum is ", np.sum(ps[:, -1])*wx)
+            ps = np.divide(counts, self.size * wx)
+            print("sum is ", np.sum(ps[:, -1]) * wx)
             # print("corresponding xx is ", xx)
             # print("corresponding yy is ", yy)
-            self.background_noise = 0.5/self.size/wx
+            self.background_noise = 0.5 / self.size / wx
             # print("background_noise is now ", self.background_noise)
         else:
-            yy, wy = np.linspace(self.min[1], self.max[1],
-                                 self.grid_size_y, retstep=True)
-            ps = np.divide(counts, self.size*wx)
+            yy, wy = np.linspace(
+                self.min[1], self.max[1], self.grid_size_y, retstep=True
+            )
+            ps = np.divide(counts, self.size * wx)
             # print("width x is ", wx)
-            print("sum is ", np.sum(ps[:, -1])*wx)
-            self.background_noise = 0.5/self.size/wx
+            print("sum is ", np.sum(ps[:, -1]) * wx)
+            self.background_noise = 0.5 / self.size / wx
 
         # print("x_grid is ", xx)
         # print("widthx is ", wx)
@@ -324,7 +351,7 @@ class FastKde2D:
         # print("self.kde.grid is ", self.kde.grid)
 
     def fit_numpy(self, x: np.ndarray):
-        df = pd.DataFrame(x, columns=['x', 'y'])
+        df = pd.DataFrame(x, columns=["x", "y"])
         self.fit_pd(df)
 
     def fit_list(self, x: list):
@@ -333,9 +360,9 @@ class FastKde2D:
 
 
 def plot1d(kde):
-    x = np.linspace(kde.min, kde.max,  2**8)
+    x = np.linspace(kde.min, kde.max, 2**8)
     p = kde.predict(x)
-    plt.plot(x, p, c='r')
+    plt.plot(x, p, c="r")
     plt.show()
 
 
@@ -343,13 +370,13 @@ def plot2d(kde, grid_size_x=2**10, grid_size_y=2**10):
     fig = plt.figure()
     ax = fig.gca()
     N = 4  # Number of contours
-    xx = np.linspace(kde.min[0], kde.max[0],  grid_size_x)
-    yy = np.linspace(kde.min[1], kde.max[1],  grid_size_y)
+    xx = np.linspace(kde.min[0], kde.max[0], grid_size_x)
+    yy = np.linspace(kde.min[1], kde.max[1], grid_size_y)
     p = kde.predict_grid(xx, yy, b_plot=False)
-    cfset = ax.contourf(xx, yy, p, N, cmap="Blues",
-                        locator=ticker.LogLocator())
-    cset = ax.contour(xx, yy, p, N, linewidths=0.8,
-                      colors="k", locator=ticker.LogLocator())
+    cfset = ax.contourf(xx, yy, p, N, cmap="Blues", locator=ticker.LogLocator())
+    cset = ax.contour(
+        xx, yy, p, N, linewidths=0.8, colors="k", locator=ticker.LogLocator()
+    )
     # ax.clabel(cset, inline=1, fontsize=10)
     cbar = fig.colorbar(cfset)
     plt.show()
@@ -399,10 +426,12 @@ if __name__ == "__main__":
     # kde2d.predict([1, 2])
     # plot2d(kde2d)
 
-    data = [[1, 2],
-            [1, 3],
-            [2, 3],
-            [4, 5],]
+    data = [
+        [1, 2],
+        [1, 3],
+        [2, 3],
+        [4, 5],
+    ]
     #         [1, 2],
     #         [1, 3],
     #         [2, 3],

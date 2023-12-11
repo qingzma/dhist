@@ -23,11 +23,13 @@ class TableContainer:
         self.efficients = dict()
         self.use_cdf = False
 
-    def fit(self, file, join_keys, relevant_keys, exclude=None, use_2d_model=True, args=None) -> None:
-        df = pd.read_csv(file, sep=',')
+    def fit(
+        self, file, join_keys, relevant_keys, exclude=None, use_2d_model=True, args=None
+    ) -> None:
+        df = pd.read_csv(file, sep=",")
         self.size = df.shape[0]
         self.file_path = file
-        self.name = file.split('/')[-1].split('.')[0]
+        self.name = file.split("/")[-1].split(".")[0]
 
         if args.cdf:
             self.use_cdf = args.cdf
@@ -37,14 +39,14 @@ class TableContainer:
         # assert len(join_keys) == 1
         # if len(join_keys) == 1 or (not use_2d_model):
         for join_key in join_keys[self.name]:
-            df_col = df[join_key].fillna(-1)  # replace NULL with -1 !
+            df_col = df[join_key]  # .fillna(-1)  # replace NULL with -1 !
             column = Column()
             column.fit(df_col, self.name, args=args)
             self.pdfs[join_key] = column
 
         for relev_key in relevant_keys[self.name]:
             logger.info("col is %s", relev_key)
-            df_col = df[relev_key].fillna(-1)  # replace NULL with -1 !
+            df_col = df[relev_key]  # .fillna(-1)  # replace NULL with -1 !
             column = Column()
             column.fit(df_col, self.name, args=args)
             if args.cdf:
@@ -93,8 +95,7 @@ class TableContainer:
 
                         # if t not in self.correlations:
                         #     self.correlations[t] = dict()
-                        columns.fit(d,
-                                    self.name, args=args)
+                        columns.fit(d, self.name, args=args)
                         if args.cdf:
                             # columns.fit(d,
                             #             self.name, args=args)
@@ -131,16 +132,16 @@ class Column:
         """
         methods: ["fft", "kde","nflow"]
         """
-        x = df_column.to_numpy().reshape(-1, 1)
+        self.min = np.min(df_column)
+        self.max = np.max(df_column)
+        x = df_column.fillna(-1).to_numpy().reshape(-1, 1)
         logger.debug("fit the 1d pdf...")
-        self.min = np.min(x)
-        self.max = np.max(x)
+
         self.name = df_column.head()
         self.size = len(x)
         if method == "kde":
             kde = Kde1D()
-            kde.fit(x,
-                    header=self.name, table=table_name)
+            kde.fit(x, header=self.name, table=table_name)
             self.pdf = kde
             if args.plot:
                 kde.plot()
@@ -154,12 +155,16 @@ class Column:
                 plot1d(kde)
         else:
             kde = KdePy1D()
-            kde.fit(df_column.to_numpy().reshape(-1, 1),
-                    grid_size=args.grid, kernel=args.kernel)
+            kde.fit(
+                df_column.to_numpy().reshape(-1, 1),
+                grid_size=args.grid,
+                kernel=args.kernel,
+            )
             self.pdf = kde
             if args.plot:
                 plot1d(kde)
         # kde.plot()
+
     # def plot(self) -> None:
     #     logger.info("plot the pdf...")
 
@@ -172,35 +177,41 @@ class Column2d:
         self.min = None
         self.max = None
 
-    def fit(self, df_columns, table_name, method="fast",  args=None, use_coefficient=False) -> None:
+    def fit(
+        self, df_columns, table_name, method="fast", args=None, use_coefficient=False
+    ) -> None:
         """
         methods: ["fft", "kde","nflow"]
         """
         self.size = df_columns.shape[0]
         # use float32 for pytorch compatibility
-        df_columns = df_columns.astype('float32')
+        df_columns = df_columns.astype("float32")
         logger.debug("fit the 2d pdf...")
         # logger.info("mins: %s", df_columns.min())
         self.min = df_columns.min().values
         self.max = df_columns.max().values
         # exit()
         self.name = df_columns.head()
-        if method == 'nflow':
+        if method == "nflow":
             flow = Nflow2D(max_iter=100, show_iter=200, enable_cuda=False)
             flow.fit(df_columns.to_numpy())
             self.pdf = flow
             if args.plot:
                 flow.plot()
-        elif method == 'kde':
+        elif method == "kde":
             kde = Kde2D()
-            kde.fit(df_columns.to_numpy(),  # .reshape(-1, 2),
-                    header=self.name, table=table_name)
+            kde.fit(
+                df_columns.to_numpy(),  # .reshape(-1, 2),
+                header=self.name,
+                table=table_name,
+            )
             self.pdf = kde
             if args.plot:
                 kde.plot()
         elif method == "fast":
-            kde = FastKde2D(args.grid, args.grid,
-                            cumulative=args.cdf, y_is_categorical=False)
+            kde = FastKde2D(
+                args.grid, args.grid, cumulative=args.cdf, y_is_categorical=False
+            )
             kde.fit(df_columns.to_numpy())
             self.pdf = kde
             if args.plot:
@@ -214,8 +225,7 @@ class Column2d:
                 # self.pdf = kde
             else:
                 kde = KdePy2D()
-                kde.fit(df_columns.to_numpy(),
-                        grid_size=args.grid, kernel=args.kernel)
+                kde.fit(df_columns.to_numpy(), grid_size=args.grid, kernel=args.kernel)
                 self.pdf = kde
             if args.plot:
                 plot2d(kde)
@@ -228,18 +238,18 @@ def plot2d(kde):
     fig = plt.figure()
     ax = fig.gca()
     N = 4  # Number of contours
-    xx = np.linspace(kde.min[0], kde.max[0],  2**10)
-    yy = np.linspace(kde.min[1], kde.max[1],  2**10)
+    xx = np.linspace(kde.min[0], kde.max[0], 2**10)
+    yy = np.linspace(kde.min[1], kde.max[1], 2**10)
     p = kde.predict_grid(xx, yy)
-    cfset = ax.contourf(xx, yy, p, N, cmap="Blues",
-                        locator=ticker.LogLocator())
-    cset = ax.contour(xx, yy, p, N, linewidths=0.8,
-                      colors="k", locator=ticker.LogLocator())
+    cfset = ax.contourf(xx, yy, p, N, cmap="Blues", locator=ticker.LogLocator())
+    cset = ax.contour(
+        xx, yy, p, N, linewidths=0.8, colors="k", locator=ticker.LogLocator()
+    )
     # ax.clabel(cset, inline=1, fontsize=10)
     cbar = fig.colorbar(cfset)
     plt.show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     table = TableContainer()
     # table.fit(file='data/pm25_100.csv', join_keys=['PRES'], exclude=['cbwd'])

@@ -6,7 +6,14 @@ from joins.base_logger import logger
 
 
 class Domain:
-    def __init__(self, mins=-np.Infinity, maxs=np.Infinity, left=False, right=True, is_categorical=True) -> None:
+    def __init__(
+        self,
+        mins=-np.Infinity,
+        maxs=np.Infinity,
+        left=False,
+        right=True,
+        is_categorical=True,
+    ) -> None:
         self.min = mins
         self.max = maxs
         self.left = left
@@ -37,7 +44,7 @@ class Domain:
             high += ")"
 
         return f"{low}{self.min}, {self.max}{high}"
-    
+
     def __repr__(self) -> str:
         return self.__str__()
 
@@ -45,8 +52,10 @@ class Domain:
 class JoinKeyGrid:
     def __init__(self, low, high, grid_size) -> None:
         self.grid, self.width = np.linspace(low, high, grid_size, retstep=True)
+
     def __str__(self) -> str:
         return f"[{self.grid[0]}, {self.grid[-1]}]-with-width-[{self.width}]"
+
     def __repr__(self) -> str:
         return self.__str__()
 
@@ -57,7 +66,9 @@ class JoinKeysGrid:
         self.join_keys_domain = []
         self.join_keys_grid: list[JoinKeyGrid] = []
 
-    def calculate_push_down_join_keys_domain(self, conditions, join_cond, models: dict, tabls_all, grid_size):
+    def calculate_push_down_join_keys_domain(
+        self, conditions, join_cond, models: dict, tabls_all, grid_size
+    ):
         # note, selection on join key is not supported yet.
         if join_cond is None:
             # tbl = list(tabls_all.values())[0]
@@ -73,13 +84,17 @@ class JoinKeysGrid:
         # logger.info("len is %s", len(ps))
         while len(join_cond_copy) > 0:
             join_cond = join_cond_copy.pop()
+            logger.info("join_cond %s", join_cond)
             tk1, tk2 = join_cond.replace(" ", "").split("=")
             t1, k1 = tk1.split(".")
             t2, k2 = tk2.split(".")
             domain1 = Domain(models[t1].pdfs[k1].min, models[t1].pdfs[k1].max)
             domain2 = Domain(models[t2].pdfs[k2].min, models[t2].pdfs[k2].max)
+            logger.info("domain 1 is %s", domain1)
+            logger.info("domain 2 is %s", domain2)
             # merged = merge_domain(domain1, domain2)
             domain1.merge_domain(domain2)
+            logger.info("domain merged to  %s", domain1)
 
             # check existence and update domain
             idx1 = get_idx_in_lists(tk1, join_keys)
@@ -95,10 +110,10 @@ class JoinKeysGrid:
                 join_keys[idx2].append(tk1)
                 join_keys_domain[idx2].merge_domain(domain1)
             else:
-                logger.error(
-                    "unexpected behavior as the join condition appear twice")
+                logger.error("unexpected behavior as the join condition appear twice")
         self.join_keys_lists = join_keys
         self.join_keys_domain = join_keys_domain
+        logger.info("final join key domain is %s", join_keys_domain)
 
         for domain in join_keys_domain:
             grid = JoinKeyGrid(domain.min, domain.max, grid_size)
@@ -106,7 +121,7 @@ class JoinKeysGrid:
 
     def get_join_key_grid_for_table_jk(self, jk) -> JoinKeyGrid:
         idx = get_idx_in_lists(jk, self.join_keys_lists)
-        assert (idx >= 0)
+        assert idx >= 0
         return self.join_keys_grid[idx]
 
 
@@ -122,15 +137,23 @@ def get_idx_in_lists(k, lists):
 
 
 class SingleTablePushedDownCondition:
-    def __init__(self, tbl: str, join_keys: list[str], non_key: str, non_key_condition: dict[str, dict], to_join, key_conditions=None) -> None:
+    def __init__(
+        self,
+        tbl: str,
+        join_keys: list[str],
+        non_key: str,
+        non_key_condition: dict[str, dict],
+        to_join,
+        key_conditions=None,
+    ) -> None:
         self.tbl = tbl
         # currently only support at most 2 join keys in a single table
-        assert (len(join_keys) <= 2)
+        assert len(join_keys) <= 2
         self.join_keys = join_keys
         self.non_key = non_key
         self.non_key_condition = non_key_condition
         # selection on join key is not supported, but could be easily supported.
-        assert (key_conditions is None)
+        assert key_conditions is None
 
         self.to_join = to_join
 
@@ -152,7 +175,7 @@ def generate_push_down_conditions(tables_all, table_query, join_cond, join_keys)
     if len(tables_all) == 1:
         to_join = {}
         tbl = list(tables_all.values())[0]
-        default_primary_key = [tbl+"."+"Id"]
+        default_primary_key = [tbl + "." + "Id"]
 
         if table_query and tbl in table_query:
             # push down single table condition
@@ -161,30 +184,32 @@ def generate_push_down_conditions(tables_all, table_query, join_cond, join_keys)
                 condition = Domain(-np.Infinity, np.Infinity)
                 for op in table_query[tbl][non_key]:
                     val = table_query[tbl][non_key][op]
-                    if '<=' in op:
+                    if "<=" in op:
                         condition.max = val
                         condition.right = True
-                    elif '<' in op:
+                    elif "<" in op:
                         condition.max = val
                         condition.right = False
-                    elif '>=' in op:
+                    elif ">=" in op:
                         condition.min = val
                         condition.left = True
-                    elif '>' in op:
+                    elif ">" in op:
                         condition.min = val
                         condition.left = False
-                    elif '==' in op or '=' in op:
+                    elif "==" in op or "=" in op:
                         condition = Domain(val, val, True, True)
                     else:
                         logger.error("unexpected operation")
 
                 con = SingleTablePushedDownCondition(
-                    tbl, default_primary_key, non_key, condition, to_join, None)
+                    tbl, default_primary_key, non_key, condition, to_join, None
+                )
                 single_table_conditions.append(con)
         else:
             single_table_conditions = []
             con = SingleTablePushedDownCondition(
-                tbl, default_primary_key, None, None, to_join, None)
+                tbl, default_primary_key, None, None, to_join, None
+            )
             single_table_conditions.append(con)
         conditions[tbl] = single_table_conditions
         return conditions
@@ -200,8 +225,9 @@ def generate_push_down_conditions(tables_all, table_query, join_cond, join_keys)
             # logger.info("jk is %s", jk)
             for join_condition in join_cond:
                 if jk in join_condition:
-                    to_j = join_condition.replace(
-                        jk, "").replace("=", "").replace(" ", "")
+                    to_j = (
+                        join_condition.replace(jk, "").replace("=", "").replace(" ", "")
+                    )
                     # logger.info("to_j,%s", to_j)
                     to_tbl, to_k = to_j.split(".")
                     if to_tbl not in to_join:
@@ -212,22 +238,22 @@ def generate_push_down_conditions(tables_all, table_query, join_cond, join_keys)
             # push down single table condition
             single_table_conditions = []
             for non_key in table_query[tbl]:
-                condition = Domain(-np.Infinity, np.Infinity,True,True)
+                condition = Domain(-np.Infinity, np.Infinity, True, True)
                 for op in table_query[tbl][non_key]:
                     val = table_query[tbl][non_key][op]
-                    if '<=' in op:
+                    if "<=" in op:
                         condition.max = val
                         condition.right = True
-                    elif '<' in op:
+                    elif "<" in op:
                         condition.max = val
                         condition.right = False
-                    elif '>=' in op:
+                    elif ">=" in op:
                         condition.min = val
                         condition.left = True
-                    elif '>' in op:
+                    elif ">" in op:
                         condition.min = val
                         condition.left = False
-                    elif '==' in op or '=' in op:
+                    elif "==" in op or "=" in op:
                         condition = Domain(val, val, True, True)
                     # if '<=' in op or '<' in op:
                     #     condition[1] = val
@@ -239,12 +265,14 @@ def generate_push_down_conditions(tables_all, table_query, join_cond, join_keys)
                         logger.error("unexpected operation")
 
                 con = SingleTablePushedDownCondition(
-                    tbl, join_keyss, non_key, condition, to_join, None)
+                    tbl, join_keyss, non_key, condition, to_join, None
+                )
                 single_table_conditions.append(con)
         else:
             single_table_conditions = []
             con = SingleTablePushedDownCondition(
-                tbl, join_keyss, None, None, to_join, None)
+                tbl, join_keyss, None, None, to_join, None
+            )
             single_table_conditions.append(con)
         conditions[tbl] = single_table_conditions
     return conditions
