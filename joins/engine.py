@@ -42,7 +42,7 @@ class Engine:
         self.use_cdf = use_cdf
 
     def query(self, query_str):
-        logger.debug("QUERY [%s]", query_str)
+        logger.info("QUERY [%s]", query_str)
         tables_all, table_query, join_cond, join_keys = parse_query_simple(query_str)
         conditions = generate_push_down_conditions(
             tables_all, table_query, join_cond, join_keys
@@ -62,7 +62,7 @@ class Engine:
         join_keys_grid.calculate_push_down_join_keys_domain(
             conditions, join_cond, self.models, tables_all, self.grid_size_x
         )
-        logger.info("join_keys_grid %s", join_keys_grid.join_keys_domain)
+        # logger.info("join_keys_grid %s", join_keys_grid.join_keys_domain)
 
         # only a single join key is allowed in a table
         assert len(join_keys_grid.join_keys_domain) == 1
@@ -74,8 +74,8 @@ class Engine:
             self.models, conditions, join_cond, join_keys_grid
         )
 
-        logger.info("cartesian is %E", n)
-        logger.info("pred is %s ", np.sum(pred))
+        # logger.info("cartesian is %E", n)
+        # logger.info("pred is %s ", np.sum(pred))
 
         return np.sum(pred) * n
 
@@ -93,6 +93,7 @@ def vec_sel_single_table_query(
     conds = conditions[tbl]
 
     # sz_min = np.Infinity
+
     # logger.info("conds: %s", conds)
     if len(conds) == 1:
         cond = conds[0]
@@ -101,11 +102,14 @@ def vec_sel_single_table_query(
         # [SingleTablePushedDownCondition[badges]--join_keys[badges.Id]--non_key[None]--condition[None, None]--to_join[{}]]]
         if cond.non_key is None:
             if force_return_vec_sel_key:
-                model:Column = models[tbl].pdfs[force_return_vec_sel_key]
+                model: Column = models[tbl].pdfs[force_return_vec_sel_key]
                 # logger.info("model is %s",model)
                 # logger.info("width is %s",join_keys_grid.join_keys_grid[0].width)
                 # logger.info("grid is %s",join_keys_grid.join_keys_grid[0].grid)
-                return model.pdf.predict(join_keys_grid.join_keys_grid[0].grid) * join_keys_grid.join_keys_grid[0].width
+                return (
+                    model.pdf.predict(join_keys_grid.join_keys_grid[0].grid)
+                    * join_keys_grid.join_keys_grid[0].width
+                )
             # sz_min = models[tbl].size
             return np.array([1.0])  # [models[tbl].size]
 
@@ -125,6 +129,15 @@ def vec_sel_single_table_query(
             logger.info("selectivity is %s", np.sum(pred))
             return pred
         # for cases if column model is not used.
+        model = None
+        if force_return_vec_sel_key:
+            logger.info("join key is %s", force_return_vec_sel_key)
+            model: Column = models[tbl].pdfs[force_return_vec_sel_key]
+            return (
+                model.pdf.predict(join_keys_grid.join_keys_grid[0].grid)
+                * join_keys_grid.join_keys_grid[0].width
+            )
+
         model: Column2d = models[tbl].correlations_cdf["Id"][cond.non_key.split(".")[1]]
         jk_domain = [model.min[0], model.max[0]]
         nk_domain = Domain(model.min[1], model.max[1], True, True)
@@ -139,7 +152,9 @@ def vec_sel_single_table_query(
             grid_x = join_keys_grid.join_keys_grid[0].grid
             width_x = join_keys_grid.join_keys_grid[0].width
         else:
-            grid_x, width_x = np.linspace(*jk_domain, grid_size_x, retstep=True) #TODO  done !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            grid_x, width_x = np.linspace(
+                *jk_domain, grid_size_x, retstep=True
+            )  # TODO  done !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # grid_y, width_y = np.linspace(
         #     nk_domain.min, nk_domain.max, grid_size_y, retstep=True)
         pred = model.pdf.predict_grid_with_y_range(grid_x, nk_domain)
@@ -163,7 +178,7 @@ def vec_sel_single_table_query(
             models, {tbl: [condi]}, grid_size_x, use_column_model=False
         )
         pred_xys.append(sel)
-        logger.debug("sub selectivity is %s", np.sum(sel))
+        # logger.debug("sub selectivity is %s", np.sum(sel))
 
         # logger.info("size is %s", sz)
         # if sz < sz_min:
@@ -192,33 +207,24 @@ def vec_sel_multi_table_query(
     widths = {}
     for tbl in conditions:
         predictions_within_table = []
-        # for condition in conditions[tbl]:
-        #     pred_p = process_single_table_push_down_condition_for_join(
-        #         tbl, models, condition, join_keys_grid, grid_size_y)
-        #     assert (pred_p is not None)
-        #     predictions_within_table.append(pred_p)
 
-        # # get grid width for this single table
-        # p = merge_single_table_predictions(
-        #     conditions, predictions_within_table,)
         jk_id = None
         for jk_item in join_keys_grid.join_keys_lists[0]:
             # logger.info("jk_item %s",jk_item)
             if tbl in jk_item:
                 jk_id = jk_item.split(".")[1]
                 break
-        logger.info("table with id %s, %s", tbl, jk_id)
+        # logger.info("table with id %s, %s", tbl, jk_id)
         pred_p = vec_sel_single_table_query(
-            models, {tbl: conditions[tbl]}, join_keys_grid=join_keys_grid, force_return_vec_sel_key=jk_id
+            models,
+            {tbl: conditions[tbl]},
+            join_keys_grid=join_keys_grid,
+            force_return_vec_sel_key=jk_id,
         )
-        # logger.info("pred_p is %s", pred_p)
+        # logger.info("[table %s with selectivity: %s", tbl, np.sum(pred_p))
+
         ps[tbl] = pred_p
-        # widths[tbl] = width_p
-    # logger.info("grid join_keys_lists %s", join_keys_grid.join_keys_lists)
-    # logger.info("grid join_keys_domain %s", join_keys_grid.join_keys_domain)
-    # logger.info("grid join_keys_grid %s", join_keys_grid.join_keys_grid)
-    predss = vec_sel_join(ps, join_cond,join_keys_grid)
-    #                          join_keys_grid, grid_size_x)
+    predss = vec_sel_join(ps, join_cond, join_keys_grid)
     return predss
 
 
@@ -235,23 +241,23 @@ def vec_sel_divide(sel1, sel2):
     return np.divide(sel1, sel2, out=np.zeros_like(sel1), where=sel2 != 0)
 
 
-def vec_sel_join(ps, join_cond,join_keys_grid):
+def vec_sel_join(ps, join_cond, join_keys_grid):
     # logger.info("join_cond %s",join_cond)
     # logger.info("join_keys_grid %s",join_keys_grid.join_keys_grid)
     tbls = ps.keys()
     tbl0 = list(tbls)[0]
     width = join_keys_grid.join_keys_grid[0].width
-    
-    pred=ps[tbl0]
+
+    pred = ps[tbl0]
     # plot_line(pred)
-    logger.info("ssub of %s is %s", tbl0, np.sum(pred))
+    # logger.info("ssub of %s is %s", tbl0, np.sum(pred))
     for tbl in ps:
-        if tbl!= tbl0:
+        if tbl != tbl0:
             # plot_line(ps[tbl])
-            pred = vec_sel_multiply(pred, ps[tbl])/width
+            pred = vec_sel_multiply(pred, ps[tbl])
             # plot_line(pred)
-            logger.info("sub of %s is %s", tbl,  np.sum(ps[tbl]))
-    return pred
+            # logger.info("sub of %s is %s", tbl, np.sum(ps[tbl]))
+    return pred / width
 
 
 def get_cartesian_cardinality(counters, tables_all):

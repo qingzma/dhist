@@ -163,7 +163,7 @@ class FastKde2D:
         return self.predict_grid([x[0]], [x[1]])
 
     def predict_grid_with_y_range(self, x_grid, domain: Domain, b_plot=False):
-        print("domain is  \n", domain)
+        # print("domain is  \n", domain)
         assert (self.cumulative)
         l, h = domain.min, domain.max
         # width = x_grid[1]-x_grid[0]
