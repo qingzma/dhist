@@ -131,7 +131,7 @@ def vec_sel_single_table_query(
         # for cases if column model is not used.
         model = None
         if force_return_vec_sel_key:
-            logger.info("join key is %s", force_return_vec_sel_key)
+            # logger.info("join key is %s", force_return_vec_sel_key)
             model: Column = models[tbl].pdfs[force_return_vec_sel_key]
             return (
                 model.pdf.predict(join_keys_grid.join_keys_grid[0].grid)
@@ -168,7 +168,11 @@ def vec_sel_single_table_query(
     jk_model = models[tbl].pdfs[jk]
     jk_domain = [jk_model.min, jk_model.max]
     # logger.info("x range is %s", jk_domain)
-    grid_x, width_x = np.linspace(*jk_domain, grid_size_x, retstep=True)
+    if join_keys_grid:
+        grid_x = join_keys_grid.join_keys_grid[0].grid
+        width_x = join_keys_grid.join_keys_grid[0].width
+    else:
+        grid_x, width_x = np.linspace(*jk_domain, grid_size_x, retstep=True)
     pred_x = vec_sel_single_column(jk_model, grid_x)
 
     pred_xys = []
@@ -221,7 +225,7 @@ def vec_sel_multi_table_query(
             join_keys_grid=join_keys_grid,
             force_return_vec_sel_key=jk_id,
         )
-        # logger.info("[table %s with selectivity: %s", tbl, np.sum(pred_p))
+        logger.info("[table %s with selectivity: %s", tbl, np.sum(pred_p))
 
         ps[tbl] = pred_p
     predss = vec_sel_join(ps, join_cond, join_keys_grid)
