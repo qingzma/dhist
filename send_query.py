@@ -11,7 +11,7 @@ def send_query(dataset, method_name, query_file, save_folder, iteration=None):
         user="postgres",
         password="postgres",
         host="127.0.0.1",
-        port=5436,
+        port=5432,
     )
     cursor = conn.cursor()
 
@@ -22,15 +22,18 @@ def send_query(dataset, method_name, query_file, save_folder, iteration=None):
     # cursor.execute('SET print_sub_queries=true')
     # cursor.execute('SET print_single_tbl_queries=true')
 
-    cursor.execute("SET ml_joinest_enabled=true;")
-    cursor.execute("SET join_est_no=0;")
-    cursor.execute(f"SET ml_joinest_fname='{method_name}';")
+    # cursor.execute("SET ml_joinest_enabled=true;")
+    # cursor.execute("SET join_est_no=0;")
+    # cursor.execute(f"SET ml_joinest_fname='{method_name}';")
 
+    save_file_name = method_name.split(".txt")[0] + ".log"
+    print("saved  to " + save_file_name)
     planning_time = []
     execution_time = []
-    for no, query in enumerate(queries):
-        if "||" in query:
-            query = query.split("||")[-1]
+    predictions = []
+    for no, query_str in enumerate(queries):
+        if "||" in query_str:
+            query = query_str.split("||")[0]
         print(f"Executing query {no}")
         start = time.time()
         cursor.execute("EXPLAIN ANALYZE " + query)
@@ -41,22 +44,30 @@ def send_query(dataset, method_name, query_file, save_folder, iteration=None):
         print(
             f"{no}-th query finished in {end-start}, with planning_time {planning_time[no]} ms and execution_time {execution_time[no]} ms"
         )
+        cursor.execute(query)
+        res = cursor.fetchall()
+        for row in res:
+            predictions.append(row[0])
+            with open(save_file_name, "a+") as f:
+                #
+                f.write(query_str[:-1] + "||" + str(row[0]) + "\n")
+    print(predictions)
 
     cursor.close()
     conn.close()
-    save_file_name = method_name.split(".txt")[0]
-    if iteration:
-        np.save(
-            save_folder + f"plan_time_{save_file_name}_iter{iteration}",
-            np.asarray(planning_time),
-        )
-        np.save(
-            save_folder + f"exec_time_{save_file_name}_iter{iteration}",
-            np.asarray(execution_time),
-        )
-    else:
-        np.save(save_folder + f"plan_time_{save_file_name}", np.asarray(planning_time))
-        np.save(save_folder + f"exec_time_{save_file_name}", np.asarray(execution_time))
+
+    # if iteration:
+    #     np.save(
+    #         save_folder + f"plan_time_{save_file_name}_iter{iteration}",
+    #         np.asarray(planning_time),
+    #     )
+    #     np.save(
+    #         save_folder + f"exec_time_{save_file_name}_iter{iteration}",
+    #         np.asarray(execution_time),
+    #     )
+    # else:
+    #     np.save(save_folder + f"plan_time_{save_file_name}", np.asarray(planning_time))
+    #     np.save(save_folder + f"exec_time_{save_file_name}", np.asarray(execution_time))
 
 
 if __name__ == "__main__":
@@ -64,12 +75,12 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", default="stats", help="Which dataset to be used")
     parser.add_argument(
         "--method_name",
-        default="stats_CEB_sub_queries_model_stats_greedy_50.txt",
+        default="workloads/stats_CEB/estimates/truth.txt",
         help="save estimates",
     )
     parser.add_argument(
         "--query_file",
-        default="/home/ubuntu/data_CE/stats_CEB/stats_CEB.sql",
+        default="workloads/stats_CEB/sub_plan_queries/stats_CEB_sub_queries.sql",
         help="Query file location",
     )
     parser.add_argument(
@@ -79,7 +90,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--save_folder",
-        default="/home/ubuntu/data_CE/stats_CEB/",
+        default="workloads/stats_CEB/estimates/",
         help="Query file location",
     )
     parser.add_argument(
