@@ -90,11 +90,11 @@ class JoinKeysGrid:
             t2, k2 = tk2.split(".")
             domain1 = Domain(models[t1].pdfs[k1].min, models[t1].pdfs[k1].max)
             domain2 = Domain(models[t2].pdfs[k2].min, models[t2].pdfs[k2].max)
-            logger.info("domain 1 is %s", domain1)
-            logger.info("domain 2 is %s", domain2)
+            # logger.info("domain 1 is %s", domain1)
+            # logger.info("domain 2 is %s", domain2)
             # merged = merge_domain(domain1, domain2)
             domain1.merge_domain(domain2)
-            logger.info("domain merged to  %s", domain1)
+            # logger.info("domain merged to  %s", domain1)
 
             # check existence and update domain
             idx1 = get_idx_in_lists(tk1, join_keys)
@@ -110,10 +110,11 @@ class JoinKeysGrid:
                 join_keys[idx2].append(tk1)
                 join_keys_domain[idx2].merge_domain(domain1)
             else:
-                logger.error("unexpected behavior as the join condition appear twice")
+                logger.error(
+                    "unexpected behavior as the join condition appear twice")
         self.join_keys_lists = join_keys
         self.join_keys_domain = join_keys_domain
-        logger.info("final join key domain is %s", join_keys_domain)
+        # logger.info("final join key domain is %s", join_keys_domain)
 
         for domain in join_keys_domain:
             grid = JoinKeyGrid(domain.min, domain.max, grid_size)
@@ -226,7 +227,8 @@ def generate_push_down_conditions(tables_all, table_query, join_cond, join_keys)
             for join_condition in join_cond:
                 if jk in join_condition:
                     to_j = (
-                        join_condition.replace(jk, "").replace("=", "").replace(" ", "")
+                        join_condition.replace(jk, "").replace(
+                            "=", "").replace(" ", "")
                     )
                     # logger.info("to_j,%s", to_j)
                     to_tbl, to_k = to_j.split(".")
