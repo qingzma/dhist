@@ -88,7 +88,9 @@ class Engine:
                 join_keys_grid.calculate_push_down_join_keys_domain(
                     conds, join_cond, self.models, tbls, self.grid_size_x
                 )
-                grid_in_paths[jk] = join_keys_grid.join_keys_grid
+                grid_in_paths[jk] = join_keys_grid.get_join_key_grid_for_table_jk(
+                    target_tbl + "." + jk
+                )
                 if len(tbls) == 1:
                     k = conds[list(tbls.values())[0]][0].join_keys[0].split(".")[1]
                     # print("k is ", k)
@@ -131,10 +133,26 @@ class Engine:
 
             logger.info("predictions_in_paths.keys() %s", predictions_in_paths.keys())
             [k1, k2] = list(predictions_in_paths.keys())
-            pred = vec_sel_multiply(predictions_in_paths[k1], predictions_in_paths[k2])
+            pred_k1 = (
+                self.models[target_tbl].pdfs[k1].pdf.predict(grid_in_paths[k1].grid)
+            )
+            pred_k2 = (
+                self.models[target_tbl].pdfs[k2].pdf.predict(grid_in_paths[k2].grid)
+            )
+            pred1 = vec_sel_multiply(pred_k1, predictions_in_paths[k1])
+            pred2 = vec_sel_multiply(pred_k2, predictions_in_paths[k2])
+            # pred_k1 = vec_sel_single_table_query(
+            #     self.models,
+            #     None,
+            #     grid_size_x=None,
+            #     use_column_model=False,
+            #     join_keys_grid=grid_in_paths[k1],
+            #     force_return_vec_sel_key=k1,
+            # )
+            pred = vec_sel_multiply(pred1, pred2)
             logger.info("total selectivity is %s", np.sum(pred))
             n = get_cartesian_cardinality(self.counters, tables_all)
-            res = n * np.sum(pred)
+            res = n * np.sum(pred) * grid_in_paths[k1].width * grid_in_paths[k2].width
             logger.info("predict is %s", res)
             return res  # len(join_keys_grid.join_keys_domain)  # TODO support this
         elif max_dim > 2:

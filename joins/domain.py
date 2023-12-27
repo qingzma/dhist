@@ -110,8 +110,7 @@ class JoinKeysGrid:
                 join_keys[idx2].append(tk1)
                 join_keys_domain[idx2].merge_domain(domain1)
             else:
-                logger.error(
-                    "unexpected behavior as the join condition appear twice")
+                logger.error("unexpected behavior as the join condition appear twice")
         self.join_keys_lists = join_keys
         self.join_keys_domain = join_keys_domain
         # logger.info("final join key domain is %s", join_keys_domain)
@@ -121,6 +120,8 @@ class JoinKeysGrid:
             self.join_keys_grid.append(grid)
 
     def get_join_key_grid_for_table_jk(self, jk) -> JoinKeyGrid:
+        print("jk is ", jk)
+        print("self.join_keys_lists is ", self.join_keys_lists)
         idx = get_idx_in_lists(jk, self.join_keys_lists)
         assert idx >= 0
         return self.join_keys_grid[idx]
@@ -227,8 +228,7 @@ def generate_push_down_conditions(tables_all, table_query, join_cond, join_keys)
             for join_condition in join_cond:
                 if jk in join_condition:
                     to_j = (
-                        join_condition.replace(jk, "").replace(
-                            "=", "").replace(" ", "")
+                        join_condition.replace(jk, "").replace("=", "").replace(" ", "")
                     )
                     # logger.info("to_j,%s", to_j)
                     to_tbl, to_k = to_j.split(".")
