@@ -690,30 +690,42 @@ def get_two_chained_query(join_keys, join_cond, include_self=True):
     # print("target_jk is ", target_jk)
 
     while join_conds:
+        # print("!!!!!!!!!!!!!")
+        # print("join_conds", join_conds)
         idxs_to_remove = []
         for i, cond in enumerate(join_conds):
+            # print("hh", join_conds)
             for jk in target_jk:
+                # print("jk", jk)
                 target_jk_full_item = target_tbl + "." + jk
+                copies = copy.deepcopy(join_path_alias_items[jk])
                 for alias in join_path_alias_items[jk]:
                     if alias in cond:
+                        # print("hehre")
                         # print("alias in cond", alias, cond)
-                        another = cond.replace(target_jk_full_item, "").replace(
-                            " = ", ""
+                        another = cond.replace(alias, "").replace(
+                            "=", ""
                         )
+                        another = another.strip()  # target_jk_full_item
                         tbl_i = another.split(".")[0]
                         join_paths[jk].append(tbl_i)
-                        join_path_alias_items[jk].append(another)
+                        copies.append(another)
                         idxs_to_remove.append(i)
+                        # print("join_path_alias_items", join_path_alias_items)
+                        # print("idxs_to_remove", idxs_to_remove)
+                join_path_alias_items[jk] = copies
 
                 if target_jk_full_item in cond:
                     another = cond.replace(
-                        target_jk_full_item, "").replace(" = ", "")
+                        target_jk_full_item, "").replace("=", "")
+                    another = another.strip()
                     tbl_i = another.split(".")[0]
                     join_paths[jk].append(tbl_i)
                     join_path_alias_items[jk].append(another)
                     idxs_to_remove.append(i)
         for index in sorted(idxs_to_remove, reverse=True):
             del join_conds[index]
+        # print("changed to ", join_conds)
 
     # add self table if needed
     if include_self:

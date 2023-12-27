@@ -69,10 +69,12 @@ class Engine:
 
         # only a single join key is allowed in a table
         if max_dim == 2:
+            # logger.debug("!!!!in 2 mode!!!!")
             target_tbl, join_paths = get_two_chained_query(
                 join_keys, join_cond, include_self=False
             )
             # logger.info("target table is %s", target_tbl)
+            # logger.info("join_paths is %s", join_paths)
             predictions_in_paths = {}
             grid_in_paths = {}
             for jk in join_paths.keys():
@@ -160,7 +162,7 @@ class Engine:
             #     force_return_vec_sel_key=k1,
             # )
             pred = vec_sel_multiply(pred1, pred2)
-            # logger.info("total selectivity is %s", np.sum(pred))
+            logger.debug("total selectivity is %s", np.sum(pred))
             n = get_cartesian_cardinality(self.counters, tables_all)
             res = n * np.sum(pred) * \
                 grid_in_paths[k1].width * grid_in_paths[k2].width
@@ -251,7 +253,7 @@ def vec_sel_single_table_query(
             domain_query = cond.non_key_condition
             domain.merge_domain(domain_query)
             pred = model.pdf.predict_domain(domain)
-            logger.info("selectivity is %s", np.sum(pred))
+            logger.debug("selectivity is %s", np.sum(pred))
             return pred
         # for cases if column model is not used.
 
@@ -335,7 +337,7 @@ def vec_sel_single_table_query(
                 force_return_vec_sel_key=force_return_vec_sel_key,
             )
         pred_xys.append(sel)
-        # logger.debug("sub selectivity is %s", np.sum(sel))
+        logger.debug("sub selectivity is %s", np.sum(sel))
 
         # logger.info("size is %s", sz)
         # if sz < sz_min:
@@ -361,6 +363,8 @@ def vec_sel_multi_table_query(
     grid_size_y=1000,
 ):
     # logger.info("conditions: %s", conditions)
+    # logger.info("join_keys_grid.join_keys_lists: %s",
+    #             join_keys_grid.join_keys_lists)
     ps = {}
     widths = {}
     for tbl in conditions:
@@ -372,6 +376,13 @@ def vec_sel_multi_table_query(
             if tbl in jk_item:
                 jk_id = jk_item.split(".")[1]
                 break
+        # not found, means the second join path is used.
+        if jk_id is None:
+            for jk_item in join_keys_grid.join_keys_lists[1]:
+                # logger.info("jk_item %s", jk_item)
+                if tbl in jk_item:
+                    jk_id = jk_item.split(".")[1]
+                    break
         # logger.info("table with id %s, %s", tbl, jk_id)
         pred_p = vec_sel_single_table_query(
             models,
