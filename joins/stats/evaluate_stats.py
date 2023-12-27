@@ -28,7 +28,7 @@ def evaluate_stats(args: ArgumentParser):
     bad_queries = []
     cnt_key = []
     cnt_non_key = []
-    for query_str in queries:  # [:10]
+    for query_str in queries[:100]:
         query = query_str.split("||")[0][:-1]
         true_card = int(query_str.split("||")[-1])
         t = time.time()
@@ -43,12 +43,12 @@ def evaluate_stats(args: ArgumentParser):
         ratios.append(res / true_card)
         # if (res/true_card > 10000):
         #     exit()
-        if res / true_card > 1e2 or res / true_card < 0.25:
+        if res / true_card > 1e3 or res / true_card < 0.25:
             bad_queries.append(query)
-            logger.info("-" * 80)
+            logger.info("-" * 800)
             logger.info("true is %s, pred is %s", true_card, res)
             logger.info("query is %s", query)
-            logger.info("-" * 80)
+            logger.info("-" * 800)
             # exit()
         # logger.info("qerror is %s", max(res/true_card, true_card/res))
     # logger.info("max is %s", max(cnt_key))

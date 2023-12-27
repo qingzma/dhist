@@ -72,10 +72,12 @@ class Engine:
             target_tbl, join_paths = get_two_chained_query(
                 join_keys, join_cond, include_self=False
             )
+            logger.info("target table is %s", target_tbl)
             predictions_in_paths = {}
             grid_in_paths = {}
             for jk in join_paths.keys():
                 conds = {key: conditions[key] for key in join_paths[jk]}
+                logger.info("conds %s", conds)
                 tbls = {}
                 for k in tables_all:
                     if tables_all[k] in join_paths[jk]:
@@ -95,7 +97,8 @@ class Engine:
                 if len(tbls) == 1:
                     k = conds[list(tbls.values())[0]
                               ][0].join_keys[0].split(".")[1]
-                    # print("k is ", k)
+                    print("here!!!!! ")
+                    print("k is ", k)
                     pred = vec_sel_single_table_query(
                         self.models,
                         conds,
@@ -103,11 +106,13 @@ class Engine:
                         force_return_vec_sel_key=k,
                         join_keys_grid=join_keys_grid,
                     )
+                    logger.info("pred is %s", np.sum(pred))
                     tbl = list(conds.keys())[0]
                     n = self.models[tbl].size
                     predictions_in_paths[jk] = pred
 
                 else:
+                    print("here!!!!!!!!!!!!!!!!!!!!!!!!!! ")
                     n = get_cartesian_cardinality(self.counters, tbls)
                     pred = vec_sel_multi_table_query(
                         self.models, conds, join_cond, join_keys_grid
@@ -116,22 +121,22 @@ class Engine:
 
                 # logger.info("pred is %s", pred[:10])
                 # logger.info("predictions_in_paths is %s", predictions_in_paths)
-            #     for k in predictions_in_paths:
-            #         logger.warning(
-            #             "path seletivity of %s is %s",
-            #             k,
-            #             np.sum(predictions_in_paths[k]),
-            #         )
+                for k in predictions_in_paths:
+                    logger.warning(
+                        "path seletivity of %s is %s",
+                        k,
+                        np.sum(predictions_in_paths[k]),
+                    )
 
-            #     for k in grid_in_paths:
-            #         logger.warning(
-            #             "grid of %s is %s",
-            #             k,
-            #             grid_in_paths[k],
-            #         )
+                # for k in grid_in_paths:
+                #     logger.warning(
+                #         "grid of %s is %s",
+                #         k,
+                #         grid_in_paths[k][:10],
+                #     )
 
-            #     logger.info("n is %s", n)
-            #     logger.info("*" * 200)
+                # logger.info("n is %s", n)
+                # logger.info("*" * 200)
 
             # logger.info("predictions_in_paths.keys() %s",
             #             predictions_in_paths.keys())
@@ -215,12 +220,14 @@ def vec_sel_single_table_query(
         if cond.non_key is None:
             if force_return_vec_sel_key:
                 model: Column = models[tbl].pdfs[force_return_vec_sel_key]
+                grid = join_keys_grid.get_join_key_grid_for_table_jk(
+                    tbl+"."+force_return_vec_sel_key)
                 # logger.info("model is %s",model)
                 # logger.info("width is %s",join_keys_grid.join_keys_grid[0].width)
                 # logger.info("grid is %s",join_keys_grid.join_keys_grid[0].grid)
                 return (
-                    model.pdf.predict(join_keys_grid.join_keys_grid[0].grid)
-                    * join_keys_grid.join_keys_grid[0].width
+                    model.pdf.predict(grid.grid)
+                    * grid.width
                 )
             # sz_min = models[tbl].size
             return np.array([1.0])  # [models[tbl].size]
@@ -244,10 +251,14 @@ def vec_sel_single_table_query(
         model = None
         if force_return_vec_sel_key:
             # logger.info("join key is %s", force_return_vec_sel_key)
+            # logger.info("join_keys_grid.join_keys_grid %s",
+            #             join_keys_grid.join_keys_grid)
             model: Column = models[tbl].pdfs[force_return_vec_sel_key]
+            grid = join_keys_grid.get_join_key_grid_for_table_jk(
+                tbl+"."+force_return_vec_sel_key)
             return (
-                model.pdf.predict(join_keys_grid.join_keys_grid[0].grid)
-                * join_keys_grid.join_keys_grid[0].width
+                model.pdf.predict(grid.grid)
+                * grid.width
             )
 
         model: Column2d = (
