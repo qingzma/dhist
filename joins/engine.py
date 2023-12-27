@@ -189,12 +189,13 @@ class Engine:
         #     conditions, join_cond, self.models, tables_all)
 
         n = get_cartesian_cardinality(self.counters, tables_all)
+        logger.info("self.counters %s", self.counters)
         pred = vec_sel_multi_table_query(
             self.models, conditions, join_cond, join_keys_grid
         )
 
-        # logger.info("cartesian is %E", n)
-        # logger.info("pred is %s ", np.sum(pred))
+        logger.info("cartesian is %E", n)
+        logger.info("selectivity is %s ", np.sum(pred))
 
         return np.sum(pred) * n
 

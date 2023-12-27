@@ -43,7 +43,7 @@ def evaluate_stats(args: ArgumentParser):
         ratios.append(res / true_card)
         # if (res/true_card > 10000):
         #     exit()
-        if res / true_card > 1e3 or res / true_card < 0.25:
+        if res / true_card > 1e7 or res / true_card < 0.000025:
             bad_queries.append(query)
             logger.info("-" * 800)
             logger.info("true is %s, pred is %s", true_card, res)
