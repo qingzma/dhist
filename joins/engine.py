@@ -97,8 +97,8 @@ class Engine:
                 if len(tbls) == 1:
                     k = conds[list(tbls.values())[0]
                               ][0].join_keys[0].split(".")[1]
-                    print("here!!!!! ")
-                    print("k is ", k)
+                    # print("here!!!!! ")
+                    # print("k is ", k)
                     pred = vec_sel_single_table_query(
                         self.models,
                         conds,
@@ -106,13 +106,13 @@ class Engine:
                         force_return_vec_sel_key=k,
                         join_keys_grid=join_keys_grid,
                     )
-                    logger.info("pred is %s", np.sum(pred))
+                    # logger.info("pred is %s", np.sum(pred))
                     tbl = list(conds.keys())[0]
                     n = self.models[tbl].size
                     predictions_in_paths[jk] = pred
 
                 else:
-                    print("here!!!!!!!!!!!!!!!!!!!!!!!!!! ")
+                    # print("here!!!!!!!!!!!!!!!!!!!!!!!!!! ")
                     n = get_cartesian_cardinality(self.counters, tbls)
                     pred = vec_sel_multi_table_query(
                         self.models, conds, join_cond, join_keys_grid
@@ -178,7 +178,7 @@ class Engine:
         join_keys_grid.calculate_push_down_join_keys_domain(
             conditions, join_cond, self.models, tables_all, self.grid_size_x
         )
-        # logger.info("join_keys_grid %s", join_keys_grid.join_keys_domain)
+        logger.info("join_keys_grid %s", join_keys_grid.join_keys_domain)
         # logger.info(
         #     "join_keys_grid.join_keys_domain %s", join_keys_grid.join_keys_domain
         # )
@@ -210,6 +210,9 @@ def vec_sel_single_table_query(
     conds = conditions[tbl]
 
     # sz_min = np.Infinity
+    if tbl == "votes":
+        logger.warning("hahha")
+        logger.warning("conds %s", conds)
 
     # logger.info("conds: %s", conds)
     if len(conds) == 1:
@@ -220,6 +223,9 @@ def vec_sel_single_table_query(
         if cond.non_key is None:
             if force_return_vec_sel_key:
                 model: Column = models[tbl].pdfs[force_return_vec_sel_key]
+                # if tbl == "votes":
+                #     model: Column = models[tbl].pdfs["Id"]
+
                 grid = join_keys_grid.get_join_key_grid_for_table_jk(
                     tbl+"."+force_return_vec_sel_key)
                 # logger.info("model is %s",model)
@@ -248,18 +254,22 @@ def vec_sel_single_table_query(
             logger.info("selectivity is %s", np.sum(pred))
             return pred
         # for cases if column model is not used.
-        model = None
-        if force_return_vec_sel_key:
-            # logger.info("join key is %s", force_return_vec_sel_key)
-            # logger.info("join_keys_grid.join_keys_grid %s",
-            #             join_keys_grid.join_keys_grid)
-            model: Column = models[tbl].pdfs[force_return_vec_sel_key]
-            grid = join_keys_grid.get_join_key_grid_for_table_jk(
-                tbl+"."+force_return_vec_sel_key)
-            return (
-                model.pdf.predict(grid.grid)
-                * grid.width
-            )
+
+        # TODO this is commented out !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # model = None
+        # if force_return_vec_sel_key:
+        #     # logger.info("join key is %s", force_return_vec_sel_key)
+        #     # logger.info("join_keys_grid.join_keys_grid %s",
+        #     #             join_keys_grid.join_keys_grid)
+        #     model: Column = models[tbl].pdfs[force_return_vec_sel_key]
+        #     # if tbl == "votes":
+        #     #     model: Column = models[tbl].pdfs["Id"]
+        #     grid = join_keys_grid.get_join_key_grid_for_table_jk(
+        #         tbl+"."+force_return_vec_sel_key)
+        #     return (
+        #         model.pdf.predict(grid.grid)
+        #         * grid.width
+        #     )
 
         model: Column2d = (
             models[tbl].correlations_cdf["Id"][cond.non_key.split(".")[1]]
@@ -354,11 +364,11 @@ def vec_sel_multi_table_query(
 
         jk_id = None
         for jk_item in join_keys_grid.join_keys_lists[0]:
-            # logger.info("jk_item %s",jk_item)
+            logger.info("jk_item %s", jk_item)
             if tbl in jk_item:
                 jk_id = jk_item.split(".")[1]
                 break
-        # logger.info("table with id %s, %s", tbl, jk_id)
+        logger.info("table with id %s, %s", tbl, jk_id)
         pred_p = vec_sel_single_table_query(
             models,
             {tbl: conditions[tbl]},
