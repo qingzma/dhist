@@ -3,7 +3,7 @@ import sys
 import time
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     # [%(threadName)-12.12s]
     format="%(asctime)s [%(levelname)-5.5s]  %(message)s",
     handlers=[

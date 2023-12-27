@@ -72,12 +72,12 @@ class Engine:
             target_tbl, join_paths = get_two_chained_query(
                 join_keys, join_cond, include_self=False
             )
-            logger.info("target table is %s", target_tbl)
+            # logger.info("target table is %s", target_tbl)
             predictions_in_paths = {}
             grid_in_paths = {}
             for jk in join_paths.keys():
                 conds = {key: conditions[key] for key in join_paths[jk]}
-                logger.info("conds %s", conds)
+                # logger.info("conds %s", conds)
                 tbls = {}
                 for k in tables_all:
                     if tables_all[k] in join_paths[jk]:
@@ -121,12 +121,12 @@ class Engine:
 
                 # logger.info("pred is %s", pred[:10])
                 # logger.info("predictions_in_paths is %s", predictions_in_paths)
-                for k in predictions_in_paths:
-                    logger.warning(
-                        "path seletivity of %s is %s",
-                        k,
-                        np.sum(predictions_in_paths[k]),
-                    )
+                # for k in predictions_in_paths:
+                #     logger.warning(
+                #         "path seletivity of %s is %s",
+                #         k,
+                #         np.sum(predictions_in_paths[k]),
+                #     )
 
                 # for k in grid_in_paths:
                 #     logger.warning(
@@ -178,7 +178,7 @@ class Engine:
         join_keys_grid.calculate_push_down_join_keys_domain(
             conditions, join_cond, self.models, tables_all, self.grid_size_x
         )
-        logger.info("join_keys_grid %s", join_keys_grid.join_keys_domain)
+        # logger.info("join_keys_grid %s", join_keys_grid.join_keys_domain)
         # logger.info(
         #     "join_keys_grid.join_keys_domain %s", join_keys_grid.join_keys_domain
         # )
@@ -210,9 +210,9 @@ def vec_sel_single_table_query(
     conds = conditions[tbl]
 
     # sz_min = np.Infinity
-    if tbl == "votes":
-        logger.warning("hahha")
-        logger.warning("conds %s", conds)
+    # if tbl == "votes":
+    #     logger.warning("hahha")
+    #     logger.warning("conds %s", conds)
 
     # logger.info("conds: %s", conds)
     if len(conds) == 1:
@@ -368,18 +368,18 @@ def vec_sel_multi_table_query(
 
         jk_id = None
         for jk_item in join_keys_grid.join_keys_lists[0]:
-            logger.info("jk_item %s", jk_item)
+            # logger.info("jk_item %s", jk_item)
             if tbl in jk_item:
                 jk_id = jk_item.split(".")[1]
                 break
-        logger.info("table with id %s, %s", tbl, jk_id)
+        # logger.info("table with id %s, %s", tbl, jk_id)
         pred_p = vec_sel_single_table_query(
             models,
             {tbl: conditions[tbl]},
             join_keys_grid=join_keys_grid,
             force_return_vec_sel_key=jk_id,
         )
-        logger.info("[table %s with selectivity: %s", tbl, np.sum(pred_p))
+        logger.debug("[table %s with selectivity: %s", tbl, np.sum(pred_p))
 
         ps[tbl] = pred_p
     predss = vec_sel_join(ps, join_cond, join_keys_grid)
