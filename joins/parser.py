@@ -209,15 +209,15 @@ def parse_query(query_str, schema):
     ), "Nested queries are currently not supported."
     group_by_attributes = None
     if len(group_by_idxs) == 1:
-        tokens_from_from = parsed_tokens[from_idx: group_by_idxs[0]]
+        tokens_from_from = parsed_tokens[from_idx : group_by_idxs[0]]
         order_by_idxs = [
             i for i, token in enumerate(parsed_tokens) if token.normalized == "ORDER BY"
         ]
         if len(order_by_idxs) > 0:
             group_by_end = order_by_idxs[0]
-            tokens_group_by = parsed_tokens[group_by_idxs[0]: group_by_end]
+            tokens_group_by = parsed_tokens[group_by_idxs[0] : group_by_end]
         else:
-            tokens_group_by = parsed_tokens[group_by_idxs[0]:]
+            tokens_group_by = parsed_tokens[group_by_idxs[0] :]
         # Do not enforce single because there could be order by statement. Will be ignored.
         group_by_attributes = _extract_identifiers(
             tokens_group_by, enforce_single=False
@@ -353,8 +353,7 @@ def parse_query(query_str, schema):
     ]
     for comparison in comparisons:
         left = comparison.left
-        assert isinstance(
-            left, sqlparse.sql.Identifier), "Invalid where condition"
+        assert isinstance(left, sqlparse.sql.Identifier), "Invalid where condition"
         comparison_tokens = [
             token
             for token in comparison.tokens
@@ -402,23 +401,20 @@ def parse_query(query_str, schema):
             # Where condition
             else:
                 where_condition = left_attribute + "".join(
-                    [token.value.strip()
-                     for token in comparison.tokens[operator_idx:]]
+                    [token.value.strip() for token in comparison.tokens[operator_idx:]]
                 )
                 query.add_where_condition(left_table_name, where_condition)
 
         else:
             # Replace alias by full table names
-            left_part = _fully_qualified_attribute_name(
-                left, schema, alias_dict)
+            left_part = _fully_qualified_attribute_name(left, schema, alias_dict)
 
             right = comparison.right
             # Join relationship
             if isinstance(right, sqlparse.sql.Identifier):
                 if right.tokens[1].value == ".":
                     right_part = (
-                        alias_dict[right.tokens[0].value] +
-                        "." + right.tokens[2].value
+                        alias_dict[right.tokens[0].value] + "." + right.tokens[2].value
                     )
                     assert (
                         comparison.tokens[operator_idx].value == "="
@@ -433,18 +429,15 @@ def parse_query(query_str, schema):
                         left_part + " = " + right_part
                         in schema.relationship_dictionary.keys()
                     ):
-                        query.add_join_condition(
-                            left_part + " = " + right_part)
+                        query.add_join_condition(left_part + " = " + right_part)
                     elif (
                         right_part + " = " + left_part
                         in schema.relationship_dictionary.keys()
                     ):
-                        query.add_join_condition(
-                            right_part + " = " + left_part)
+                        query.add_join_condition(right_part + " = " + left_part)
                 else:
                     assert right.tokens[1].value == "::"
-                    right.value = str(
-                        timestamp_transorform(right.tokens[0].value))
+                    right.value = str(timestamp_transorform(right.tokens[0].value))
                     query.add_where_condition(
                         alias_dict[left.tokens[0].value],
                         left.tokens[2].value
@@ -476,8 +469,7 @@ def handle_aggregation(alias_dict, query, schema, tokens_before_from):
             for token in tokens_before_from
             if isinstance(token, sqlparse.sql.Function)
         ]
-        assert len(
-            functions) == 1, "Only a single aggregate function is supported."
+        assert len(functions) == 1, "Only a single aggregate function is supported."
         function = functions[0]
         _parse_aggregation(alias_dict, function, query, schema)
     else:
@@ -489,8 +481,7 @@ def handle_aggregation(alias_dict, query, schema, tokens_before_from):
         ]
         # handle inner operations recursively
         if len(inner_operations) > 0:
-            assert len(
-                inner_operations) == 1, "Multiple inner operations impossible"
+            assert len(inner_operations) == 1, "Multiple inner operations impossible"
             handle_aggregation(alias_dict, query, schema, inner_operations)
         for token in operation.tokens:
             if isinstance(token, sqlparse.sql.Function):
@@ -541,8 +532,7 @@ def parse_query_simple(query):
     for table_str in tables_str.split(","):
         table_str = table_str.strip()
         if " as " in table_str:
-            tables_all[table_str.split(
-                " as ")[-1]] = table_str.split(" as ")[0]
+            tables_all[table_str.split(" as ")[-1]] = table_str.split(" as ")[0]
         else:
             tables_all[table_str.split(" ")[-1]] = table_str.split(" ")[0]
 
@@ -560,8 +550,7 @@ def parse_query_simple(query):
                 assert (
                     "::timestamp" in value
                 )  # this is hardcoded for STATS-CEB workload
-                value = timestamp_transorform(
-                    value.strip().split("::timestamp")[0])
+                value = timestamp_transorform(value.strip().split("::timestamp")[0])
             if table not in table_query:
                 table_query[table] = dict()
             # construct_table_query(
@@ -602,8 +591,7 @@ def construct_table_query(BN, table_query, attr, ops, val, epsilon=1e-6):
         else:
             prev_l = table_query[attr][0]
             prev_r = table_query[attr][1]
-            query_domain = (max(prev_l, query_domain[0]), min(
-                prev_r, query_domain[1]))
+            query_domain = (max(prev_l, query_domain[0]), min(prev_r, query_domain[1]))
             table_query[attr] = query_domain
 
     else:
@@ -697,16 +685,16 @@ def get_two_chained_query(join_keys, join_cond):
                 for alias in join_path_alias_items[jk]:
                     if alias in cond:
                         # print("alias in cond", alias, cond)
-                        another = cond.replace(
-                            target_jk_full_item, "").replace(" = ", "")
+                        another = cond.replace(target_jk_full_item, "").replace(
+                            " = ", ""
+                        )
                         tbl_i = another.split(".")[0]
                         join_paths[jk].append(tbl_i)
                         join_path_alias_items[jk].append(another)
                         idxs_to_remove.append(i)
 
                 if target_jk_full_item in cond:
-                    another = cond.replace(
-                        target_jk_full_item, "").replace(" = ", "")
+                    another = cond.replace(target_jk_full_item, "").replace(" = ", "")
                     tbl_i = another.split(".")[0]
                     join_paths[jk].append(tbl_i)
                     join_path_alias_items[jk].append(another)
@@ -728,3 +716,13 @@ class Node:
 
     def __repr__(self) -> str:
         return f"[{self.table}-()]"
+
+
+def get_max_dim(join_keys):
+    if not join_keys:
+        return 1
+    n = list(map(lambda x: len(x), join_keys.values()))
+    # print("n is !!!!", n)
+    if n:
+        return max(n)
+    return 1

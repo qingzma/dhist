@@ -15,7 +15,7 @@ from joins.domain import (
     get_idx_in_lists,
 )
 from joins.join_graph import get_join_hyper_graph
-from joins.parser import get_two_chained_query, parse_query_simple
+from joins.parser import get_max_dim, get_two_chained_query, parse_query_simple
 from joins.schema_base import identify_conditions, identify_key_values
 from joins.stats.schema import get_stats_relevant_attributes
 from joins.table import Column, Column2d, TableContainer
@@ -43,16 +43,17 @@ class Engine:
 
     def query(self, query_str):
         logger.info("QUERY [%s]", query_str)
-        tables_all, table_query, join_cond, join_keys = parse_query_simple(
-            query_str)
+        tables_all, table_query, join_cond, join_keys = parse_query_simple(query_str)
         conditions = generate_push_down_conditions(
             tables_all, table_query, join_cond, join_keys
         )
+        max_dim = get_max_dim(join_keys)
         logger.info("join_cond is %s", join_cond)
         logger.info("tables_all is %s", tables_all)
         logger.info("table_query is %s", table_query)
         logger.info("join_keys is %s", join_keys)
         logger.info("conditions %s", conditions)
+        logger.info("max_dim %s", max_dim)
 
         # single table query
         if len(tables_all) == 1:
@@ -69,11 +70,13 @@ class Engine:
             conditions, join_cond, self.models, tables_all, self.grid_size_x
         )
         logger.info("join_keys_grid %s", join_keys_grid.join_keys_domain)
+        logger.info(
+            "join_keys_grid.join_keys_domain %s", join_keys_grid.join_keys_domain
+        )
 
         # only a single join key is allowed in a table
-        if len(join_keys_grid.join_keys_domain) == 2:
-            target_tbl, join_paths = get_two_chained_query(
-                join_keys, join_cond)
+        if max_dim == 2:
+            target_tbl, join_paths = get_two_chained_query(join_keys, join_cond)
 
             for jk in join_paths.keys():
                 conds = {key: conditions[key] for key in join_paths[jk]}
@@ -82,12 +85,14 @@ class Engine:
                     if tables_all[k] in join_paths[jk]:
                         tbls[k] = tables_all[k]
 
-                logger.info("_"*120)
+                logger.info("_" * 120)
                 logger.info("conds is %s", conds)
                 logger.info("tbls is %s", tbls)
                 if len(tbls) == 1:
                     pred = vec_sel_single_table_query(
-                        self.models, conds, self.grid_size_x,
+                        self.models,
+                        conds,
+                        self.grid_size_x,
                         # force_return_vec_sel_key="PostId"
                     )
                     tbl = list(conds.keys())[0]
@@ -100,12 +105,11 @@ class Engine:
 
                 logger.info("pred is %s", pred[:10])
                 logger.info("n is %s", n)
-                logger.info("*"*200)
+                logger.info("*" * 200)
 
             return len(join_keys_grid.join_keys_domain)  # TODO support this
-        elif len(join_keys_grid.join_keys_domain) > 2:
-            logger.error("length is  [%i]", len(
-                join_keys_grid.join_keys_domain))
+        elif max_dim > 2:
+            logger.error("length is  [%i]", len(join_keys_grid.join_keys_domain))
             logger.error("is 3 [%s]", query_str)
             exit()
         assert len(join_keys_grid.join_keys_domain) == 1
@@ -250,8 +254,7 @@ def vec_sel_single_table_query(
     # logger.info("predx is %s", np.sum(pred_x))
     pred = np.ones_like(pred_x)
     for pred_xyi in pred_xys:
-        pred = vec_sel_multiply(
-            pred, vec_sel_divide(pred_xyi, pred_x)) / width_x
+        pred = vec_sel_multiply(pred, vec_sel_divide(pred_xyi, pred_x)) / width_x
 
     # logger.info("width x is %s", width_x)
     res = width_x * vec_sel_multiply(pred, pred_x)
