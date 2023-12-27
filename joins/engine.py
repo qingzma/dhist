@@ -65,19 +65,11 @@ class Engine:
             return np.sum(vec_sel) * n
 
         # join query
-        join_keys_grid = JoinKeysGrid()
-        join_keys_grid.calculate_push_down_join_keys_domain(
-            conditions, join_cond, self.models, tables_all, self.grid_size_x
-        )
-        logger.info("join_keys_grid %s", join_keys_grid.join_keys_domain)
-        logger.info(
-            "join_keys_grid.join_keys_domain %s", join_keys_grid.join_keys_domain
-        )
 
         # only a single join key is allowed in a table
         if max_dim == 2:
             target_tbl, join_paths = get_two_chained_query(join_keys, join_cond)
-
+            predictions_in_paths = {}
             for jk in join_paths.keys():
                 conds = {key: conditions[key] for key in join_paths[jk]}
                 tbls = {}
@@ -88,22 +80,32 @@ class Engine:
                 logger.info("_" * 120)
                 logger.info("conds is %s", conds)
                 logger.info("tbls is %s", tbls)
+
+                join_keys_grid = JoinKeysGrid()
+                join_keys_grid.calculate_push_down_join_keys_domain(
+                    conds, join_cond, self.models, tbls, self.grid_size_x
+                )
                 if len(tbls) == 1:
+                    k = conds[list(tbls.values())[0]][0].join_keys[0].split(".")[1]
+                    # print("k is ", k)
                     pred = vec_sel_single_table_query(
                         self.models,
                         conds,
                         self.grid_size_x,
-                        # force_return_vec_sel_key="PostId"
+                        force_return_vec_sel_key=k,
+                        join_keys_grid=join_keys_grid,
                     )
                     tbl = list(conds.keys())[0]
                     n = self.models[tbl].size
+                    predictions_in_paths[jk] = pred
                 else:
                     n = get_cartesian_cardinality(self.counters, tbls)
                     pred = vec_sel_multi_table_query(
                         self.models, conds, join_cond, join_keys_grid
                     )
+                    predictions_in_paths[jk] = pred
 
-                logger.info("pred is %s", pred[:10])
+                logger.info("predictions_in_paths is %s", predictions_in_paths)
                 logger.info("n is %s", n)
                 logger.info("*" * 200)
 
@@ -112,6 +114,16 @@ class Engine:
             logger.error("length is  [%i]", len(join_keys_grid.join_keys_domain))
             logger.error("is 3 [%s]", query_str)
             exit()
+
+        # for cases with max_dim==1
+        join_keys_grid = JoinKeysGrid()
+        join_keys_grid.calculate_push_down_join_keys_domain(
+            conditions, join_cond, self.models, tables_all, self.grid_size_x
+        )
+        logger.info("join_keys_grid %s", join_keys_grid.join_keys_domain)
+        logger.info(
+            "join_keys_grid.join_keys_domain %s", join_keys_grid.join_keys_domain
+        )
         assert len(join_keys_grid.join_keys_domain) == 1
         # join_keys_lists, join_keys_domain = calculate_push_down_join_keys_domain(
         #     conditions, join_cond, self.models, tables_all)
