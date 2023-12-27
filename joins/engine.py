@@ -68,8 +68,11 @@ class Engine:
 
         # only a single join key is allowed in a table
         if max_dim == 2:
-            target_tbl, join_paths = get_two_chained_query(join_keys, join_cond)
+            target_tbl, join_paths = get_two_chained_query(
+                join_keys, join_cond, include_self=False
+            )
             predictions_in_paths = {}
+            grid_in_paths = {}
             for jk in join_paths.keys():
                 conds = {key: conditions[key] for key in join_paths[jk]}
                 tbls = {}
@@ -85,6 +88,7 @@ class Engine:
                 join_keys_grid.calculate_push_down_join_keys_domain(
                     conds, join_cond, self.models, tbls, self.grid_size_x
                 )
+                grid_in_paths[jk] = join_keys_grid.join_keys_grid
                 if len(tbls) == 1:
                     k = conds[list(tbls.values())[0]][0].join_keys[0].split(".")[1]
                     # print("k is ", k)
@@ -98,18 +102,41 @@ class Engine:
                     tbl = list(conds.keys())[0]
                     n = self.models[tbl].size
                     predictions_in_paths[jk] = pred
+
                 else:
                     n = get_cartesian_cardinality(self.counters, tbls)
                     pred = vec_sel_multi_table_query(
                         self.models, conds, join_cond, join_keys_grid
                     )
                     predictions_in_paths[jk] = pred
+
                 logger.info("pred is %s", pred[:10])
                 # logger.info("predictions_in_paths is %s", predictions_in_paths)
+                for k in predictions_in_paths:
+                    logger.warning(
+                        "path seletivity of %s is %s",
+                        k,
+                        np.sum(predictions_in_paths[k]),
+                    )
+
+                for k in grid_in_paths:
+                    logger.warning(
+                        "grid of %s is %s",
+                        k,
+                        grid_in_paths[k],
+                    )
+
                 logger.info("n is %s", n)
                 logger.info("*" * 200)
 
-            return len(join_keys_grid.join_keys_domain)  # TODO support this
+            logger.info("predictions_in_paths.keys() %s", predictions_in_paths.keys())
+            [k1, k2] = list(predictions_in_paths.keys())
+            pred = vec_sel_multiply(predictions_in_paths[k1], predictions_in_paths[k2])
+            logger.info("total selectivity is %s", np.sum(pred))
+            n = get_cartesian_cardinality(self.counters, tables_all)
+            res = n * np.sum(pred)
+            logger.info("predict is %s", res)
+            return res  # len(join_keys_grid.join_keys_domain)  # TODO support this
         elif max_dim > 2:
             logger.error("length is  [%i]", len(join_keys_grid.join_keys_domain))
             logger.error("is 3 [%s]", query_str)

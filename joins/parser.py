@@ -646,7 +646,7 @@ def parse_single_table_query(query):
     return tbl_name, tuple(cols)
 
 
-def get_two_chained_query(join_keys, join_cond):
+def get_two_chained_query(join_keys, join_cond, include_self=True):
     """split the query and get the two invididual join paths that involves only 1 common join key
 
     Args:
@@ -703,11 +703,12 @@ def get_two_chained_query(join_keys, join_cond):
             del join_conds[index]
 
     # add self table if needed
-    for jk in target_jk:
-        join_paths[jk].append(target_tbl)
-        # tmp = join_paths[jk]
-        # tmp.append(target_tbl)
-        # join_paths[jk] = tmp
+    if include_self:
+        for jk in target_jk:
+            join_paths[jk].append(target_tbl)
+            # tmp = join_paths[jk]
+            # tmp.append(target_tbl)
+            # join_paths[jk] = tmp
     print("join_paths", join_paths)
     # print("join_path_alias_items", join_path_alias_items)
     # print("idxs_to_remove", idxs_to_remove)

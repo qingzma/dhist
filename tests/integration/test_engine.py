@@ -290,7 +290,8 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #     self.assertTrue(q_error(res, truth) < 3)
 
     def test_multi_way_2_join_key(self):
-        query = "SELECT COUNT(*) FROM postLinks as pl, comments as c, posts as p, users as u WHERE c.UserId = u.Id AND p.Id = pl.PostId AND p.OwnerUserId = u.Id AND p.CommentCount<=18 AND p.CreationDate>='2010-07-23 07:27:31'::timestamp AND p.CreationDate<='2014-09-09 01:43:00'::timestamp"
+        query = """SELECT COUNT(*) FROM postLinks as pl,  comments as c, posts as p,  users as u  WHERE c.UserId = u.Id  AND p.Id = pl.PostId  AND p.OwnerUserId = u.Id  AND p.CommentCount<=18  AND p.CreationDate>='2010-07-23 07:27:31'::timestamp  AND p.CreationDate<='2014-09-09 01:43:00'::timestamp"""
+        # query = """SELECT COUNT(*) FROM postLinks as pl,  posts as p,  users as u  WHERE p.Id = pl.PostId  AND p.OwnerUserId = u.Id  AND p.CommentCount<=18  AND p.CreationDate>='2010-07-23 07:27:31'::timestamp  AND p.CreationDate<='2014-09-09 01:43:00'::timestamp """
         with open("models/" + self.model_name + ".pkl", "rb") as f:
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
