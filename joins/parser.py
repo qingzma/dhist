@@ -702,6 +702,12 @@ def get_two_chained_query(join_keys, join_cond):
         for index in sorted(idxs_to_remove, reverse=True):
             del join_conds[index]
 
+    # add self table if needed
+    for jk in target_jk:
+        join_paths[jk].append(target_tbl)
+        # tmp = join_paths[jk]
+        # tmp.append(target_tbl)
+        # join_paths[jk] = tmp
     print("join_paths", join_paths)
     # print("join_path_alias_items", join_path_alias_items)
     # print("idxs_to_remove", idxs_to_remove)

@@ -104,8 +104,8 @@ class Engine:
                         self.models, conds, join_cond, join_keys_grid
                     )
                     predictions_in_paths[jk] = pred
-
-                logger.info("predictions_in_paths is %s", predictions_in_paths)
+                logger.info("pred is %s", pred[:10])
+                # logger.info("predictions_in_paths is %s", predictions_in_paths)
                 logger.info("n is %s", n)
                 logger.info("*" * 200)
 
