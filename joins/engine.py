@@ -287,9 +287,13 @@ def vec_sel_single_table_query(
             nk_domain.merge_domain(nk_domain_query)
         # logger.info("nk_domain %s", nk_domain)
 
+        # logger.info("join_keys_grid is %s", join_keys_grid.join_keys_grid)
         if join_keys_grid:
-            grid_x = join_keys_grid.join_keys_grid[0].grid
-            width_x = join_keys_grid.join_keys_grid[0].width
+            grid_i = join_keys_grid.get_join_key_grid_for_table_jk(
+                tbl+"."+force_return_vec_sel_key)
+            grid_x = grid_i.grid
+            width_x = grid_i.width
+            # logger.info("grid_x is %s", grid_x)
         else:
             grid_x, width_x = np.linspace(
                 *jk_domain, grid_size_x, retstep=True
