@@ -1,3 +1,4 @@
+import copy
 import numpy as np
 
 from joins.base_logger import logger
@@ -126,6 +127,15 @@ class JoinKeysGrid:
         idx = get_idx_in_lists(jk, self.join_keys_lists)
         assert idx >= 0
         return self.join_keys_grid[idx]
+
+    def shrink_join_key_grid_for_table_jk(self, jk):
+        idx = get_idx_in_lists(jk, self.join_keys_lists)
+        assert idx >= 0
+        copies = copy.deepcopy(self)
+        del copies.join_keys_lists[idx]
+        del copies.join_keys_domain[idx]
+        del copies.join_keys_grid[idx]
+        return copies
 
 
 def get_idx_in_lists(k, lists):

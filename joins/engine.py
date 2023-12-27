@@ -77,7 +77,9 @@ class Engine:
             # logger.info("join_paths is %s", join_paths)
             predictions_in_paths = {}
             grid_in_paths = {}
+            # logger.info("conditions %s", conditions)
             for jk in join_paths.keys():
+                # logger.info("jk %s", jk)
                 conds = {key: conditions[key] for key in join_paths[jk]}
                 # logger.info("conds %s", conds)
                 tbls = {}
@@ -88,6 +90,7 @@ class Engine:
                 # logger.info("_" * 120)
                 # logger.info("conds is %s", conds)
                 # logger.info("tbls is %s", tbls)
+                # logger.info("join_cond is %s", join_cond)
 
                 join_keys_grid = JoinKeysGrid()
                 join_keys_grid.calculate_push_down_join_keys_domain(
@@ -96,6 +99,10 @@ class Engine:
                 grid_in_paths[jk] = join_keys_grid.get_join_key_grid_for_table_jk(
                     target_tbl + "." + jk
                 )
+                # logger.warning("grid was %s", join_keys_grid)
+                grids = join_keys_grid.shrink_join_key_grid_for_table_jk(
+                    target_tbl + "." + jk)
+                # logger.warning("grid changed to %s", grids)
                 if len(tbls) == 1:
                     k = conds[list(tbls.values())[0]
                               ][0].join_keys[0].split(".")[1]
@@ -106,7 +113,7 @@ class Engine:
                         conds,
                         self.grid_size_x,
                         force_return_vec_sel_key=k,
-                        join_keys_grid=join_keys_grid,
+                        join_keys_grid=join_keys_grid,  # join_keys_grid,
                     )
                     # logger.info("pred is %s", np.sum(pred))
                     tbl = list(conds.keys())[0]
@@ -115,9 +122,11 @@ class Engine:
 
                 else:
                     # print("here!!!!!!!!!!!!!!!!!!!!!!!!!! ")
+                    # logger.info("join_keys_grid %s", grids)
                     n = get_cartesian_cardinality(self.counters, tbls)
                     pred = vec_sel_multi_table_query(
-                        self.models, conds, join_cond, join_keys_grid
+                        # join_keys_grid
+                        self.models, conds, join_cond, join_keys_grid, join_keys_grid_1=grids, return_with_width_multiplied=False
                     )
                     predictions_in_paths[jk] = pred
 
@@ -189,13 +198,13 @@ class Engine:
         #     conditions, join_cond, self.models, tables_all)
 
         n = get_cartesian_cardinality(self.counters, tables_all)
-        logger.info("self.counters %s", self.counters)
+        # logger.info("self.counters %s", self.counters)
         pred = vec_sel_multi_table_query(
             self.models, conditions, join_cond, join_keys_grid
         )
 
-        logger.info("cartesian is %E", n)
-        logger.info("selectivity is %s ", np.sum(pred))
+        # logger.info("cartesian is %E", n)
+        # logger.info("selectivity is %s ", np.sum(pred))
 
         return np.sum(pred) * n
 
@@ -207,6 +216,7 @@ def vec_sel_single_table_query(
     use_column_model=False,
     join_keys_grid=None,
     force_return_vec_sel_key=None,
+    return_with_width_multiplied=True
 ):
     assert len(conditions) == 1
     tbl = list(conditions.keys())[0]
@@ -234,10 +244,13 @@ def vec_sel_single_table_query(
                 # logger.info("model is %s",model)
                 # logger.info("width is %s",join_keys_grid.join_keys_grid[0].width)
                 # logger.info("grid is %s",join_keys_grid.join_keys_grid[0].grid)
-                return (
-                    model.pdf.predict(grid.grid)
-                    * grid.width
-                )
+                if return_with_width_multiplied:
+                    return (
+                        model.pdf.predict(grid.grid)
+                        * grid.width
+                    )
+                else:
+                    return model.pdf.predict(grid.grid)
             # sz_min = models[tbl].size
             return np.array([1.0])  # [models[tbl].size]
 
@@ -308,16 +321,22 @@ def vec_sel_single_table_query(
         # logger.info("pred is %s", pred)
         # logger.info("sum is %s", np.sum(pred))
         # logger.info("sums is %s", np.sum(pred)*width_x)
-        return pred * width_x  # , model.size
+        if return_with_width_multiplied:
+            return pred * width_x  # , model.size
+        else:
+            return pred
     # multiple selection
+    logger.info("!"*200)
     cond0 = conds[0]
     jk = cond0.join_keys[0].split(".")[1]
     jk_model = models[tbl].pdfs[jk]
     jk_domain = [jk_model.min, jk_model.max]
     # logger.info("x range is %s", jk_domain)
     if join_keys_grid:
-        grid_x = join_keys_grid.join_keys_grid[0].grid
-        width_x = join_keys_grid.join_keys_grid[0].width
+        grid_i = join_keys_grid.get_join_key_grid_for_table_jk(
+            tbl+"."+jk)
+        grid_x = grid_i.grid
+        width_x = grid_i.width
     else:
         grid_x, width_x = np.linspace(*jk_domain, grid_size_x, retstep=True)
     pred_x = vec_sel_single_column(jk_model, grid_x)
@@ -352,7 +371,11 @@ def vec_sel_single_table_query(
 
     # logger.info("width x is %s", width_x)
     res = width_x * vec_sel_multiply(pred, pred_x)
-    return res  # , sz_min
+    if return_with_width_multiplied:
+        return res
+    else:
+        return res/width_x
+    # return res  # , sz_min
 
 
 def vec_sel_multi_table_query(
@@ -362,10 +385,12 @@ def vec_sel_multi_table_query(
     join_keys_grid: JoinKeysGrid,
     grid_size_x=2000,
     grid_size_y=1000,
+    join_keys_grid_1: JoinKeysGrid = None,
+    return_with_width_multiplied=True
 ):
-    # logger.info("conditions: %s", conditions)
-    # logger.info("join_keys_grid.join_keys_lists: %s",
-    #             join_keys_grid.join_keys_lists)
+    logger.info("conditions: %s", conditions)
+    logger.info("join_keys_grid.join_keys_lists: %s",
+                join_keys_grid.join_keys_lists)
     ps = {}
     widths = {}
     for tbl in conditions:
@@ -390,11 +415,17 @@ def vec_sel_multi_table_query(
             {tbl: conditions[tbl]},
             join_keys_grid=join_keys_grid,
             force_return_vec_sel_key=jk_id,
+            return_with_width_multiplied=False
         )
         logger.debug("[table %s with selectivity: %s", tbl, np.sum(pred_p))
 
         ps[tbl] = pred_p
-    predss = vec_sel_join(ps, join_cond, join_keys_grid)
+    if join_keys_grid_1:
+        predss = vec_sel_join(ps, join_cond, join_keys_grid_1,
+                              return_with_width_multiplied=return_with_width_multiplied)
+    else:
+        predss = vec_sel_join(ps, join_cond, join_keys_grid,
+                              return_with_width_multiplied=return_with_width_multiplied)
     return predss
 
 
@@ -411,14 +442,16 @@ def vec_sel_divide(sel1, sel2):
     return np.divide(sel1, sel2, out=np.zeros_like(sel1), where=sel2 != 0)
 
 
-def vec_sel_join(ps, join_cond, join_keys_grid):
+def vec_sel_join(ps, join_cond, join_keys_grid, return_with_width_multiplied=True):
     # logger.info("join_cond %s",join_cond)
-    # logger.info("join_keys_grid %s",join_keys_grid.join_keys_grid)
+    # logger.info("ps %s", ps)
+    logger.info("join_keys_grid %s", join_keys_grid.join_keys_grid)
+
     tbls = ps.keys()
     tbl0 = list(tbls)[0]
     width = join_keys_grid.join_keys_grid[0].width
 
-    pred = ps[tbl0]
+    pred = ps[tbl0]  # /width
     # plot_line(pred)
     # logger.info("ssub of %s is %s", tbl0, np.sum(pred))
     for tbl in ps:
@@ -427,7 +460,9 @@ def vec_sel_join(ps, join_cond, join_keys_grid):
             pred = vec_sel_multiply(pred, ps[tbl])
             # plot_line(pred)
             # logger.info("sub of %s is %s", tbl, np.sum(ps[tbl]))
-    return pred / width
+    if return_with_width_multiplied:
+        return pred * width
+    return pred
 
 
 def get_cartesian_cardinality(counters, tables_all):

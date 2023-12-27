@@ -43,7 +43,7 @@ def evaluate_stats(args: ArgumentParser):
         ratios.append(res / true_card)
         # if (res/true_card > 10000):
         #     exit()
-        if res / true_card > 1e7 or res / true_card < 0.000025:
+        if res / true_card > 1e5 or res / true_card < 0.000025:
             bad_queries.append(query)
             logger.info("-" * 800)
             logger.info("true is %s, pred is %s", true_card, res)
@@ -59,7 +59,7 @@ def evaluate_stats(args: ArgumentParser):
     for i in [1, 50, 90, 95, 99, 100]:
         logger.info(f"q-error {i}% percentile is {np.percentile(qerror, i)}")
 
-    logger.info(f"pred is  {pred}")
+    # logger.info(f"pred is  {pred}")
     logger.info(f"average latency per query is {np.mean(latency)}")
     logger.info(f"total estimation time is {np.sum(latency)}")
 
