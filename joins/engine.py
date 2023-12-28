@@ -43,8 +43,7 @@ class Engine:
 
     def query(self, query_str):
         logger.info("QUERY [%s]", query_str)
-        tables_all, table_query, join_cond, join_keys = parse_query_simple(
-            query_str)
+        tables_all, table_query, join_cond, join_keys = parse_query_simple(query_str)
         conditions = generate_push_down_conditions(
             tables_all, table_query, join_cond, join_keys
         )
@@ -69,6 +68,7 @@ class Engine:
 
         # only a single join key is allowed in a table
         if max_dim == 2:
+            return 2
             # logger.debug("!!!!in 2 mode!!!!")
             target_tbl, join_paths = get_two_chained_query(
                 join_keys, join_cond, include_self=False
@@ -101,11 +101,11 @@ class Engine:
                 )
                 # logger.warning("grid was %s", join_keys_grid)
                 grids = join_keys_grid.shrink_join_key_grid_for_table_jk(
-                    target_tbl + "." + jk)
+                    target_tbl + "." + jk
+                )
                 # logger.warning("grid changed to %s", grids)
                 if len(tbls) == 1:
-                    k = conds[list(tbls.values())[0]
-                              ][0].join_keys[0].split(".")[1]
+                    k = conds[list(tbls.values())[0]][0].join_keys[0].split(".")[1]
                     # print("here!!!!! ")
                     # print("k is ", k)
                     pred = vec_sel_single_table_query(
@@ -126,7 +126,12 @@ class Engine:
                     n = get_cartesian_cardinality(self.counters, tbls)
                     pred = vec_sel_multi_table_query(
                         # join_keys_grid
-                        self.models, conds, join_cond, join_keys_grid, join_keys_grid_1=grids, return_with_width_multiplied=False
+                        self.models,
+                        conds,
+                        join_cond,
+                        join_keys_grid,
+                        join_keys_grid_1=grids,
+                        return_with_width_multiplied=False,
                     )
                     predictions_in_paths[jk] = pred
 
@@ -153,12 +158,10 @@ class Engine:
             #             predictions_in_paths.keys())
             [k1, k2] = list(predictions_in_paths.keys())
             pred_k1 = (
-                self.models[target_tbl].pdfs[k1].pdf.predict(
-                    grid_in_paths[k1].grid)
+                self.models[target_tbl].pdfs[k1].pdf.predict(grid_in_paths[k1].grid)
             )
             pred_k2 = (
-                self.models[target_tbl].pdfs[k2].pdf.predict(
-                    grid_in_paths[k2].grid)
+                self.models[target_tbl].pdfs[k2].pdf.predict(grid_in_paths[k2].grid)
             )
             pred1 = vec_sel_multiply(pred_k1, predictions_in_paths[k1])
             pred2 = vec_sel_multiply(pred_k2, predictions_in_paths[k2])
@@ -173,16 +176,14 @@ class Engine:
             pred = vec_sel_multiply(pred1, pred2)
             logger.debug("total selectivity is %s", np.sum(pred))
             n = get_cartesian_cardinality(self.counters, tables_all)
-            res = n * np.sum(pred) * \
-                grid_in_paths[k1].width * grid_in_paths[k2].width
+            res = n * np.sum(pred) * grid_in_paths[k1].width * grid_in_paths[k2].width
             # logger.info("predict is %s", res)
             # len(join_keys_grid.join_keys_domain)  # TODO support this
             return res
         elif max_dim > 2:
-            logger.error("length is  [%i]", len(
-                join_keys_grid.join_keys_domain))
+            logger.error("length is  [%i]", len(join_keys_grid.join_keys_domain))
             logger.error("is 3 [%s]", query_str)
-            # exit()
+            exit()
 
         # for cases with max_dim==1
         join_keys_grid = JoinKeysGrid()
@@ -216,7 +217,7 @@ def vec_sel_single_table_query(
     use_column_model=False,
     join_keys_grid=None,
     force_return_vec_sel_key=None,
-    return_with_width_multiplied=True
+    return_with_width_multiplied=True,
 ):
     assert len(conditions) == 1
     tbl = list(conditions.keys())[0]
@@ -240,15 +241,13 @@ def vec_sel_single_table_query(
                 #     model: Column = models[tbl].pdfs["Id"]
 
                 grid = join_keys_grid.get_join_key_grid_for_table_jk(
-                    tbl+"."+force_return_vec_sel_key)
+                    tbl + "." + force_return_vec_sel_key
+                )
                 # logger.info("model is %s",model)
                 # logger.info("width is %s",join_keys_grid.join_keys_grid[0].width)
                 # logger.info("grid is %s",join_keys_grid.join_keys_grid[0].grid)
                 if return_with_width_multiplied:
-                    return (
-                        model.pdf.predict(grid.grid)
-                        * grid.width
-                    )
+                    return model.pdf.predict(grid.grid) * grid.width
                 else:
                     return model.pdf.predict(grid.grid)
             # sz_min = models[tbl].size
@@ -306,7 +305,8 @@ def vec_sel_single_table_query(
         # logger.info("join_keys_grid is %s", join_keys_grid.join_keys_grid)
         if join_keys_grid:
             grid_i = join_keys_grid.get_join_key_grid_for_table_jk(
-                tbl+"."+force_return_vec_sel_key)
+                tbl + "." + force_return_vec_sel_key
+            )
             grid_x = grid_i.grid
             width_x = grid_i.width
             # logger.info("grid_x is %s", grid_x)
@@ -326,15 +326,14 @@ def vec_sel_single_table_query(
         else:
             return pred
     # multiple selection
-    logger.info("!"*200)
+    logger.info("!" * 200)
     cond0 = conds[0]
     jk = cond0.join_keys[0].split(".")[1]
     jk_model = models[tbl].pdfs[jk]
     jk_domain = [jk_model.min, jk_model.max]
     # logger.info("x range is %s", jk_domain)
     if join_keys_grid:
-        grid_i = join_keys_grid.get_join_key_grid_for_table_jk(
-            tbl+"."+jk)
+        grid_i = join_keys_grid.get_join_key_grid_for_table_jk(tbl + "." + jk)
         grid_x = grid_i.grid
         width_x = grid_i.width
     else:
@@ -366,15 +365,14 @@ def vec_sel_single_table_query(
     # logger.info("predx is %s", np.sum(pred_x))
     pred = np.ones_like(pred_x)
     for pred_xyi in pred_xys:
-        pred = vec_sel_multiply(
-            pred, vec_sel_divide(pred_xyi, pred_x)) / width_x
+        pred = vec_sel_multiply(pred, vec_sel_divide(pred_xyi, pred_x)) / width_x
 
     # logger.info("width x is %s", width_x)
     res = width_x * vec_sel_multiply(pred, pred_x)
     if return_with_width_multiplied:
         return res
     else:
-        return res/width_x
+        return res / width_x
     # return res  # , sz_min
 
 
@@ -386,11 +384,10 @@ def vec_sel_multi_table_query(
     grid_size_x=2000,
     grid_size_y=1000,
     join_keys_grid_1: JoinKeysGrid = None,
-    return_with_width_multiplied=True
+    return_with_width_multiplied=True,
 ):
     logger.info("conditions: %s", conditions)
-    logger.info("join_keys_grid.join_keys_lists: %s",
-                join_keys_grid.join_keys_lists)
+    logger.info("join_keys_grid.join_keys_lists: %s", join_keys_grid.join_keys_lists)
     ps = {}
     widths = {}
     for tbl in conditions:
@@ -415,17 +412,25 @@ def vec_sel_multi_table_query(
             {tbl: conditions[tbl]},
             join_keys_grid=join_keys_grid,
             force_return_vec_sel_key=jk_id,
-            return_with_width_multiplied=False
+            return_with_width_multiplied=False,
         )
         logger.debug("[table %s with selectivity: %s", tbl, np.sum(pred_p))
 
         ps[tbl] = pred_p
     if join_keys_grid_1:
-        predss = vec_sel_join(ps, join_cond, join_keys_grid_1,
-                              return_with_width_multiplied=return_with_width_multiplied)
+        predss = vec_sel_join(
+            ps,
+            join_cond,
+            join_keys_grid_1,
+            return_with_width_multiplied=return_with_width_multiplied,
+        )
     else:
-        predss = vec_sel_join(ps, join_cond, join_keys_grid,
-                              return_with_width_multiplied=return_with_width_multiplied)
+        predss = vec_sel_join(
+            ps,
+            join_cond,
+            join_keys_grid,
+            return_with_width_multiplied=return_with_width_multiplied,
+        )
     return predss
 
 

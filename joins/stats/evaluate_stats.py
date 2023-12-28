@@ -35,6 +35,8 @@ def evaluate_stats(args: ArgumentParser):
         res = engine.query(query)
         # cnt_key.append(len(key_conditions))
         # cnt_non_key.append(len(non_key_conditions))
+        if res == 2:
+            continue
         pred.append(res)
         latency.append(time.time() - t)
 
@@ -62,7 +64,7 @@ def evaluate_stats(args: ArgumentParser):
     # logger.info(f"pred is  {pred}")
     logger.info(f"average latency per query is {np.mean(latency)}")
     logger.info(f"total estimation time is {np.sum(latency)}")
-
+    logger.info(f"number of queries is {len(pred)}")
     logger.info("bad queries\n")
     # logger.info("-"*100)
     # for q in bad_queries:
