@@ -236,6 +236,7 @@ def vec_sel_single_table_query(
     force_return_vec_sel_key=None,
     return_with_width_multiplied=True,
     return_width=False,
+    bug_support_for_single_no_selection_join=False
 ):
     assert len(conditions) == 1
     tbl = list(conditions.keys())[0]
@@ -266,6 +267,8 @@ def vec_sel_single_table_query(
                 # logger.info("model is %s",model)
                 # logger.info("width is %s",join_keys_grid.join_keys_grid[0].width)
                 # logger.info("grid is %s",join_keys_grid.join_keys_grid[0].grid)
+                if bug_support_for_single_no_selection_join:
+                    return model.pdf.predict(grid.grid), grid.width
                 if return_with_width_multiplied:
                     if return_width:
                         return model.pdf.predict(grid.grid) * grid.width, grid.width
@@ -449,6 +452,7 @@ def vec_sel_multi_table_query(
             force_return_vec_sel_key=jk_id,
             return_with_width_multiplied=True,
             return_width=True,
+            bug_support_for_single_no_selection_join=True
         )
         logger.debug("[table %s with selectivity: %s", tbl, np.sum(pred_p))
 
@@ -458,14 +462,14 @@ def vec_sel_multi_table_query(
             ps,
             join_cond,
             join_keys_grid_1,
-            return_with_width_multiplied=False,
+            return_with_width_multiplied=True,
         )
     else:
         predss = vec_sel_join(
             ps,
             join_cond,
             join_keys_grid,
-            return_with_width_multiplied=False,
+            return_with_width_multiplied=True,
         )
     if return_with_width_multiplied:
         if return_width:
