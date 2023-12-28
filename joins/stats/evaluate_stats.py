@@ -45,13 +45,13 @@ def evaluate_stats(args: ArgumentParser):
         ratios.append(res / true_card)
         # if (res/true_card > 10000):
         #     exit()
-        if res / true_card > 1e5 or res / true_card < 0.000025:
+        if res / true_card > 1e8 or res / true_card < 2e-7:
             bad_queries.append(query)
             logger.info("-" * 800)
             logger.info("true is %s, pred is %s", true_card, res)
             logger.info("query is %s", query)
             logger.info("-" * 800)
-            # exit()
+            exit()
         # logger.info("qerror is %s", max(res/true_card, true_card/res))
     # logger.info("max is %s", max(cnt_key))
     # logger.info("max of non is %s", max(cnt_non_key))

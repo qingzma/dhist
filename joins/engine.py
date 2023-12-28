@@ -1,5 +1,6 @@
 # this is an example for p(yz|x)= p(y|x)p(z|x), assuming y and z are conditionally independent given x
 # https://stats.stackexchange.com/questions/29510/proper-way-to-combine-conditional-probability-distributions-of-the-same-random-v
+import math
 import time
 from enum import Enum
 
@@ -200,14 +201,24 @@ class Engine:
 
         n = get_cartesian_cardinality(self.counters, tables_all)
         # logger.info("self.counters %s", self.counters)
-        pred = vec_sel_multi_table_query(
-            self.models, conditions, join_cond, join_keys_grid
+        pred, width = vec_sel_multi_table_query(
+            self.models,
+            conditions,
+            join_cond,
+            join_keys_grid,
+            return_with_width_multiplied=False,
+            return_width=True,
         )
 
         # logger.info("cartesian is %E", n)
         # logger.info("selectivity is %s ", np.sum(pred))
+        logger.info("total tables is %s ", len(tables_all))
+        res = np.sum(pred) * n / width
 
-        return np.sum(pred) * n
+        if len(tables_all) > 2:
+            for _ in range(3, len(tables_all) + 2):
+                res /= width  # math.sqrt(math.sqrt(width))
+        return res  # np.sum(pred) * n / width  # * width
 
 
 def vec_sel_single_table_query(
@@ -218,6 +229,7 @@ def vec_sel_single_table_query(
     join_keys_grid=None,
     force_return_vec_sel_key=None,
     return_with_width_multiplied=True,
+    return_width=False,
 ):
     assert len(conditions) == 1
     tbl = list(conditions.keys())[0]
@@ -247,8 +259,12 @@ def vec_sel_single_table_query(
                 # logger.info("width is %s",join_keys_grid.join_keys_grid[0].width)
                 # logger.info("grid is %s",join_keys_grid.join_keys_grid[0].grid)
                 if return_with_width_multiplied:
+                    if return_width:
+                        return model.pdf.predict(grid.grid) * grid.width, grid.width
                     return model.pdf.predict(grid.grid) * grid.width
                 else:
+                    if return_width:
+                        return model.pdf.predict(grid.grid), grid.width
                     return model.pdf.predict(grid.grid)
             # sz_min = models[tbl].size
             return np.array([1.0])  # [models[tbl].size]
@@ -322,8 +338,12 @@ def vec_sel_single_table_query(
         # logger.info("sum is %s", np.sum(pred))
         # logger.info("sums is %s", np.sum(pred)*width_x)
         if return_with_width_multiplied:
+            if return_width:
+                return pred * width_x, width_x
             return pred * width_x  # , model.size
         else:
+            if return_width:
+                return pred, width_x
             return pred
     # multiple selection
     logger.info("!" * 200)
@@ -370,8 +390,12 @@ def vec_sel_single_table_query(
     # logger.info("width x is %s", width_x)
     res = width_x * vec_sel_multiply(pred, pred_x)
     if return_with_width_multiplied:
+        if return_width:
+            return res, width_x
         return res
     else:
+        if return_width:
+            return res / width_x, width_x
         return res / width_x
     # return res  # , sz_min
 
@@ -385,6 +409,7 @@ def vec_sel_multi_table_query(
     grid_size_y=1000,
     join_keys_grid_1: JoinKeysGrid = None,
     return_with_width_multiplied=True,
+    return_width=False,
 ):
     logger.info("conditions: %s", conditions)
     logger.info("join_keys_grid.join_keys_lists: %s", join_keys_grid.join_keys_lists)
@@ -407,12 +432,13 @@ def vec_sel_multi_table_query(
                     jk_id = jk_item.split(".")[1]
                     break
         # logger.info("table with id %s, %s", tbl, jk_id)
-        pred_p = vec_sel_single_table_query(
+        pred_p, width = vec_sel_single_table_query(
             models,
             {tbl: conditions[tbl]},
             join_keys_grid=join_keys_grid,
             force_return_vec_sel_key=jk_id,
-            return_with_width_multiplied=False,
+            return_with_width_multiplied=True,
+            return_width=True,
         )
         logger.debug("[table %s with selectivity: %s", tbl, np.sum(pred_p))
 
@@ -422,15 +448,21 @@ def vec_sel_multi_table_query(
             ps,
             join_cond,
             join_keys_grid_1,
-            return_with_width_multiplied=return_with_width_multiplied,
+            return_with_width_multiplied=False,
         )
     else:
         predss = vec_sel_join(
             ps,
             join_cond,
             join_keys_grid,
-            return_with_width_multiplied=return_with_width_multiplied,
+            return_with_width_multiplied=False,
         )
+    if return_with_width_multiplied:
+        if return_width:
+            return predss * width, width
+        return predss * width
+    if return_width:
+        return predss, width
     return predss
 
 
@@ -447,7 +479,9 @@ def vec_sel_divide(sel1, sel2):
     return np.divide(sel1, sel2, out=np.zeros_like(sel1), where=sel2 != 0)
 
 
-def vec_sel_join(ps, join_cond, join_keys_grid, return_with_width_multiplied=True):
+def vec_sel_join(
+    ps, join_cond, join_keys_grid, return_with_width_multiplied=True, return_width=False
+):
     # logger.info("join_cond %s",join_cond)
     # logger.info("ps %s", ps)
     logger.info("join_keys_grid %s", join_keys_grid.join_keys_grid)
@@ -465,8 +499,13 @@ def vec_sel_join(ps, join_cond, join_keys_grid, return_with_width_multiplied=Tru
             pred = vec_sel_multiply(pred, ps[tbl])
             # plot_line(pred)
             # logger.info("sub of %s is %s", tbl, np.sum(ps[tbl]))
+    logger.info("total selectivity is %s", np.sum(pred))
     if return_with_width_multiplied:
+        if return_width:
+            return pred * width, width
         return pred * width
+    if return_width:
+        return pred, width
     return pred
 
 
