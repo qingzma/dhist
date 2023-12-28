@@ -44,7 +44,8 @@ class Engine:
 
     def query(self, query_str):
         logger.info("QUERY [%s]", query_str)
-        tables_all, table_query, join_cond, join_keys = parse_query_simple(query_str)
+        tables_all, table_query, join_cond, join_keys = parse_query_simple(
+            query_str)
         conditions = generate_push_down_conditions(
             tables_all, table_query, join_cond, join_keys
         )
@@ -106,7 +107,8 @@ class Engine:
                 )
                 # logger.warning("grid changed to %s", grids)
                 if len(tbls) == 1:
-                    k = conds[list(tbls.values())[0]][0].join_keys[0].split(".")[1]
+                    k = conds[list(tbls.values())[0]
+                              ][0].join_keys[0].split(".")[1]
                     # print("here!!!!! ")
                     # print("k is ", k)
                     pred = vec_sel_single_table_query(
@@ -159,10 +161,12 @@ class Engine:
             #             predictions_in_paths.keys())
             [k1, k2] = list(predictions_in_paths.keys())
             pred_k1 = (
-                self.models[target_tbl].pdfs[k1].pdf.predict(grid_in_paths[k1].grid)
+                self.models[target_tbl].pdfs[k1].pdf.predict(
+                    grid_in_paths[k1].grid)
             )
             pred_k2 = (
-                self.models[target_tbl].pdfs[k2].pdf.predict(grid_in_paths[k2].grid)
+                self.models[target_tbl].pdfs[k2].pdf.predict(
+                    grid_in_paths[k2].grid)
             )
             pred1 = vec_sel_multiply(pred_k1, predictions_in_paths[k1])
             pred2 = vec_sel_multiply(pred_k2, predictions_in_paths[k2])
@@ -177,12 +181,14 @@ class Engine:
             pred = vec_sel_multiply(pred1, pred2)
             logger.debug("total selectivity is %s", np.sum(pred))
             n = get_cartesian_cardinality(self.counters, tables_all)
-            res = n * np.sum(pred) * grid_in_paths[k1].width * grid_in_paths[k2].width
+            res = n * np.sum(pred) * \
+                grid_in_paths[k1].width * grid_in_paths[k2].width
             # logger.info("predict is %s", res)
             # len(join_keys_grid.join_keys_domain)  # TODO support this
             return res
         elif max_dim > 2:
-            logger.error("length is  [%i]", len(join_keys_grid.join_keys_domain))
+            logger.error("length is  [%i]", len(
+                join_keys_grid.join_keys_domain))
             logger.error("is 3 [%s]", query_str)
             exit()
 
@@ -215,9 +221,9 @@ class Engine:
         logger.info("total tables is %s ", len(tables_all))
         res = np.sum(pred) * n / width
 
-        if len(tables_all) > 2:
-            for _ in range(3, len(tables_all) + 2):
-                res /= width  # math.sqrt(math.sqrt(width))
+        # if len(tables_all) > 2:
+        #     for _ in range(3, len(tables_all) + 2):
+        #         res /= width  # math.sqrt(math.sqrt(width))
         return res  # np.sum(pred) * n / width  # * width
 
 
@@ -238,7 +244,7 @@ def vec_sel_single_table_query(
     # sz_min = np.Infinity
     # if tbl == "votes":
     #     logger.warning("hahha")
-    #     logger.warning("conds %s", conds)
+    logger.warning("conds %s", conds)
 
     # logger.info("conds: %s", conds)
     if len(conds) == 1:
@@ -247,11 +253,13 @@ def vec_sel_single_table_query(
         # no selection, simple cardinality, return n
         # [SingleTablePushedDownCondition[badges]--join_keys[badges.Id]--non_key[None]--condition[None, None]--to_join[{}]]]
         if cond.non_key is None:
+            logger.info("table is %s: force_return_vec_sel_key %s",
+                        tbl, force_return_vec_sel_key)
             if force_return_vec_sel_key:
                 model: Column = models[tbl].pdfs[force_return_vec_sel_key]
                 # if tbl == "votes":
                 #     model: Column = models[tbl].pdfs["Id"]
-
+                logger.info("join_keys_grid %s", join_keys_grid.join_keys_grid)
                 grid = join_keys_grid.get_join_key_grid_for_table_jk(
                     tbl + "." + force_return_vec_sel_key
                 )
@@ -289,18 +297,18 @@ def vec_sel_single_table_query(
         # TODO this is commented out !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # model = None
         # if force_return_vec_sel_key:
-        #     # logger.info("join key is %s", force_return_vec_sel_key)
-        #     # logger.info("join_keys_grid.join_keys_grid %s",
-        #     #             join_keys_grid.join_keys_grid)
-        #     model: Column = models[tbl].pdfs[force_return_vec_sel_key]
-        #     # if tbl == "votes":
-        #     #     model: Column = models[tbl].pdfs["Id"]
-        #     grid = join_keys_grid.get_join_key_grid_for_table_jk(
-        #         tbl+"."+force_return_vec_sel_key)
-        #     return (
-        #         model.pdf.predict(grid.grid)
-        #         * grid.width
-        #     )
+            # # logger.info("join key is %s", force_return_vec_sel_key)
+            # # logger.info("join_keys_grid.join_keys_grid %s",
+            # #             join_keys_grid.join_keys_grid)
+            # model: Column = models[tbl].pdfs[force_return_vec_sel_key]
+            # # if tbl == "votes":
+            # #     model: Column = models[tbl].pdfs["Id"]
+            # grid = join_keys_grid.get_join_key_grid_for_table_jk(
+            #     tbl+"."+force_return_vec_sel_key)
+            # return (
+            #     model.pdf.predict(grid.grid)
+            #     * grid.width
+            # )
 
         model: Column2d = (
             models[tbl].correlations_cdf["Id"][cond.non_key.split(".")[1]]
@@ -385,7 +393,8 @@ def vec_sel_single_table_query(
     # logger.info("predx is %s", np.sum(pred_x))
     pred = np.ones_like(pred_x)
     for pred_xyi in pred_xys:
-        pred = vec_sel_multiply(pred, vec_sel_divide(pred_xyi, pred_x)) / width_x
+        pred = vec_sel_multiply(
+            pred, vec_sel_divide(pred_xyi, pred_x)) / width_x
 
     # logger.info("width x is %s", width_x)
     res = width_x * vec_sel_multiply(pred, pred_x)
@@ -412,7 +421,8 @@ def vec_sel_multi_table_query(
     return_width=False,
 ):
     logger.info("conditions: %s", conditions)
-    logger.info("join_keys_grid.join_keys_lists: %s", join_keys_grid.join_keys_lists)
+    logger.info("join_keys_grid.join_keys_lists: %s",
+                join_keys_grid.join_keys_lists)
     ps = {}
     widths = {}
     for tbl in conditions:
