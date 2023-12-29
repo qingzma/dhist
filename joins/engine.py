@@ -219,13 +219,13 @@ class Engine:
         # logger.info("cartesian is %E", n)
         # logger.info("selectivity is %s ", np.sum(pred))
         logger.info("total tables is %s ", len(tables_all))
-        res = np.sum(pred) * n*width
+        res = np.sum(pred) * n  # *width
 
-        if len(tables_all) == 2:
-            res /= width
+        # if len(tables_all) == 2:
+        #     res /= width
         # if len(tables_all) > 2:
-            # for _ in range(3, len(tables_all) + 1):
-            #     res *= width  # math.sqrt(math.sqrt(width))
+        # for _ in range(3, len(tables_all) + 1):
+        #     res *= width  # math.sqrt(math.sqrt(width))
         return res  # np.sum(pred) * n / width  # * width
 
 
@@ -351,7 +351,7 @@ def vec_sel_single_table_query(
         # logger.info("sum is %s", np.sum(pred))
         # logger.info("sums is %s", np.sum(pred)*width_x)
         if bug_support_for_single_no_selection_join:
-            return pred, width_x
+            return pred*width_x, width_x
         if return_with_width_multiplied:
             if return_width:
                 return pred*width_x, width_x
