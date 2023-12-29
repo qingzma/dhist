@@ -219,11 +219,13 @@ class Engine:
         # logger.info("cartesian is %E", n)
         # logger.info("selectivity is %s ", np.sum(pred))
         logger.info("total tables is %s ", len(tables_all))
-        res = np.sum(pred) * n / width
+        res = np.sum(pred) * n*width
 
+        if len(tables_all) == 2:
+            res /= width
         # if len(tables_all) > 2:
-        #     for _ in range(3, len(tables_all) + 2):
-        #         res /= width  # math.sqrt(math.sqrt(width))
+            # for _ in range(3, len(tables_all) + 1):
+            #     res *= width  # math.sqrt(math.sqrt(width))
         return res  # np.sum(pred) * n / width  # * width
 
 
@@ -268,15 +270,15 @@ def vec_sel_single_table_query(
                 # logger.info("width is %s",join_keys_grid.join_keys_grid[0].width)
                 # logger.info("grid is %s",join_keys_grid.join_keys_grid[0].grid)
                 if bug_support_for_single_no_selection_join:
-                    return model.pdf.predict(grid.grid), grid.width
+                    return model.pdf.predict(grid.grid)*grid.width, grid.width
                 if return_with_width_multiplied:
-                    if return_width:
-                        return model.pdf.predict(grid.grid) * grid.width, grid.width
-                    return model.pdf.predict(grid.grid) * grid.width
-                else:
                     if return_width:
                         return model.pdf.predict(grid.grid), grid.width
                     return model.pdf.predict(grid.grid)
+                else:
+                    if return_width:
+                        return model.pdf.predict(grid.grid) / grid.width, grid.width
+                    return model.pdf.predict(grid.grid) / grid.width
             # sz_min = models[tbl].size
             return np.array([1.0])  # [models[tbl].size]
 
@@ -348,10 +350,12 @@ def vec_sel_single_table_query(
         # logger.info("pred is %s", pred)
         # logger.info("sum is %s", np.sum(pred))
         # logger.info("sums is %s", np.sum(pred)*width_x)
+        if bug_support_for_single_no_selection_join:
+            return pred, width_x
         if return_with_width_multiplied:
             if return_width:
-                return pred * width_x, width_x
-            return pred * width_x  # , model.size
+                return pred*width_x, width_x
+            return pred*width_x   # , model.size
         else:
             if return_width:
                 return pred, width_x
@@ -400,15 +404,18 @@ def vec_sel_single_table_query(
             pred, vec_sel_divide(pred_xyi, pred_x)) / width_x
 
     # logger.info("width x is %s", width_x)
-    res = width_x * vec_sel_multiply(pred, pred_x)
+    res = vec_sel_multiply(pred, pred_x)
+
+    if bug_support_for_single_no_selection_join:
+        return res, width_x
     if return_with_width_multiplied:
+        if return_width:
+            return res*width_x, width_x
+        return res*width_x
+    else:
         if return_width:
             return res, width_x
         return res
-    else:
-        if return_width:
-            return res / width_x, width_x
-        return res / width_x
     # return res  # , sz_min
 
 
@@ -462,14 +469,14 @@ def vec_sel_multi_table_query(
             ps,
             join_cond,
             join_keys_grid_1,
-            return_with_width_multiplied=True,
+            return_with_width_multiplied=False,
         )
     else:
         predss = vec_sel_join(
             ps,
             join_cond,
             join_keys_grid,
-            return_with_width_multiplied=True,
+            return_with_width_multiplied=False,
         )
     if return_with_width_multiplied:
         if return_width:
