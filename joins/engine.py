@@ -207,7 +207,16 @@ class Engine:
 
         n = get_cartesian_cardinality(self.counters, tables_all)
         # logger.info("self.counters %s", self.counters)
-        pred, width = vec_sel_multi_table_query(
+        # pred, width = vec_sel_multi_table_query(
+        #     self.models,
+        #     conditions,
+        #     join_cond,
+        #     join_keys_grid,
+        #     return_with_width_multiplied=False,
+        #     return_width=True,
+        # )
+
+        pred, width = vec_sel_multi_table_query_with_same_column(
             self.models,
             conditions,
             join_cond,
@@ -219,7 +228,7 @@ class Engine:
         # logger.info("cartesian is %E", n)
         # logger.info("selectivity is %s ", np.sum(pred))
         logger.info("total tables is %s ", len(tables_all))
-        res = np.sum(pred) * n  # *width
+        res = np.sum(pred) * n/width
 
         # if len(tables_all) == 2:
         #     res /= width
@@ -269,16 +278,21 @@ def vec_sel_single_table_query(
                 # logger.info("model is %s",model)
                 # logger.info("width is %s",join_keys_grid.join_keys_grid[0].width)
                 # logger.info("grid is %s",join_keys_grid.join_keys_grid[0].grid)
-                if bug_support_for_single_no_selection_join:
+                logger.info("table [%s] with selectivity is %s",
+                            tbl, np.sum(model.pdf.predict(grid.grid))*grid.width)
+                if return_width:
                     return model.pdf.predict(grid.grid)*grid.width, grid.width
-                if return_with_width_multiplied:
-                    if return_width:
-                        return model.pdf.predict(grid.grid), grid.width
-                    return model.pdf.predict(grid.grid)
-                else:
-                    if return_width:
-                        return model.pdf.predict(grid.grid) / grid.width, grid.width
-                    return model.pdf.predict(grid.grid) / grid.width
+                return model.pdf.predict(grid.grid)*grid.width
+                # if bug_support_for_single_no_selection_join:
+                #     return model.pdf.predict(grid.grid)*grid.width, grid.width
+                # if return_with_width_multiplied:
+                #     if return_width:
+                #         return model.pdf.predict(grid.grid), grid.width
+                #     return model.pdf.predict(grid.grid)
+                # else:
+                #     if return_width:
+                #         return model.pdf.predict(grid.grid) / grid.width, grid.width
+                #     return model.pdf.predict(grid.grid) / grid.width
             # sz_min = models[tbl].size
             return np.array([1.0])  # [models[tbl].size]
 
@@ -536,3 +550,69 @@ def get_cartesian_cardinality(counters, tables_all):
     for tbl in tables:
         n *= counters[tbl]
     return n
+
+
+def vec_sel_multi_table_query_with_same_column(
+    models,
+    conditions,
+    join_cond,
+    join_keys_grid: JoinKeysGrid,
+    join_keys_grid_1: JoinKeysGrid = None,
+    return_with_width_multiplied=True,
+    return_width=False,
+):
+    logger.info("conditions: %s", conditions)
+    logger.info("join_keys_grid.join_keys_lists: %s",
+                join_keys_grid.join_keys_lists)
+    ps = {}
+    widths = {}
+    for tbl in conditions:
+        predictions_within_table = []
+
+        jk_id = None
+        for jk_item in join_keys_grid.join_keys_lists[0]:
+            # logger.info("jk_item %s", jk_item)
+            if tbl in jk_item:
+                jk_id = jk_item.split(".")[1]
+                break
+        # not found, means the second join path is used.
+        if jk_id is None:
+            for jk_item in join_keys_grid.join_keys_lists[1]:
+                # logger.info("jk_item %s", jk_item)
+                if tbl in jk_item:
+                    jk_id = jk_item.split(".")[1]
+                    break
+        # logger.info("table with id %s, %s", tbl, jk_id)
+        pred_p, width = vec_sel_single_table_query(
+            models,
+            {tbl: conditions[tbl]},
+            join_keys_grid=join_keys_grid,
+            force_return_vec_sel_key=jk_id,
+            return_with_width_multiplied=False,
+            return_width=True,
+            bug_support_for_single_no_selection_join=True
+        )
+        logger.debug("[table %s with selectivity: %s", tbl, np.sum(pred_p))
+
+        ps[tbl] = pred_p
+    if join_keys_grid_1:
+        predss = vec_sel_join(
+            ps,
+            join_cond,
+            join_keys_grid_1,
+            return_with_width_multiplied=False,
+        )
+    else:
+        predss = vec_sel_join(
+            ps,
+            join_cond,
+            join_keys_grid,
+            return_with_width_multiplied=False,
+        )
+    # if return_with_width_multiplied:
+    #     if return_width:
+    #         return predss * width, width
+    #     return predss * width
+    if return_width:
+        return predss, width
+    return predss
