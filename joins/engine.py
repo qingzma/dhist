@@ -228,7 +228,7 @@ class Engine:
         # logger.info("cartesian is %E", n)
         # logger.info("selectivity is %s ", np.sum(pred))
         logger.info("total tables is %s ", len(tables_all))
-        res = np.sum(pred) * n/width
+        res = np.sum(pred) * n
 
         # if len(tables_all) == 2:
         #     res /= width
@@ -614,5 +614,5 @@ def vec_sel_multi_table_query_with_same_column(
     #         return predss * width, width
     #     return predss * width
     if return_width:
-        return predss, width
-    return predss
+        return predss/width, width
+    return predss/width
