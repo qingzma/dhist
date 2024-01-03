@@ -222,7 +222,7 @@ class Engine:
         # logger.info("cartesian is %E", n)
         # logger.info("selectivity is %s ", np.sum(pred))
         logger.info("total tables is %s ", len(tables_all))
-        res = np.sum(pred) * n / width  # / width / width
+        res = np.sum(pred) * n * width  # / width / width
 
         # if len(tables_all) == 2:
         #     res /= width
@@ -360,12 +360,13 @@ def vec_sel_single_table_query(
         # grid_y, width_y = np.linspace(
         #     nk_domain.min, nk_domain.max, grid_size_y, retstep=True)
         # logger.info("grid x is %s", grid_x)
+        logger.warning("--------[single table query for table (%s)]-------------", tbl)
         pred = model.pdf.predict_grid_with_y_range(grid_x, nk_domain)
-        # logger.info("pred is %s", pred)
-        # logger.info("sum is %s", np.sum(pred))
-        # logger.info("sums is %s", np.sum(pred)*width_x)
+        logger.info("pred is %s", pred[:2])
+        logger.info("sum is %s", np.sum(pred))
+        logger.info("sums is %s", np.sum(pred) * width_x)
         if bug_support_for_single_no_selection_join:
-            return pred, width_x
+            return pred * width_x, width_x
         if return_with_width_multiplied:
             if return_width:
                 return pred * width_x, width_x
@@ -590,6 +591,7 @@ def vec_sel_multi_table_query_with_same_column(
             bug_support_for_single_no_selection_join=True,
         )
         logger.debug("[table %s with selectivity: %s", tbl, np.sum(pred_p))
+        logger.debug("[table %s with selectivity: %s", tbl, pred_p[:2])
 
         ps[tbl] = pred_p
     if join_keys_grid_1:
