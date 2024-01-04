@@ -226,13 +226,14 @@ class FastKde2D:
         except ValueError:
             try:
                 hh = h - 0.5
-                ps = self.predict_grid(x_grid, np.array([l, self.max[1]]))
+                ps = self.predict_grid(x_grid, np.array([l, hh]))
                 print(
                     "try to  restore  uppper bound to fix issue. %s",
                     Domain(l, hh, False, False),
                 )
             except ValueError:
                 try:
+                    print("h is ", h)
                     ll = l + 0.5
                     ps = self.predict_grid(x_grid, np.array([h]))
                     print(
@@ -298,6 +299,10 @@ class FastKde2D:
         self.min = df.min().to_numpy()
         self.max = df.max().to_numpy()
         columns = list(df.columns)
+        print("data is \n")
+        print(df)
+        print("min - max = ", self.max[0] - self.min[0])
+        print("grid_size_x= ", self.grid_size_x)
 
         width_x = (self.max[0] - self.min[0]) / (self.grid_size_x - 1)
         width_y = (self.max[1] - self.min[1]) / (self.grid_size_x - 1)
@@ -306,13 +311,23 @@ class FastKde2D:
             self.max[0] + 0.5 * width_x,
             self.grid_size_x + 1,
         )
+        if self.min[0] == self.max[0]:
+            return
+        len_unique_y = np.unique(df[columns[1]]).size
+
+        # print()
+        if len_unique_y <= 1000:
+            print("!!!!!set to categorical !!!!%s", len_unique_y)
+            self.y_is_categorical = True
 
         if self.y_is_categorical:
             unique_y = np.unique(df[columns[1]])
             unique_y.sort()
-            # print("unique y is ", unique_y)
-            grid_y = unique_y - 0.5 * width_y
-            grid_y = np.append(grid_y, [unique_y[-1] + 0.5 * width_y])
+            print("unique y is ", unique_y)
+            # grid_y = unique_y
+            grid_y = unique_y - 0.5  # * width_y
+            grid_y = np.append(grid_y, [unique_y[-1] + 0.5])
+            print("grid y is set to ", grid_y)
         else:
             grid_y, _ = get_linspace_centered(
                 self.min[1] - 0.5 * width_y,
@@ -321,7 +336,7 @@ class FastKde2D:
             )
         # print("unique y is ", unique_y)
         # print("widthx was ", width_x)
-        # print("original grid_x is ", grid_x)
+        print("original grid_x is ", grid_x)
         # print("original grid_y is ", grid_y)
         df[columns[0]] = pd.cut(
             df[columns[0]],

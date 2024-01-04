@@ -77,7 +77,8 @@ class TableContainer:
         for join_key in join_keys[t]:
             if t in relevant_keys:
                 for relevant_key in relevant_keys[t]:
-                    # print("relevant_key", relevant_key)
+                    print("name is ", self.name)
+                    print("relevant_key", relevant_key)
                     if relevant_key != join_key:
                         columns = Column2d()
                         # print(df)
@@ -92,7 +93,7 @@ class TableContainer:
                         # .dropna()  # fillna(-1)
                         # d = df[[join_key, relevant_key]].dropna()
                         d = df[[join_key, relevant_key]]
-                        # dd = d[d[relevant_key].notna()]
+                        d = d[d[relevant_key].notna()]
                         # logger.info("d is %s", dd)
                         # logger.info("key is %s", np.unique(d[join_key]))
                         # logger.info("key is %s", np.unique(d[relevant_key]))
@@ -234,7 +235,8 @@ class Column2d:
                 # self.pdf = kde
             else:
                 kde = KdePy2D()
-                kde.fit(df_columns.to_numpy(), grid_size=args.grid, kernel=args.kernel)
+                kde.fit(df_columns.to_numpy(),
+                        grid_size=args.grid, kernel=args.kernel)
                 self.pdf = kde
             if args.plot:
                 plot2d(kde)
@@ -250,7 +252,8 @@ def plot2d(kde):
     xx = np.linspace(kde.min[0], kde.max[0], 2**10)
     yy = np.linspace(kde.min[1], kde.max[1], 2**10)
     p = kde.predict_grid(xx, yy)
-    cfset = ax.contourf(xx, yy, p, N, cmap="Blues", locator=ticker.LogLocator())
+    cfset = ax.contourf(xx, yy, p, N, cmap="Blues",
+                        locator=ticker.LogLocator())
     cset = ax.contour(
         xx, yy, p, N, linewidths=0.8, colors="k", locator=ticker.LogLocator()
     )
