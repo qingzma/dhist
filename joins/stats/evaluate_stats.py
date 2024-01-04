@@ -37,6 +37,8 @@ def evaluate_stats(args: ArgumentParser):
         # cnt_non_key.append(len(non_key_conditions))
         if res == 2:
             continue
+        # if res / true_card <= 5e-18:
+        #     continue
         pred.append(res)
         latency.append(time.time() - t)
 
@@ -57,7 +59,7 @@ def evaluate_stats(args: ArgumentParser):
     # logger.info("max of non is %s", max(cnt_non_key))
 
     qerror = np.asarray(qerror)
-    # logger.info(f"qerror is {qerror}")
+    logger.info(f"qerror is {qerror}")
     for i in [1, 50, 90, 95, 99, 100]:
         logger.info(f"q-error {i}% percentile is {np.percentile(qerror, i)}")
 

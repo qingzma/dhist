@@ -222,7 +222,7 @@ class Engine:
         # logger.info("cartesian is %E", n)
         # logger.info("selectivity is %s ", np.sum(pred))
         logger.info("total tables is %s ", len(tables_all))
-        res = np.sum(pred) * n * width  # / width / width
+        res = np.sum(pred) * n / width  # / width / width
 
         # if len(tables_all) == 2:
         #     res /= width
@@ -251,6 +251,8 @@ def vec_sel_single_table_query(
     # if tbl == "votes":
     #     logger.warning("hahha")
     logger.warning("conds %s", conds)
+    if tbl == "users":
+        logger.warning("!!!!!this is table users")
 
     # logger.info("conds: %s", conds)
     if len(conds) == 1:
@@ -328,6 +330,8 @@ def vec_sel_single_table_query(
         #     model.pdf.predict(grid.grid)
         #     * grid.width
         # )
+        if tbl == "users":
+            logger.warning("!!!!!this is table users %s", force_return_vec_sel_key)
 
         model: Column2d = (
             models[tbl].correlations_cdf["Id"][cond.non_key.split(".")[1]]
@@ -339,11 +343,11 @@ def vec_sel_single_table_query(
         jk_domain = [model.min[0], model.max[0]]
         nk_domain = Domain(model.min[1], model.max[1], True, True)
         nk_domain_query = cond.non_key_condition
-        # logger.info("jk_domain %s", jk_domain)
-        # logger.info("nk_domain_query %s", nk_domain_query)
+        logger.info("jk_domain %s", jk_domain)
+        logger.info("nk_domain_query %s", nk_domain_query)
         if nk_domain_query:
             nk_domain.merge_domain(nk_domain_query)
-        # logger.info("nk_domain %s", nk_domain)
+        logger.info("nk_domain %s", nk_domain)
 
         # logger.info("join_keys_grid is %s", join_keys_grid.join_keys_grid)
         if join_keys_grid:
@@ -364,8 +368,9 @@ def vec_sel_single_table_query(
         pred = model.pdf.predict_grid_with_y_range(grid_x, nk_domain)
         logger.info("pred is %s", pred[:2])
         logger.info("sum is %s", np.sum(pred))
-        logger.info("sums is %s", np.sum(pred) * width_x)
+        logger.info("sums x width is %s", np.sum(pred) * width_x)
         if bug_support_for_single_no_selection_join:
+            logger.info("bug support !~~~~~~~~~~~~~~~~~!!")
             return pred * width_x, width_x
         if return_with_width_multiplied:
             if return_width:
@@ -590,11 +595,13 @@ def vec_sel_multi_table_query_with_same_column(
             return_width=True,
             bug_support_for_single_no_selection_join=True,
         )
-        logger.debug("[table %s with selectivity: %s", tbl, np.sum(pred_p))
-        logger.debug("[table %s with selectivity: %s", tbl, pred_p[:2])
+        logger.debug("[table %s with selectivities: %s", tbl, np.sum(pred_p))
+        logger.debug("[table %s 's selectivities: %s", tbl, pred_p[:2])
 
         ps[tbl] = pred_p
+
     if join_keys_grid_1:
+        logger.info("grid1")
         predss = vec_sel_join(
             ps,
             join_cond,
@@ -602,12 +609,20 @@ def vec_sel_multi_table_query_with_same_column(
             return_with_width_multiplied=False,
         )
     else:
+        logger.info("grid")
         predss = vec_sel_join(
             ps,
             join_cond,
             join_keys_grid,
             return_with_width_multiplied=False,
         )
+
+    logger.info("shape is %s, %s", len(ps), len(ps[list(ps.keys())[0]]))
+    for p in ps:
+        logger.info("sum is %s, details: %s", np.sum(ps[p]), ps[p][:5])
+    logger.info("final selectivity is %s", np.sum(predss))
+    logger.info("len of selectivity is %s", len(predss))
+    logger.info("predss is  %s", predss[:5])
     # if return_with_width_multiplied:
     #     if return_width:
     #         return predss * width, width

@@ -174,7 +174,7 @@ class FastKde2D:
         return self.predict_grid([x[0]], [x[1]])
 
     def predict_grid_with_y_range(self, x_grid, domain: Domain, b_plot=False):
-        # print("domain is  \n", domain)
+        print("domain is  \n", domain)
         assert self.cumulative
         l, h = domain.min, domain.max
         # width = x_grid[1]-x_grid[0]
@@ -193,36 +193,64 @@ class FastKde2D:
             plot2d(self)
 
         # support  (l, h) seamlessly, [1,1] is treated as (0,2)
+
+        # if domain.max > self.max[1] and domain.min < self.min[1]:
+        #     ps = self.predict_grid(x_grid, np.array([self.max]))
+        # elif domain.max == self.max[1] and domain.min < self.min[1]:
+
+        # if domain.left:
+        #     l = max(self.min[1], l - 0.5)
+        # else:
+        #     l += 0.5
+        # if domain.right:
+        #     h = min(self.max[1], h + 0.50)
+        # else:
+        #     h -= 0.5
+        print("min is %s", self.min)
+        print("max is %s", self.max)
+
         if domain.left:
             l -= 0.5
+        else:
+            l += 0.5
         if domain.right:
             h += 0.5
+        else:
+            h -= 0.5
+
         try:
             ps = self.predict_grid(x_grid, np.array([l, h]))
         except ValueError:
             try:
                 hh = h - 0.5
-                ps = self.predict_grid(x_grid, np.array([l, self.max]))
-                # print("try to  restore  uppper bound to fix issue. %s",
-                #       Domain(l, hh, False, False))
+                ps = self.predict_grid(x_grid, np.array([l, self.max[1]]))
+                print(
+                    "try to  restore  uppper bound to fix issue. %s",
+                    Domain(l, hh, False, False),
+                )
             except ValueError:
                 try:
                     ll = l + 0.5
                     ps = self.predict_grid(x_grid, np.array([h]))
-                    # print("try to  restore  lower bound to fix issue. %s",
-                    #       Domain(ll, h, False, False))
+                    print(
+                        "try to  restore  lower bound to fix issue. %s",
+                        Domain(ll, h, False, False),
+                    )
                 except ValueError:
-                    hh = h - 0.5
-                    ll = l + 0.5
-                    # print("min is %s", self.min)
-                    # print("max is %s", self.max)
-                    # print("hh %s", hh)
-                    # print("min of grid is %s", x_grid[0])
-                    # print("max of grid is %s", x_grid[-1])
+                    # hh = h - 0.5
+                    # ll = l + 0.5
+
+                    print("hh %s", hh)
+                    print("ll %s", ll)
+                    print("min of grid is %s", x_grid[0])
+                    print("max of grid is %s", x_grid[-1])
                     # TODO need to optimize this part, avoid multiple try.
-                    ps = self.predict_grid(x_grid, np.array([hh]))
-                    # print("try to  restore  both bounds to fix issue, this should not happen. %s",
-                    #       Domain(ll, hh, False, False))
+                    # ps = self.predict_grid(x_grid, np.array([ll, hh]))
+                    ps = self.predict_grid(x_grid, np.array([h - 0.5]))
+                    print(
+                        "try to  restore  both bounds to fix issue, this should not happen. %s",
+                        Domain(ll, hh, False, False),
+                    )
             # exit()
         # if len(ps) == 1:
         #     return ps
