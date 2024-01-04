@@ -54,6 +54,7 @@ https://github.com/tommyod/KDEpy
 2. coutour plot log
 3. 1d bw selection. lead to negative density. (Interpolate error! select the most appropriate one!) (a) manual bw to 500. (b), granularity to 2\*\*12. how to auto decide it?
 4. 2d density could not be too small. if p<1e-5, division on small probabilities gives rise to higher error. [this could be explained as follows. the cases with multiple selections in a single table, it is not a good solution to have grid>1000, it is because many prababilities are tiny numbers, lead to division peak!]
+5. 2d dropnan affect single table estimation significantly.
 
 # shortcuts
 

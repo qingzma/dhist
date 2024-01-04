@@ -93,7 +93,7 @@ class TableContainer:
                         # .dropna()  # fillna(-1)
                         # d = df[[join_key, relevant_key]].dropna()
                         d = df[[join_key, relevant_key]]
-                        d = d[d[relevant_key].notna()]
+                        # d = d[d[relevant_key].notna()]
                         # logger.info("d is %s", dd)
                         # logger.info("key is %s", np.unique(d[join_key]))
                         # logger.info("key is %s", np.unique(d[relevant_key]))
