@@ -109,7 +109,8 @@ class FastKde1D:
             ps = np.divide(counts, 1.0 * self.size)
             self.background_noise = 0.5 / self.size
         else:
-            xx, wx = np.linspace(self.min, self.max, self.grid_size - 1, retstep=True)
+            xx, wx = np.linspace(self.min, self.max,
+                                 self.grid_size - 1, retstep=True)
             if self.cumulative:
                 ps = np.divide(counts, self.size * wx)
                 self.background_noise = 0.5 / self.size / wx
@@ -213,7 +214,9 @@ class FastKde2D:
             l -= 0.5
         else:
             l += 0.5
+            # pass
         if domain.right:
+            # pass
             h += 0.5
         else:
             h -= 0.5
@@ -349,7 +352,8 @@ class FastKde2D:
         print("sum of count is ", np.sum(counts))
         print("sum of last count is ", np.sum(counts[-1, :]))
         # print("table is ", self.size)
-        xx, wx = np.linspace(self.min[0], self.max[0], self.grid_size_x, retstep=True)
+        xx, wx = np.linspace(
+            self.min[0], self.max[0], self.grid_size_x, retstep=True)
         if self.y_is_categorical:
             yy = unique_y
             # print("y grid is now ", unique_y)
@@ -398,7 +402,8 @@ def plot2d(kde, grid_size_x=2**10, grid_size_y=2**10):
     xx = np.linspace(kde.min[0], kde.max[0], grid_size_x)
     yy = np.linspace(kde.min[1], kde.max[1], grid_size_y)
     p = kde.predict_grid(xx, yy, b_plot=False)
-    cfset = ax.contourf(xx, yy, p, N, cmap="Blues", locator=ticker.LogLocator())
+    cfset = ax.contourf(xx, yy, p, N, cmap="Blues",
+                        locator=ticker.LogLocator())
     cset = ax.contour(
         xx, yy, p, N, linewidths=0.8, colors="k", locator=ticker.LogLocator()
     )
