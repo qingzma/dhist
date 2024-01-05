@@ -343,15 +343,17 @@ class FastKde2D:
         )
         if self.min[0] == self.max[0]:
             return
-        len_unique_y = np.unique(df[columns[1]]).size
+        u_y = np.unique(df[columns[1]])
+        u_yy = u_y[~np.isnan(u_y)]
+        len_unique_y = u_yy.size
 
         # print()
-        if len_unique_y <= -1:
+        if len_unique_y <= 1000:
             print("!!!!!set to categorical !!!!%s", len_unique_y)
             self.y_is_categorical = True
 
         if self.y_is_categorical:
-            unique_y = np.unique(df[columns[1]])
+            unique_y = u_yy  # np.unique(df[columns[1]])
             unique_y.sort()
             print("unique y is ", unique_y)
             # grid_y = unique_y
