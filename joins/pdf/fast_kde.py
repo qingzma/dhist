@@ -348,7 +348,7 @@ class FastKde2D:
         len_unique_y = u_yy.size
 
         # print()
-        if len_unique_y <= 1000:
+        if len_unique_y <= -1:
             print("!!!!!set to categorical !!!!%s", len_unique_y)
             self.y_is_categorical = True
 

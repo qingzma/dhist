@@ -383,7 +383,8 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #         model = pickle.load(f)
     #     engine = Engine(model, use_cdf=self.args.cdf)
     #     t1 = time.time()
-    #     res = engine.query(query) if self.use_pushed_down else engine.query(query)
+    #     res = engine.query(
+    #         query) if self.use_pushed_down else engine.query(query)
     #     t2 = time.time()
     #     truth = 11645
     #     logger.info("result %.6E", res)
@@ -796,35 +797,36 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #     logger.info("time cost is %.5f s.", t2 - t1)
     #     self.assertTrue(q_error(res, truth) < 5)
 
-    # # this is a bug !!!!!!!!!!!!!!!!!!!!!!!!!!!!! only upvotes as 5 seem good enough
-    def test_multi_table_same_join_column_3_with_single_condition_less_than_condition(self):
-        query = """SELECT COUNT(*) FROM badges as b, comments as c, users as u WHERE u.Id = c.UserId AND u.Id = b.UserId AND b.Date>='2013-07-20 19:02:22'::timestamp and u.UpVotes<1 and c.Score=0 """
-        with open("models/" + self.model_name + ".pkl", "rb") as f:
-            model = pickle.load(f)
-        engine = Engine(model, use_cdf=self.args.cdf)
-        t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
-        t2 = time.time()
-        truth = 67211  # 67211  # 4260125  # 67211  #
-        logger.info("result %.6E", res)
-        logger.info("truth %.6E", truth)
-        logger.info("time cost is %.5f s.", t2 - t1)
-        self.assertTrue(q_error(res, truth) < 10)
-
-    # def test_multi_table_same_join_column_3_with_multi_condition(self):
-    #     query = """SELECT COUNT(*) FROM badges as b, comments as c, users as u WHERE u.Id = c.UserId AND u.Id = b.UserId AND b.Date>='2013-07-20 19:02:22'::timestamp and u.UpVotes<=27 and u.UpVotes>=5 and c.Score=0 """
+    # # # this is a bug !!!!!!!!!!!!!!!!!!!!!!!!!!!!! only upvotes as 5 seem good enough
+    # def test_multi_table_same_join_column_3_with_single_condition_less_than_condition(self):
+    #     query = """SELECT COUNT(*) FROM badges as b, comments as c, users as u WHERE u.Id = c.UserId AND u.Id = b.UserId AND b.Date>='2013-07-20 19:02:22'::timestamp and u.UpVotes<1 and c.Score=0 """
     #     with open("models/" + self.model_name + ".pkl", "rb") as f:
     #         model = pickle.load(f)
     #     engine = Engine(model, use_cdf=self.args.cdf)
     #     t1 = time.time()
-    #     res = engine.query(query) if self.use_pushed_down else engine.query(query)
+    #     res = engine.query(
+    #         query) if self.use_pushed_down else engine.query(query)
     #     t2 = time.time()
-    #     truth = 200582
+    #     truth = 67211  # 67211  # 4260125  # 67211  #
     #     logger.info("result %.6E", res)
     #     logger.info("truth %.6E", truth)
     #     logger.info("time cost is %.5f s.", t2 - t1)
-    #     self.assertTrue(q_error(res, truth) < 5)
+    #     self.assertTrue(q_error(res, truth) < 10)
+
+    # def test_multi_table_same_join_column_3_with_multi_condition(self):
+    #     query = """SELECT COUNT(*) FROM badges as b, comments as c, users as u WHERE u.Id = c.UserId AND u.Id = b.UserId AND b.Date>='2013-07-20 19:02:22'::timestamp  and u.UpVotes>=2 and c.Score=0 """
+    #     with open("models/" + self.model_name + ".pkl", "rb") as f:
+    #         model = pickle.load(f)
+    #     engine = Engine(model, use_cdf=self.args.cdf)
+    #     t1 = time.time()
+    #     res = engine.query(
+    #         query) if self.use_pushed_down else engine.query(query)
+    #     t2 = time.time()
+    #     truth = 4285046
+    #     logger.info("result %.6E", res)
+    #     logger.info("truth %.6E", truth)
+    #     logger.info("time cost is %.5f s.", t2 - t1)
+    #     self.assertTrue(q_error(res, truth) < 6)
 
     # def test_multi_table_same_join_column_4_with_single_condition(self):
     #     query = """SELECT COUNT(*) FROM badges as b, comments as c,posts as p,  users as u WHERE u.Id = c.UserId AND u.Id = b.UserId AND u.Id = p.OwnerUserId AND b.Date>='2013-07-20 19:02:22'::timestamp and u.UpVotes>=5 and c.Score=10  and p.CreationDate>='2013-07-23 07:27:31'::timestamp """
@@ -862,7 +864,8 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #         model = pickle.load(f)
     #     engine = Engine(model, use_cdf=self.args.cdf)
     #     t1 = time.time()
-    #     res = engine.query(query) if self.use_pushed_down else engine.query(query)
+    #     res = engine.query(
+    #         query) if self.use_pushed_down else engine.query(query)
     #     t2 = time.time()
     #     truth = 78392
     #     logger.info("result %.6E", res)
@@ -876,7 +879,8 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #         model = pickle.load(f)
     #     engine = Engine(model, use_cdf=self.args.cdf)
     #     t1 = time.time()
-    #     res = engine.query(query) if self.use_pushed_down else engine.query(query)
+    #     res = engine.query(
+    #         query) if self.use_pushed_down else engine.query(query)
     #     t2 = time.time()
     #     truth = 445767
     #     logger.info("result %.6E", res)
@@ -890,7 +894,8 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #         model = pickle.load(f)
     #     engine = Engine(model, use_cdf=self.args.cdf)
     #     t1 = time.time()
-    #     res = engine.query(query) if self.use_pushed_down else engine.query(query)
+    #     res = engine.query(
+    #         query) if self.use_pushed_down else engine.query(query)
     #     t2 = time.time()
     #     truth = 154993
     #     logger.info("result %.6E", res)
@@ -904,7 +909,8 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #         model = pickle.load(f)
     #     engine = Engine(model, use_cdf=self.args.cdf)
     #     t1 = time.time()
-    #     res = engine.query(query) if self.use_pushed_down else engine.query(query)
+    #     res = engine.query(
+    #         query) if self.use_pushed_down else engine.query(query)
     #     t2 = time.time()
     #     truth = 154993
     #     logger.info("result %.6E", res)

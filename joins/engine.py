@@ -21,7 +21,7 @@ from joins.schema_base import identify_conditions, identify_key_values
 from joins.stats.schema import get_stats_relevant_attributes
 from joins.table import Column, Column2d, TableContainer
 
-from joins.plots import plot_line
+from joins.plots import plot_line, plot_vec_sel_array
 
 
 class Engine:
@@ -225,10 +225,14 @@ class Engine:
             return_width=True,
         )
 
-        # logger.info("cartesian is %E", n)
+        n1, n2 = count_of_vec_sel_multi_table_query_with_same_column(
+            conditions)
+
+        logger.info("n1,n2: %s,%s", n1, n2)
+        logger.info("cartesian is %E", n)
         # logger.info("selectivity is %s ", np.sum(pred))
         logger.info("total tables is %s ", len(tables_all))
-        res = np.sum(pred) * n / width  # / width / width
+        res = np.sum(pred) * n / width  # ** (len(tables_all)+1)
 
         # if len(tables_all) == 2:
         #     res /= width
@@ -273,6 +277,40 @@ def vec_sel_single_table_query(
                 force_return_vec_sel_key,
             )
             if force_return_vec_sel_key:
+                logger.info("!!!~~~!!!!~~~~table [%s] with join key [%s]",
+                            tbl, force_return_vec_sel_key)
+                # model: Column2d = (
+                #     models[tbl].correlations_cdf["Id"][cond.non_key.split(".")[
+                #         1]]
+                #     if not force_return_vec_sel_key
+                #     else models[tbl].correlations_cdf[force_return_vec_sel_key][
+                #         'CreationDate'
+                #     ]
+                # )
+                # jk_domain = [model.min[0], model.max[0]]
+                # nk_domain = Domain(model.min[1], model.max[1], True, True)
+                # # nk_domain_query = cond.non_key_condition
+                # logger.info("jk_domain %s", jk_domain)
+                # # logger.info("nk_domain_query %s", nk_domain_query)
+                # # if nk_domain_query:
+                # #     nk_domain.merge_domain(nk_domain_query)
+
+                # if join_keys_grid:
+                #     grid_i = join_keys_grid.get_join_key_grid_for_table_jk(
+                #         tbl + "." + force_return_vec_sel_key
+                #     )
+                #     grid_x = grid_i.grid
+                #     width_x = grid_i.width
+                #     # logger.info("grid_x is %s", grid_x)
+                # else:
+                #     grid_x, width_x = np.linspace(
+                #         *jk_domain, grid_size_x, retstep=True
+                #     )
+
+                # pred = model.pdf.predict_grid_with_y_range(grid_x, nk_domain)
+                # if bug_support_for_single_no_selection_join:
+                #     logger.info("bug support !~~~~~~~~~~~~~~~~~!!")
+                #     return pred*width_x, width_x
                 model: Column = models[tbl].pdfs[force_return_vec_sel_key]
                 # if tbl == "votes":
                 #     model: Column = models[tbl].pdfs["Id"]
@@ -291,6 +329,7 @@ def vec_sel_single_table_query(
                 if return_width:
                     return model.pdf.predict(grid.grid) * grid.width, grid.width
                 return model.pdf.predict(grid.grid) * grid.width
+
                 # if bug_support_for_single_no_selection_join:
                 #     return model.pdf.predict(grid.grid)*grid.width, grid.width
                 # if return_with_width_multiplied:
@@ -339,7 +378,8 @@ def vec_sel_single_table_query(
         if tbl == "users":
             logger.warning("!!!!!this is table users %s",
                            force_return_vec_sel_key)
-
+        logger.info("!!!~~~!!!!~~~~table [%s] with join key [%s]",
+                    tbl, force_return_vec_sel_key)
         model: Column2d = (
             models[tbl].correlations_cdf["Id"][cond.non_key.split(".")[1]]
             if not force_return_vec_sel_key
@@ -435,7 +475,7 @@ def vec_sel_single_table_query(
     res = vec_sel_multiply(pred, pred_x)
 
     if bug_support_for_single_no_selection_join:
-        return res / width_x, width_x
+        return res * width_x, width_x
     if return_with_width_multiplied:
         if return_width:
             return res * width_x, width_x
@@ -634,6 +674,7 @@ def vec_sel_multi_table_query_with_same_column(
     logger.info("final selectivity is %s", np.sum(predss))
     logger.info("len of selectivity is %s", len(predss))
     logger.info("predss is  %s", predss[:5])
+    # plot_vec_sel_array(ps, predss)
     # if return_with_width_multiplied:
     #     if return_width:
     #         return predss * width, width
@@ -641,3 +682,20 @@ def vec_sel_multi_table_query_with_same_column(
     if return_width:
         return predss, width
     return predss
+
+
+def count_of_vec_sel_multi_table_query_with_same_column(
+    conditions,
+):
+    n_no_selection = 0
+    n_with_selection = len(conditions)
+    logger.info("conditions: %s", conditions)
+
+    for tbl in conditions:
+        conditions_in_table = conditions[tbl]
+        if len(conditions_in_table) == 1:
+            cond = conditions_in_table[0]
+            if cond.non_key is None:
+                n_no_selection += 1
+                n_with_selection -= 1
+    return n_no_selection, n_with_selection

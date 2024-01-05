@@ -144,7 +144,8 @@ class Column:
         """
         self.min = np.min(df_column)
         self.max = np.max(df_column)
-        x = df_column.fillna(-1).to_numpy().reshape(-1, 1)
+        # x = df_column.fillna(-1).to_numpy().reshape(-1, 1)
+        x = df_column.to_numpy().reshape(-1, 1)
         logger.debug("fit the 1d pdf...")
 
         self.name = df_column.head()
