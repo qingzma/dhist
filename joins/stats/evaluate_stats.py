@@ -47,7 +47,8 @@ def evaluate_stats(args: ArgumentParser):
         ratios.append(res / true_card)
         # if (res/true_card > 10000):
         #     exit()
-        if res / true_card > 1e8 or res / true_card < 2e-7:
+        if res / true_card < 2 and res / true_card > 0.95:
+            # if res / true_card > 1e5:
             bad_queries.append(query)
             logger.info("-" * 800)
             logger.info("true is %s, pred is %s", true_card, res)
@@ -68,9 +69,9 @@ def evaluate_stats(args: ArgumentParser):
     logger.info(f"total estimation time is {np.sum(latency)}")
     logger.info(f"number of queries is {len(pred)}")
     logger.info("bad queries\n")
-    # logger.info("-"*100)
-    # for q in bad_queries:
-    #     logger.info(q)
+    logger.info("-"*100)
+    for q in bad_queries:
+        logger.info(q)
 
     logbins = np.logspace(np.log10(min(ratios)), np.log10(max(ratios)), 100)
     plt.xscale("log")

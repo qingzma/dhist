@@ -675,22 +675,22 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #     logger.info("time cost is %.5f s.", t2-t1)
     #     self.assertTrue(q_error(res, truth) < 5)
 
-    # def test_multi_table_same_join_column_2(self):
-    #     query = (
-    #         """SELECT COUNT(*) FROM badges as b, users as u WHERE  u.Id = b.UserId """
-    #     )
-    #     with open("models/" + self.model_name + ".pkl", "rb") as f:
-    #         model = pickle.load(f)
-    #     engine = Engine(model, use_cdf=self.args.cdf)
-    #     t1 = time.time()
-    #     res = engine.query(
-    #         query) if self.use_pushed_down else engine.query(query)
-    #     t2 = time.time()
-    #     truth = 79851
-    #     logger.info("result %.6E", res)
-    #     logger.info("truth %.6E", truth)
-    #     logger.info("time cost is %.5f s.", t2 - t1)
-    #     self.assertTrue(q_error(res, truth) < 5)
+    def test_multi_table_same_join_column_2(self):
+        query = (
+            """SELECT COUNT(*) FROM badges as b, users as u WHERE  u.Id = b.UserId """
+        )
+        with open("models/" + self.model_name + ".pkl", "rb") as f:
+            model = pickle.load(f)
+        engine = Engine(model, use_cdf=self.args.cdf)
+        t1 = time.time()
+        res = engine.query(
+            query) if self.use_pushed_down else engine.query(query)
+        t2 = time.time()
+        truth = 79851
+        logger.info("result %.6E", res)
+        logger.info("truth %.6E", truth)
+        logger.info("time cost is %.5f s.", t2 - t1)
+        self.assertTrue(q_error(res, truth) < 5)
 
     # def test_multi_table_same_join_column_3(self):
     #     query = """SELECT COUNT(*) FROM badges as b, comments as c, users as u WHERE u.Id = c.UserId AND u.Id = b.UserId  """
@@ -797,21 +797,21 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #     logger.info("time cost is %.5f s.", t2 - t1)
     #     self.assertTrue(q_error(res, truth) < 5)
 
-    # # # this is a bug !!!!!!!!!!!!!!!!!!!!!!!!!!!!! only upvotes as 5 seem good enough
-    # def test_multi_table_same_join_column_3_with_single_condition_less_than_condition(self):
-    #     query = """SELECT COUNT(*) FROM badges as b, comments as c, users as u WHERE u.Id = c.UserId AND u.Id = b.UserId AND b.Date>='2013-07-20 19:02:22'::timestamp and u.UpVotes<1 and c.Score=0 """
-    #     with open("models/" + self.model_name + ".pkl", "rb") as f:
-    #         model = pickle.load(f)
-    #     engine = Engine(model, use_cdf=self.args.cdf)
-    #     t1 = time.time()
-    #     res = engine.query(
-    #         query) if self.use_pushed_down else engine.query(query)
-    #     t2 = time.time()
-    #     truth = 67211  # 67211  # 4260125  # 67211  #
-    #     logger.info("result %.6E", res)
-    #     logger.info("truth %.6E", truth)
-    #     logger.info("time cost is %.5f s.", t2 - t1)
-    #     self.assertTrue(q_error(res, truth) < 10)
+        # # # this is a bug !!!!!!!!!!!!!!!!!!!!!!!!!!!!! only upvotes as 5 seem good enough
+        # def test_multi_table_same_join_column_3_with_single_condition_less_than_condition(self):
+        #     query = """SELECT COUNT(*) FROM badges as b, comments as c, users as u WHERE u.Id = c.UserId AND u.Id = b.UserId AND b.Date>='2013-07-20 19:02:22'::timestamp and u.UpVotes<1 and c.Score=0 """
+        #     with open("models/" + self.model_name + ".pkl", "rb") as f:
+        #         model = pickle.load(f)
+        #     engine = Engine(model, use_cdf=self.args.cdf)
+        #     t1 = time.time()
+        #     res = engine.query(
+        #         query) if self.use_pushed_down else engine.query(query)
+        #     t2 = time.time()
+        #     truth = 67211  # 67211  # 4260125  # 67211  #
+        #     logger.info("result %.6E", res)
+        #     logger.info("truth %.6E", truth)
+        #     logger.info("time cost is %.5f s.", t2 - t1)
+        #     self.assertTrue(q_error(res, truth) < 10)
 
     # def test_multi_table_same_join_column_3_with_multi_condition(self):
     #     query = """SELECT COUNT(*) FROM badges as b, comments as c, users as u WHERE u.Id = c.UserId AND u.Id = b.UserId AND b.Date>='2013-07-20 19:02:22'::timestamp  and u.UpVotes>=2 and c.Score=0 """
@@ -886,7 +886,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #     logger.info("result %.6E", res)
     #     logger.info("truth %.6E", truth)
     #     logger.info("time cost is %.5f s.", t2 - t1)
-    #     self.assertTrue(q_error(res, truth) < 5)
+    #     self.assertTrue(q_error(res, truth) < 10)
 
     # def test_multi_table_same_join_column_4_with_condition(self):
     #     query = """SELECT COUNT(*) FROM badges as b, comments as c, posts as p, users as u WHERE u.Id = c.UserId AND u.Id = b.UserId AND u.Id = p.OwnerUserId AND b.Date>='2010-07-27 17:58:45'::timestamp AND b.Date<='2014-09-06 17:33:22'::timestamp AND p.PostTypeId=1 AND p.Score<=35 AND p.AnswerCount=1 AND p.CommentCount<=17 AND p.FavoriteCount>=0 AND c.Score>5 """
@@ -924,7 +924,8 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #         model = pickle.load(f)
     #     engine = Engine(model, use_cdf=self.args.cdf)
     #     t1 = time.time()
-    #     res = engine.query(query) if self.use_pushed_down else engine.query(query)
+    #     res = engine.query(
+    #         query) if self.use_pushed_down else engine.query(query)
     #     t2 = time.time()
     #     truth = 5209
     #     logger.info("result %.6E", res)
@@ -938,7 +939,8 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #         model = pickle.load(f)
     #     engine = Engine(model, use_cdf=self.args.cdf)
     #     t1 = time.time()
-    #     res = engine.query(query) if self.use_pushed_down else engine.query(query)
+    #     res = engine.query(
+    #         query) if self.use_pushed_down else engine.query(query)
     #     t2 = time.time()
     #     truth = 42921
     #     logger.info("result %.6E", res)
@@ -971,6 +973,36 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #         query) if self.use_pushed_down else engine.query(query)
     #     t2 = time.time()
     #     truth = 6223
+    #     logger.info("result %.6E", res)
+    #     logger.info("truth %.6E", truth)
+    #     logger.info("time cost is %.5f s.", t2 - t1)
+    #     self.assertTrue(q_error(res, truth) < 5)
+
+    # def test_multi_table_same_join_key_large_errors(self):
+    #     query = """SELECT COUNT(*) FROM users as u, comments as c, postHistory as ph, votes as v WHERE c.UserId = u.Id AND v.UserId = u.Id AND ph.UserId = u.Id AND u.Reputation>=1 AND u.Views>=0 AND u.Views<=110 AND u.UpVotes=0 AND u.CreationDate>='2010-07-28 19:29:11'::timestamp AND u.CreationDate<='2014-08-14 05:29:30'::timestamp AND v.BountyAmount>=0 AND v.CreationDate>='2010-07-26 00:00:00'::timestamp AND v.CreationDate<='2014-09-08 00:00:00'::timestamp"""
+    #     with open("models/" + self.model_name + ".pkl", "rb") as f:
+    #         model = pickle.load(f)
+    #     engine = Engine(model, use_cdf=self.args.cdf)
+    #     t1 = time.time()
+    #     res = engine.query(
+    #         query) if self.use_pushed_down else engine.query(query)
+    #     t2 = time.time()
+    #     truth = 6299
+    #     logger.info("result %.6E", res)
+    #     logger.info("truth %.6E", truth)
+    #     logger.info("time cost is %.5f s.", t2 - t1)
+    #     self.assertTrue(q_error(res, truth) < 5)
+
+    # def test_multi_table_same_join_key_small_errors(self):
+    #     query = """SELECT COUNT(*) FROM votes as v, comments as c, postHistory as ph, users as u WHERE c.UserId = u.Id AND v.UserId = u.Id AND ph.UserId = u.Id AND v.CreationDate>='2010-07-26 00:00:00'::timestamp AND v.CreationDate<='2014-09-12 00:00:00'::timestamp AND c.CreationDate>='2010-08-12 20:33:46'::timestamp AND c.CreationDate<='2014-09-13 19:26:55'::timestamp AND ph.CreationDate>='2011-04-11 14:46:09'::timestamp AND ph.CreationDate<='2014-08-17 16:37:23'::timestamp"""
+    #     with open("models/" + self.model_name + ".pkl", "rb") as f:
+    #         model = pickle.load(f)
+    #     engine = Engine(model, use_cdf=self.args.cdf)
+    #     t1 = time.time()
+    #     res = engine.query(
+    #         query) if self.use_pushed_down else engine.query(query)
+    #     t2 = time.time()
+    #     truth = 52988984588
     #     logger.info("result %.6E", res)
     #     logger.info("truth %.6E", truth)
     #     logger.info("time cost is %.5f s.", t2 - t1)

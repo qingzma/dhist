@@ -70,6 +70,7 @@ class JoinKeysGrid:
     def calculate_push_down_join_keys_domain(
         self, conditions, join_cond, models: dict, tabls_all, grid_size
     ):
+        grid_size = 100
         # note, selection on join key is not supported yet.
         if join_cond is None:
             # tbl = list(tabls_all.values())[0]
