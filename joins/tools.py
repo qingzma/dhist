@@ -17,7 +17,7 @@ def convert_time_to_int(data_folder):
             df_rows = pd.read_csv(csv_file_location)
             for attribute in df_rows.columns:
                 if "Date" in attribute:
-                    if df_rows[attribute].values.dtype == 'object':
+                    if df_rows[attribute].values.dtype == "object":
                         new_value = []
                         for value in df_rows[attribute].values:
                             new_value.append(timestamp_transorform(value))
@@ -26,4 +26,18 @@ def convert_time_to_int(data_folder):
 
 
 def q_error(res, true_card):
-    return max(res/true_card, true_card/res)
+    return max(res / true_card, true_card / res)
+
+
+def rel_error(pred, truth):
+    return pred / truth
+
+
+def save_predictions_to_file(preds, times, header1, header2, file_path):
+    data = zip(preds, times)
+    df = pd.DataFrame(data, columns=[header1, header2])
+    df.to_csv(file_path, index=False)
+
+
+def read_from_csv(file_path, header):
+    return pd.read_csv(file_path)[header].values

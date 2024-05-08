@@ -9,6 +9,7 @@ import numpy as np
 from joins.approximate_engine import ApproximateEngine
 from joins.engine import Engine
 from joins.base_logger import logger
+from joins.tools import save_predictions_to_file
 
 
 def evaluate_stats(args: ArgumentParser):
@@ -69,9 +70,17 @@ def evaluate_stats(args: ArgumentParser):
     logger.info(f"total estimation time is {np.sum(latency)}")
     logger.info(f"number of queries is {len(pred)}")
     logger.info("bad queries\n")
-    logger.info("-"*100)
+    logger.info("-" * 100)
     for q in bad_queries:
         logger.info(q)
+
+    # save_predictions_to_file(
+    #     pred,
+    #     latency,
+    #     "card",
+    #     "card-time",
+    #     "results/stats/single_table/card.csv",
+    # )
 
     logbins = np.logspace(np.log10(min(ratios)), np.log10(max(ratios)), 100)
     plt.xscale("log")

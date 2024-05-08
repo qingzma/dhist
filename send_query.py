@@ -3,6 +3,9 @@ import time
 import os
 import argparse
 import numpy as np
+import matplotlib.pyplot as plt
+
+from joins.tools import save_predictions_to_file
 
 
 def send_query(dataset, method_name, query_file, save_folder, iteration=None):
@@ -16,7 +19,7 @@ def send_query(dataset, method_name, query_file, save_folder, iteration=None):
     cursor = conn.cursor()
 
     with open(query_file, "r") as f:
-        queries = f.readlines()
+        queries = f.readlines()  # [587:588]
 
     # cursor.execute('SET debug_card_est=true')
     # cursor.execute('SET print_sub_queries=true')
@@ -31,6 +34,8 @@ def send_query(dataset, method_name, query_file, save_folder, iteration=None):
     planning_time = []
     execution_time = []
     predictions = []
+    ratios = []
+    truths = []
     for no, query_str in enumerate(queries):
         if "||" in query_str:
             query = query_str.split("||")[0]
@@ -38,23 +43,58 @@ def send_query(dataset, method_name, query_file, save_folder, iteration=None):
         start = time.time()
         cursor.execute("EXPLAIN ANALYZE " + query)
         res = cursor.fetchall()
+        # print(res[0])
+        # print("-" * 80)
+        # for line in res:
+        #     print(line)
+        # print("-" * 80)
         planning_time.append(float(res[-2][0].split(":")[-1].split("ms")[0].strip()))
         execution_time.append(float(res[-1][0].split(":")[-1].split("ms")[0].strip()))
         end = time.time()
         print(
             f"{no}-th query finished in {end-start}, with planning_time {planning_time[no]} ms and execution_time {execution_time[no]} ms"
         )
+        est = [line[0] for line in res if "width=0" in line[0]]
+        assert len(est) == 1
+        pred = float(est[0].split("rows=")[1].split(" ")[0])
+        truth = float(est[0].split("rows=")[2].split(" ")[0])
+        # print("est is ", pred)
+        # print("truth is ", truth)
         cursor.execute(query)
         res = cursor.fetchall()
-        for row in res:
-            predictions.append(row[0])
-            with open(save_file_name, "a+") as f:
-                #
-                f.write(query_str[:-1] + "||" + str(row[0]) + "\n")
+        assert res[0][0] == truth
+        ratios.append(pred / truth)
+        predictions.append(pred)
+        truths.append(truth)
+        # for row in res:
+        #     predictions.append(row[0])
+        #     with open(save_file_name, "a+") as f:
+        #         #
+        #         f.write(query_str[:-1] + "||" + str(row[0]) + "\n")
     print(predictions)
+    logbins = np.logspace(np.log10(min(ratios)), np.log10(max(ratios)), 100)
+    plt.xscale("log")
+    plt.hist(ratios, bins=logbins)
+    plt.show()
 
     cursor.close()
     conn.close()
+
+    save_predictions_to_file(
+        predictions,
+        planning_time,
+        "postgres",
+        "postgres-time",
+        "results/stats/single_table/postgres.csv",
+    )
+
+    save_predictions_to_file(
+        truths,
+        execution_time,
+        "truth",
+        "truth-time-postgres",
+        "results/stats/single_table/truth.csv",
+    )
 
     # if iteration:
     #     np.save(
