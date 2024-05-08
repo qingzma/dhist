@@ -35,6 +35,7 @@ def rel_error(pred, truth):
 
 def save_predictions_to_file(preds, times, header1, header2, file_path):
     data = zip(preds, times)
+    data = list(data)
     df = pd.DataFrame(data, columns=[header1, header2])
     df.to_csv(file_path, index=False)
 
