@@ -109,8 +109,7 @@ class FastKde1D:
             ps = np.divide(counts, 1.0 * self.size)
             self.background_noise = 0.5 / self.size
         else:
-            xx, wx = np.linspace(self.min, self.max,
-                                 self.grid_size - 1, retstep=True)
+            xx, wx = np.linspace(self.min, self.max, self.grid_size - 1, retstep=True)
             if self.cumulative:
                 ps = np.divide(counts, self.size * wx)
                 self.background_noise = 0.5 / self.size / wx
@@ -237,8 +236,8 @@ class FastKde2D:
         #     h = min(self.max[1], h + 0.50)
         # else:
         #     h -= 0.5
-        print("min is %s", self.min)
-        print("max is %s", self.max)
+        # print("min is %s", self.min)
+        # print("max is %s", self.max)
 
         if domain.left:
             l -= 0.5
@@ -263,7 +262,7 @@ class FastKde2D:
                 )
             except ValueError:
                 try:
-                    print("h is ", h)
+                    # print("h is ", h)
                     ll = l + 0.5
                     ps = self.predict_grid(x_grid, np.array([h]))
                     print(
@@ -274,10 +273,10 @@ class FastKde2D:
                     # hh = h - 0.5
                     # ll = l + 0.5
 
-                    print("hh %s", hh)
-                    print("ll %s", ll)
-                    print("min of grid is %s", x_grid[0])
-                    print("max of grid is %s", x_grid[-1])
+                    # print("hh %s", hh)
+                    # print("ll %s", ll)
+                    # print("min of grid is %s", x_grid[0])
+                    # print("max of grid is %s", x_grid[-1])
                     # TODO need to optimize this part, avoid multiple try.
                     # ps = self.predict_grid(x_grid, np.array([ll, hh]))
                     ps = self.predict_grid(x_grid, np.array([h - 0.5]))
@@ -329,10 +328,10 @@ class FastKde2D:
         self.min = df.min().to_numpy()
         self.max = df.max().to_numpy()
         columns = list(df.columns)
-        print("data is \n")
-        print(df)
-        print("min - max = ", self.max[0] - self.min[0])
-        print("grid_size_x= ", self.grid_size_x)
+        # print("data is \n")
+        # print(df)
+        # print("min - max = ", self.max[0] - self.min[0])
+        # print("grid_size_x= ", self.grid_size_x)
 
         width_x = (self.max[0] - self.min[0]) / (self.grid_size_x - 1)
         width_y = (self.max[1] - self.min[1]) / (self.grid_size_x - 1)
@@ -355,11 +354,11 @@ class FastKde2D:
         if self.y_is_categorical:
             unique_y = u_yy  # np.unique(df[columns[1]])
             unique_y.sort()
-            print("unique y is ", unique_y)
+            # print("unique y is ", unique_y)
             # grid_y = unique_y
             grid_y = unique_y - 0.5  # * width_y
             grid_y = np.append(grid_y, [unique_y[-1] + 0.5])
-            print("grid y is set to ", grid_y)
+            # print("grid y is set to ", grid_y)
         else:
             grid_y, _ = get_linspace_centered(
                 self.min[1] - 0.5 * width_y,
@@ -368,7 +367,7 @@ class FastKde2D:
             )
         # print("unique y is ", unique_y)
         # print("widthx was ", width_x)
-        print("original grid_x is ", grid_x)
+        # print("original grid_x is ", grid_x)
         # print("original grid_y is ", grid_y)
         df[columns[0]] = pd.cut(
             df[columns[0]],
@@ -396,16 +395,15 @@ class FastKde2D:
         if self.cumulative:
             counts = np.cumsum(counts, axis=1)
         # print("counts is\n", counts)
-        print("sum of count is ", np.sum(counts))
-        print("sum of last count is ", np.sum(counts[-1, :]))
+        # print("sum of count is ", np.sum(counts))
+        # print("sum of last count is ", np.sum(counts[-1, :]))
         # print("table is ", self.size)
-        xx, wx = np.linspace(
-            self.min[0], self.max[0], self.grid_size_x, retstep=True)
+        xx, wx = np.linspace(self.min[0], self.max[0], self.grid_size_x, retstep=True)
         if self.y_is_categorical:
             yy = unique_y
             # print("y grid is now ", unique_y)
             ps = np.divide(counts, self.size * wx)
-            print("sum is ", np.sum(ps[:, -1]) * wx)
+            # print("sum is ", np.sum(ps[:, -1]) * wx)
             # print("corresponding xx is ", xx)
             # print("corresponding yy is ", yy)
             self.background_noise = 0.5 / self.size / wx
@@ -416,7 +414,7 @@ class FastKde2D:
             )
             ps = np.divide(counts, self.size * wx)
             # print("width x is ", wx)
-            print("sum is ", np.sum(ps[:, -1]) * wx)
+            # print("sum is ", np.sum(ps[:, -1]) * wx)
             self.background_noise = 0.5 / self.size / wx
 
         # print("x_grid is ", xx)
@@ -449,8 +447,7 @@ def plot2d(kde, grid_size_x=2**10, grid_size_y=2**10):
     xx = np.linspace(kde.min[0], kde.max[0], grid_size_x)
     yy = np.linspace(kde.min[1], kde.max[1], grid_size_y)
     p = kde.predict_grid(xx, yy, b_plot=False)
-    cfset = ax.contourf(xx, yy, p, N, cmap="Blues",
-                        locator=ticker.LogLocator())
+    cfset = ax.contourf(xx, yy, p, N, cmap="Blues", locator=ticker.LogLocator())
     cset = ax.contour(
         xx, yy, p, N, linewidths=0.8, colors="k", locator=ticker.LogLocator()
     )

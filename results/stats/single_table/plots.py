@@ -25,7 +25,7 @@ def plot_accuracy():
             min(
                 min(re_card),
                 min(re_postgres),
-                # min(re_bayescard),
+                min(re_bayescard),
                 min(re_wjsample),
                 min(re_deepdb),
             )
@@ -34,7 +34,7 @@ def plot_accuracy():
             max(
                 max(re_card),
                 max(re_postgres),
-                # max(re_bayescard),
+                max(re_bayescard),
                 max(re_wjsample),
                 max(re_deepdb),
             )
@@ -47,8 +47,8 @@ def plot_accuracy():
     axs[0, 0].set_title("card")
     axs[1, 0].hist(re_postgres, bins=logbins, label="postgres")
     axs[1, 0].set_title("postgres")
-    # axs[2, 0].hist(re_bayescard, bins=logbins, label="BayesCard")
-    # axs[2, 0].set_title("BayesCard")
+    axs[2, 0].hist(re_bayescard, bins=logbins, label="BayesCard")
+    axs[2, 0].set_title("BayesCard")
     axs[0, 1].hist(re_wjsample, bins=logbins, label="WJSample")
     axs[0, 1].set_title("WJSample")
     axs[1, 1].hist(re_deepdb, bins=logbins, label="DeepDB")

@@ -8,6 +8,7 @@ from joins.pdf.fast_kde import FastKde1D, FastKde2D
 from joins.pdf.kde import Kde1D, Kde2D
 from joins.pdf.kdepy import KdePy1D, KdePy2D, plot1d
 from joins.pdf.normalizing_flow.nflow import Nflow2D
+from joins.cnts.cnts import CumulativeDistinctCounter
 
 
 class TableContainer:
@@ -22,6 +23,7 @@ class TableContainer:
         self.correlations_cdf = dict()
         self.efficients = dict()
         self.use_cdf = False
+        self.counters = dict()
 
     def fit(
         self, file, join_keys, relevant_keys, exclude=None, use_2d_model=True, args=None
@@ -53,6 +55,10 @@ class TableContainer:
             column.fit(df_col, self.name, args=args)
             self.pdfs[join_key] = column
 
+            counter = CumulativeDistinctCounter()
+            counter.fit(df[join_key].fillna(-1))
+            self.counters[join_key] = counter
+
         for relev_key in relevant_keys[self.name]:
             logger.info("col is %s", relev_key)
             df_col = df[relev_key]  # .fillna(-1)  # replace NULL with -1 !
@@ -72,13 +78,13 @@ class TableContainer:
         # print(join_keys)
         # print(relevant_keys)
         # for t in join_keys:
-        print("name is ", self.name)
+        # print("name is ", self.name)
         t = self.name
         for join_key in join_keys[t]:
             if t in relevant_keys:
                 for relevant_key in relevant_keys[t]:
-                    print("name is ", self.name)
-                    print("relevant_key", relevant_key)
+                    # print("name is ", self.name)
+                    # print("relevant_key", relevant_key)
                     if relevant_key != join_key:
                         columns = Column2d()
                         # print(df)
@@ -236,8 +242,7 @@ class Column2d:
                 # self.pdf = kde
             else:
                 kde = KdePy2D()
-                kde.fit(df_columns.to_numpy(),
-                        grid_size=args.grid, kernel=args.kernel)
+                kde.fit(df_columns.to_numpy(), grid_size=args.grid, kernel=args.kernel)
                 self.pdf = kde
             if args.plot:
                 plot2d(kde)
@@ -253,8 +258,7 @@ def plot2d(kde):
     xx = np.linspace(kde.min[0], kde.max[0], 2**10)
     yy = np.linspace(kde.min[1], kde.max[1], 2**10)
     p = kde.predict_grid(xx, yy)
-    cfset = ax.contourf(xx, yy, p, N, cmap="Blues",
-                        locator=ticker.LogLocator())
+    cfset = ax.contourf(xx, yy, p, N, cmap="Blues", locator=ticker.LogLocator())
     cset = ax.contour(
         xx, yy, p, N, linewidths=0.8, colors="k", locator=ticker.LogLocator()
     )

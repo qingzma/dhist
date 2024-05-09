@@ -66,6 +66,7 @@ class JoinKeysGrid:
         self.join_keys_lists = []
         self.join_keys_domain = []
         self.join_keys_grid: list[JoinKeyGrid] = []
+        self.grid_max_conts = dict()  # for join histogram justification.
 
     def calculate_push_down_join_keys_domain(
         self, conditions, join_cond, models: dict, tabls_all, grid_size
@@ -112,8 +113,7 @@ class JoinKeysGrid:
                 join_keys[idx2].append(tk1)
                 join_keys_domain[idx2].merge_domain(domain1)
             else:
-                logger.error(
-                    "unexpected behavior as the join condition appear twice")
+                logger.error("unexpected behavior as the join condition appear twice")
         self.join_keys_lists = join_keys
         self.join_keys_domain = join_keys_domain
         # logger.info("final join key domain is %s", join_keys_domain)
@@ -121,6 +121,32 @@ class JoinKeysGrid:
         for domain in join_keys_domain:
             grid = JoinKeyGrid(domain.min, domain.max, grid_size)
             self.join_keys_grid.append(grid)
+        logger.info("self.join_keys_lists = %s", self.join_keys_lists)
+        logger.info("self.join_keys_grid = %s", self.join_keys_grid)
+
+        for jk_pair in self.join_keys_lists:
+            assert len(jk_pair) == 2
+            tk1 = jk_pair[0]
+            tk2 = jk_pair[1]
+            t1, k1 = tk1.split(".")
+            t2, k2 = tk2.split(".")
+            logger.info("t1:%s, k1:%s", t1, k1)
+            logger.info("t2:%s, k2:%s", t2, k2)
+            if tk1 not in self.grid_max_conts:
+                cnt1 = models[t1].counters[k1].predicts(self.join_keys_grid[0].grid)
+                logger.info("cnts1 %s", cnt1)
+                self.grid_max_conts[tk1] = cnt1
+            if tk2 not in self.grid_max_conts:
+                cnt2 = models[t2].counters[k2].predicts(self.join_keys_grid[0].grid)
+                logger.info("cnts2 %s", cnt2)
+                self.grid_max_conts[tk2] = cnt2
+        # val = None
+        # for k in self.grid_max_conts:
+        #     if val is None:
+        #         val = self.grid_max_conts[k]
+        #     else:
+        #         val = np.maximum(val, self.grid_max_conts[k])
+        # logger.info("counter upadted to %s", val)
 
     def get_join_key_grid_for_table_jk(self, jk) -> JoinKeyGrid:
         # print("jk is ", jk)
@@ -240,8 +266,7 @@ def generate_push_down_conditions(tables_all, table_query, join_cond, join_keys)
             for join_condition in join_cond:
                 if jk in join_condition:
                     to_j = (
-                        join_condition.replace(jk, "").replace(
-                            "=", "").replace(" ", "")
+                        join_condition.replace(jk, "").replace("=", "").replace(" ", "")
                     )
                     # logger.info("to_j,%s", to_j)
                     to_tbl, to_k = to_j.split(".")
