@@ -720,19 +720,20 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #     logger.info("time cost is %.5f s.", t2 - t1)
     #     self.assertTrue(q_error(res, truth) < 5)
 
-    def test_multi_way_no_selection_2_b_c(self):
-        query = """SELECT COUNT(*) FROM badges as b, comments as c WHERE c.UserId = b.UserId """
-        with open("models/" + self.model_name + ".pkl", "rb") as f:
-            model = pickle.load(f)
-        engine = Engine(model, use_cdf=self.args.cdf)
-        t1 = time.time()
-        res = engine.query(query) if self.use_pushed_down else engine.query(query)
-        t2 = time.time()
-        truth = 15900001
-        logger.info("result %.6E", res)
-        logger.info("truth %.6E", truth)
-        logger.info("time cost is %.5f s.", t2 - t1)
-        self.assertTrue(q_error(res, truth) < 5)
+    # def test_multi_way_no_selection_2_b_c(self):
+    #     query = """SELECT COUNT(*) FROM badges as b, comments as c WHERE c.UserId = b.UserId """
+    #     with open("models/" + self.model_name + ".pkl", "rb") as f:
+    #         model = pickle.load(f)
+    #     engine = Engine(model, use_cdf=self.args.cdf)
+    #     t1 = time.time()
+    #     res = engine.query(
+    #         query) if self.use_pushed_down else engine.query(query)
+    #     t2 = time.time()
+    #     truth = 15900001
+    #     logger.info("result %.6E", res)
+    #     logger.info("truth %.6E", truth)
+    #     logger.info("time cost is %.5f s.", t2 - t1)
+    #     self.assertTrue(q_error(res, truth) < 5)
 
     # def test_multi_way_no_selection_2_b_p(self):
     #     query = """SELECT COUNT(*) FROM badges as b, posts as p WHERE  b.UserId= p.OwnerUserId """
@@ -740,7 +741,8 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #         model = pickle.load(f)
     #     engine = Engine(model, use_cdf=self.args.cdf)
     #     t1 = time.time()
-    #     res = engine.query(query) if self.use_pushed_down else engine.query(query)
+    #     res = engine.query(
+    #         query) if self.use_pushed_down else engine.query(query)
     #     t2 = time.time()
     #     truth = 3728360
     #     logger.info("result %.6E", res)
@@ -754,7 +756,8 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #         model = pickle.load(f)
     #     engine = Engine(model, use_cdf=self.args.cdf)
     #     t1 = time.time()
-    #     res = engine.query(query) if self.use_pushed_down else engine.query(query)
+    #     res = engine.query(
+    #         query) if self.use_pushed_down else engine.query(query)
     #     t2 = time.time()
     #     truth = 16322646
     #     logger.info("result %.6E", res)
@@ -768,7 +771,8 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #         model = pickle.load(f)
     #     engine = Engine(model, use_cdf=self.args.cdf)
     #     t1 = time.time()
-    #     res = engine.query(query) if self.use_pushed_down else engine.query(query)
+    #     res = engine.query(
+    #         query) if self.use_pushed_down else engine.query(query)
     #     t2 = time.time()
     #     truth = 56398574
     #     logger.info("result %.6E", res)
@@ -782,7 +786,8 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #         model = pickle.load(f)
     #     engine = Engine(model, use_cdf=self.args.cdf)
     #     t1 = time.time()
-    #     res = engine.query(query) if self.use_pushed_down else engine.query(query)
+    #     res = engine.query(
+    #         query) if self.use_pushed_down else engine.query(query)
     #     t2 = time.time()
     #     truth = 263105194
     #     logger.info("result %.6E", res)
@@ -796,7 +801,8 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #         model = pickle.load(f)
     #     engine = Engine(model, use_cdf=self.args.cdf)
     #     t1 = time.time()
-    #     res = engine.query(query) if self.use_pushed_down else engine.query(query)
+    #     res = engine.query(
+    #         query) if self.use_pushed_down else engine.query(query)
     #     t2 = time.time()
     #     truth = 54807156
     #     logger.info("result %.6E", res)
@@ -810,7 +816,8 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #         model = pickle.load(f)
     #     engine = Engine(model, use_cdf=self.args.cdf)
     #     t1 = time.time()
-    #     res = engine.query(query) if self.use_pushed_down else engine.query(query)
+    #     res = engine.query(
+    #         query) if self.use_pushed_down else engine.query(query)
     #     t2 = time.time()
     #     truth = 3728360
     #     logger.info("result %.6E", res)
@@ -824,7 +831,8 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #         model = pickle.load(f)
     #     engine = Engine(model, use_cdf=self.args.cdf)
     #     t1 = time.time()
-    #     res = engine.query(query) if self.use_pushed_down else engine.query(query)
+    #     res = engine.query(
+    #         query) if self.use_pushed_down else engine.query(query)
     #     t2 = time.time()
     #     truth = 7804481
     #     logger.info("result %.6E", res)
@@ -832,19 +840,20 @@ class TestApproximateEngineMethod(unittest.TestCase):
     #     logger.info("time cost is %.5f s.", t2 - t1)
     #     self.assertTrue(q_error(res, truth) < 5)
 
-    # def test_multi_way_no_selection_5(self):
-    #     query = """SELECT COUNT(*) FROM badges as b, comments as c, posts as p, postHistory as ph, users as u WHERE u.Id = c.UserId AND u.Id = b.UserId AND u.Id = ph.UserId AND u.Id = p.OwnerUserId """
-    #     with open("models/" + self.model_name + ".pkl", "rb") as f:
-    #         model = pickle.load(f)
-    #     engine = Engine(model, use_cdf=self.args.cdf)
-    #     t1 = time.time()
-    #     res = engine.query(query) if self.use_pushed_down else engine.query(query)
-    #     t2 = time.time()
-    #     truth = 913994
-    #     logger.info("result %.6E", res)
-    #     logger.info("truth %.6E", truth)
-    #     logger.info("time cost is %.5f s.", t2 - t1)
-    #     self.assertTrue(q_error(res, truth) < 5)
+    def test_multi_way_no_selection_5(self):
+        query = """SELECT COUNT(*) FROM badges as b, comments as c, posts as p, postHistory as ph, users as u WHERE u.Id = c.UserId AND u.Id = b.UserId AND u.Id = ph.UserId AND u.Id = p.OwnerUserId """
+        with open("models/" + self.model_name + ".pkl", "rb") as f:
+            model = pickle.load(f)
+        engine = Engine(model, use_cdf=self.args.cdf)
+        t1 = time.time()
+        res = engine.query(
+            query) if self.use_pushed_down else engine.query(query)
+        t2 = time.time()
+        truth = 913994
+        logger.info("result %.6E", res)
+        logger.info("truth %.6E", truth)
+        logger.info("time cost is %.5f s.", t2 - t1)
+        self.assertTrue(q_error(res, truth) < 5)
 
     # def test_dual_join_key(self):
     #     query = """SELECT COUNT(*)  FROM badges as b,  comments as c,  postLinks as pl,  posts as p,  users as u  WHERE u.Id = p.OwnerUserId  AND p.Id = pl.RelatedPostId  AND p.Id = c.PostId  AND u.Id = b.UserId"""
