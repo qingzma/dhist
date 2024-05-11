@@ -148,9 +148,9 @@ class JoinKeysGrid:
         array = np.array(list(self.grid_max_conts.values()))
         sm = np.argsort(array, axis=0)
         sorted_counter = np.take_along_axis(array, sm, axis=0)
-        logger.info("array is %s", array)
-        logger.info("sm is %s", sm)
-        logger.info("sorted_counter is %s", sorted_counter)
+        # logger.info("array is %s", array)
+        # logger.info("sm is %s", sm)
+        # logger.info("sorted_counter is %s", sorted_counter)
 
         out = sorted_counter[1]
         for i in range(2, len(sorted_counter)):

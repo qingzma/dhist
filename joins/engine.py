@@ -232,9 +232,9 @@ class Engine:
         # logger.info("cartesian is %E", n)
         # logger.info("selectivity is %s ", np.sum(pred))
         # logger.info("total tables is %s ", len(tables_all))
-        res = np.sum(pred) * n / width  # ** (len(tables_all)+1)
+        # res = np.sum(pred) * n / width**3  # ** (len(tables_all)+1)
         # logger.info("counter is %s", join_keys_grid.grid_max_conts)
-        # res = np.sum(vec_sel_divide(pred, join_keys_grid.max_counters)) * n
+        res = np.sum(vec_sel_divide(pred, join_keys_grid.max_counters)) * n
 
         # if len(tables_all) == 2:
         #     res /= width
