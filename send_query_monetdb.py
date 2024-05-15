@@ -1,6 +1,5 @@
-import psycopg2
+import pymonetdb
 import time
-import os
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
@@ -9,13 +8,12 @@ from joins.tools import save_predictions_to_file
 
 
 def send_query(dataset, method_name, query_file, save_folder, iteration=None):
-    conn = psycopg2.connect(
-        options="-c statement_timeout=100s",
+    conn = pymonetdb.connect(
         database=dataset,
-        user="quincy",
-        password="postgres",
-        host="127.0.0.1",
-        port=5433,
+        username="monetdb",
+        password="monetdb",
+        host="localhost",
+        schema="stats",
     )
     cursor = conn.cursor()
 
@@ -40,6 +38,7 @@ def send_query(dataset, method_name, query_file, save_folder, iteration=None):
     for no, query_str in enumerate(queries):
         if "||" in query_str:
             query = query_str.split("||")[0]
+        query = query.replace("::timestamp", "")
         print(f"Executing query {no}")
         # start = time.time()
         # cursor.execute("EXPLAIN ANALYZE " + query)
@@ -61,27 +60,17 @@ def send_query(dataset, method_name, query_file, save_folder, iteration=None):
         # truth = float(est[0].split("rows=")[2].split(" ")[0])
         # print("est is ", pred)
         # print("truth is ", truth)
-        try:
-            start = time.time()
-            cursor.execute(query)
-            res = cursor.fetchall()
-            end = time.time()
-            # print(res)
-            # assert res[0][0] == truth
-            # ratios.append(pred / truth)
-            # predictions.append(pred)
-            truths.append(res[0][0])
-            execution_time.append(end - start)
-            print(f"{no}-th query finished in {end-start}ms")
-            # cursor.execute("rollback()")
-            # conn.rollback()
-            # conn.commit()
-        except psycopg2.errors.QueryCanceled:
-            truths.append(-1)
-            execution_time.append(-1)
-            print(f"{no}-th query timeout!")
-            conn.rollback()
-
+        start = time.time()
+        cursor.execute(query)
+        res = cursor.fetchall()
+        end = time.time()
+        # print(res)
+        # assert res[0][0] == truth
+        # ratios.append(pred / truth)
+        # predictions.append(pred)
+        truths.append(res[0][0])
+        execution_time.append(end - start)
+        print(f"{no}-th query finished in {end-start}ms")
         # for row in res:
         #     predictions.append(row[0])
         #     with open(save_file_name, "a+") as f:
@@ -108,8 +97,8 @@ def send_query(dataset, method_name, query_file, save_folder, iteration=None):
         truths,
         execution_time,
         "truth",
-        "truth-time-postgres",
-        "results/stats/multiple_tables/truth.csv",
+        "truth-time-monetdb",
+        "results/stats/multiple_tables/truth_monetdb.csv",
     )
 
     # if iteration:

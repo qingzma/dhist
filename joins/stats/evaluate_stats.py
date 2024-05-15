@@ -29,14 +29,18 @@ def evaluate_stats(args: ArgumentParser):
     bad_queries = []
     cnt_key = []
     cnt_non_key = []
-    for query_str in queries:  # [:100]:
+    for query_str in queries:
         query = query_str.split("||")[0][:-1]
         true_card = int(query_str.split("||")[-1])
+        # query = query_str.split("||")[-1][:-1]
+        # true_card = int(query_str.split("||")[0])
         t = time.time()
         res = engine.query(query)
         # cnt_key.append(len(key_conditions))
         # cnt_non_key.append(len(non_key_conditions))
-        if res == 2:
+        if res == 2.0 or true_card == 0:
+            pred.append(-1)
+            latency.append(-1)
             continue
         # if res / true_card <= 5e-18:
         #     continue
@@ -48,7 +52,7 @@ def evaluate_stats(args: ArgumentParser):
         ratios.append(res / true_card)
         # if (res/true_card > 10000):
         #     exit()
-        if res / true_card < 2 and res / true_card > 0.95:
+        if res / true_card > 1e5:
             # if res / true_card > 1e5:
             bad_queries.append(query)
             logger.info("-" * 800)
@@ -74,15 +78,15 @@ def evaluate_stats(args: ArgumentParser):
     for q in bad_queries:
         logger.info(q)
 
-    # save_predictions_to_file(
-    #     pred,
-    #     latency,
-    #     "card",
-    #     "card-time",
-    #     "results/stats/single_table/card.csv",
-    # )
+    save_predictions_to_file(
+        pred,
+        latency,
+        "card",
+        "card-time",
+        "results/stats/multiple_tables/card.csv",
+    )
 
-    logbins = np.logspace(np.log10(min(ratios)), np.log10(max(ratios)), 100)
+    logbins = np.logspace(np.log10(min(ratios)), np.log10(max(ratios)), 31)
     plt.xscale("log")
     plt.hist(ratios, bins=logbins)
     plt.show()

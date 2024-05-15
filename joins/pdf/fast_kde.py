@@ -174,7 +174,7 @@ class FastKde2D:
         return self.predict_grid([x[0]], [x[1]])
 
     def predict_grid_with_y_range(self, x_grid, domain: Domain, b_plot=False):
-        print("domain is  \n", domain)
+        # print("domain is  \n", domain)
         assert self.cumulative
         l, h = domain.min, domain.max
         # width = x_grid[1]-x_grid[0]
@@ -249,6 +249,19 @@ class FastKde2D:
             h += 0.5
         else:
             h -= 0.5
+        # print("l is ", l)
+        # if l < self.min[1]:
+        #     l = self.min[1]
+        #     ps = self.predict_grid(x_grid, np.array([h]))
+        #     return ps
+        # # print("l changed to ", l)
+        # if h > self.max[1]:
+        #     h = self.max[1]
+        #     ps = self.predict_grid(x_grid, np.array([h]))
+        #     return ps
+
+        # print("self.min", self.min)
+        # print("self.max", self.max)
 
         try:
             ps = self.predict_grid(x_grid, np.array([l, h]))

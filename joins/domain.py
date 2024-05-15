@@ -72,7 +72,7 @@ class JoinKeysGrid:
     def calculate_push_down_join_keys_domain(
         self, conditions, join_cond, models: dict, tabls_all, grid_size
     ):
-        grid_size = 200
+        grid_size = 400
         # note, selection on join key is not supported yet.
         if join_cond is None:
             # tbl = list(tabls_all.values())[0]
@@ -114,8 +114,7 @@ class JoinKeysGrid:
                 join_keys[idx2].append(tk1)
                 join_keys_domain[idx2].merge_domain(domain1)
             else:
-                logger.error(
-                    "unexpected behavior as the join condition appear twice")
+                logger.error("unexpected behavior as the join condition appear twice")
         self.join_keys_lists = join_keys
         self.join_keys_domain = join_keys_domain
         # logger.info("final join key domain is %s", join_keys_domain)
@@ -136,8 +135,13 @@ class JoinKeysGrid:
             # logger.info("t1:%s, k1:%s", t1, k1)
             # logger.info("t2:%s, k2:%s", t2, k2)
             if tk1 not in self.grid_max_conts:
-                cnt1 = models[t1].counters[k1].predicts(
-                    self.join_keys_grid[0].grid)
+                cnt1 = (
+                    models[t1]
+                    .counters[k1]
+                    .predicts(
+                        self.join_keys_grid[0].grid + 0.0 * self.join_keys_grid[0].width
+                    )
+                )
                 # logger.info("cnts1 %s", cnt1)
                 self.grid_max_conts[tk1] = cnt1
             # if tk2 not in self.grid_max_conts:
@@ -284,8 +288,7 @@ def generate_push_down_conditions(tables_all, table_query, join_cond, join_keys)
             for join_condition in join_cond:
                 if jk in join_condition:
                     to_j = (
-                        join_condition.replace(jk, "").replace(
-                            "=", "").replace(" ", "")
+                        join_condition.replace(jk, "").replace("=", "").replace(" ", "")
                     )
                     # logger.info("to_j,%s", to_j)
                     to_tbl, to_k = to_j.split(".")
