@@ -16,15 +16,30 @@ class BaseHistogram:
         pass
 
 
-class NormalHistogram(BaseHistogram):
+class JoinHistogram(BaseHistogram):
     def __init__(self) -> None:
-        pass
+        self.headers = None
+        self.counts = None
+        self.unique_counts = None
 
-    def fit(self, data: pd.DataFrame) -> None:
-        pass
+    def fit(self, data: pd.DataFrame, headers: list, bins) -> None:
+        # print(data)
+        groups = data.groupby(pd.cut(data[headers[0]], bins))
+        self.counts = np.array(groups[headers[0]].count())
 
-    def join(self, hist1: "NormalHistogram") -> int:
-        pass
+        uniques = pd.unique(data[headers[0]])
+        # print("uniques\n", uniques)
+        # uni = pd.cut(uniques, bins=bins)  # , labels=self.grid_x[:-1]
+        uni = pd.DataFrame(uniques, columns=["uni"]).groupby(pd.cut(uniques, bins))
+        self.unique_counts = np.array(uni["uni"].count())
+        # print("self.unique_counts\n", self.unique_counts)
+
+    def join(self, hist1: "JoinHistogram") -> int:
+        mul = np.multiply(self.counts, hist1.counts).astype("float")
+        maxs = np.maximum(self.unique_counts, hist1.unique_counts).astype("float")
+        # print("max is ", maxs)
+        counts = np.divide(mul, maxs, out=np.zeros_like(mul), where=maxs != 0)
+        print("counts is \n", np.sum(counts))
 
 
 class UpperBoundHistogram(BaseHistogram):
@@ -50,14 +65,13 @@ class FinerHistogram(BaseHistogram):
 
 
 class TableJoin(BaseHistogram):
-    def __init__(self, low=None, upper=None, n=100) -> None:
+    def __init__(self) -> None:
         self.df = None
         self.size = None
         self.unique_size = None
         self.headers = None
 
     def fit(self, data: pd.DataFrame, headers: list) -> None:
-        # print("headers is ", headers)
         assert len(headers) == 1
         self.headers = headers
         # print(data)
@@ -79,36 +93,37 @@ class TableJoin(BaseHistogram):
         return count
 
 
-def plot_1d_histogram(file_path, col_header):
-    data = pd.read_csv(file_path)[col_header].values
-    plt.xlabel(col_header)
-    plt.ylabel("number of points")
-    plt.hist(data, 300, alpha=0.3, label=file_path)
-    # plt.yscale("log")
-    # plt.show()
+# def plot_1d_histogram(file_path, col_header):
+#     data = pd.read_csv(file_path)[col_header].values
+#     plt.xlabel(col_header)
+#     plt.ylabel("number of points")
+#     plt.hist(data, 300, alpha=0.3, label=file_path)
+#     # plt.yscale("log")
+#     # plt.show()
 
 
 if __name__ == "__main__":
     b = pd.read_csv("data/stats/badges.csv")[["UserId"]]
     c = pd.read_csv("data/stats/comments.csv")[["UserId"]]
     u = pd.read_csv("data/stats/users.csv")[["Id"]]
-    # print(b.min().values[0])
-    # print(c.min().values[0])
-    # print(u.min().values[0])
+
     low = np.min([b.min().values[0], c.min().values[0], u.min().values[0]])
     high = np.max([b.max().values[0], c.max().values[0], u.max().values[0]])
     print("low ", low)
     print("high ", high)
+    bins = np.linspace(low, high, 300)
+
+    # truth
     tj_b = TableJoin()
     tj_b.fit(b, ["UserId"])
     tj_c = TableJoin()
     tj_c.fit(c, ["UserId"])
-
-    bins = np.linspace(low, high, 300)
     tj_b.join(tj_c, bins=bins)
 
-    # plot_1d_histogram("data/stats/badges.csv", "UserId")
-    # plot_1d_histogram("data/stats/comments.csv", "UserId")
-    # plot_1d_histogram("data/stats/users.csv", "Id")
-    # plt.legend()
-    # plt.show()
+    jh_b = JoinHistogram()
+    jh_b.fit(b, ["UserId"], bins)
+    jh_c = JoinHistogram()
+    jh_c.fit(c, ["UserId"], bins)
+    jh_b.join(jh_c)
+
+    # join-histogram
