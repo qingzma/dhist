@@ -38,10 +38,17 @@ class JoinHistogram(BaseHistogram):
 
     def join(self, hist1: "JoinHistogram") -> int:
         mul = np.multiply(self.counts, hist1.counts).astype("float")
-        maxs = np.maximum(self.unique_counts, hist1.unique_counts).astype("float")
+        maxs = np.maximum(self.unique_counts,
+                          hist1.unique_counts).astype("float")
         # print("max is ", maxs)
-        counts = np.divide(mul, maxs, out=np.zeros_like(mul), where=maxs != 0)
+        # counts = np.divide(mul, maxs, out=np.zeros_like(mul), where=maxs != 0)
+        counts = division(mul, maxs)
         print("counts is \n", np.sum(counts))
+        return counts
+
+
+def division(a, b):
+    return np.divide(a, b, out=np.zeros_like(a), where=b != 0)
 
 
 class UpperBoundHistogram(BaseHistogram):
@@ -83,15 +90,16 @@ class TableJoin(BaseHistogram):
         self.size = len(self.df)
 
     def join(self, hist1: "TableJoin", bins) -> np.array:
-        df = self.df.merge(hist1.df, left_on=self.headers, right_on=hist1.headers)
+        df = self.df.merge(hist1.df, left_on=self.headers,
+                           right_on=hist1.headers)
         count, bins = np.histogram(df, bins=bins)
-        # print("df is \n", df)
-        # print("count:\n", count)
-        # print("division:\n", division)
+        # # print("df is \n", df)
+        # # print("count:\n", count)
+        # # print("division:\n", division)
         print("join size is ", np.sum(count))
-        plt.hist(bins[:-1], bins, weights=count)
-        plt.yscale("log")
-        plt.show()
+        # plt.hist(bins[:-1], bins, weights=count)
+        # plt.yscale("log")
+        # plt.show()
         return count
 
 
@@ -113,19 +121,24 @@ if __name__ == "__main__":
     high = np.max([b.max().values[0], c.max().values[0], u.max().values[0]])
     print("low ", low)
     print("high ", high)
-    bins = np.linspace(low, high, 300)
+    bins = np.linspace(low, high, 100)
 
     # truth
     tj_b = TableJoin()
     tj_b.fit(b, ["UserId"])
     tj_c = TableJoin()
     tj_c.fit(c, ["UserId"])
-    tj_b.join(tj_c, bins=bins)
+    tj = tj_b.join(tj_c, bins=bins)
 
+    # join-histogram
     jh_b = JoinHistogram()
     jh_b.fit(b, ["UserId"], bins)
     jh_c = JoinHistogram()
     jh_c.fit(c, ["UserId"], bins)
-    jh_b.join(jh_c)
+    jh = jh_b.join(jh_c)
 
-    # join-histogram
+    jh_error = division(jh-tj, tj)
+    # print(jh_error)
+    plt.hist(bins[:-1], bins, weights=jh_error)
+    # plt.yscale("log")
+    plt.show()
