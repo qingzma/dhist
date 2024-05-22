@@ -9,13 +9,16 @@ def plot_1d_histogram(file_path, col_header):
     data = pd.read_csv(file_path)[col_header].values
     plt.xlabel(col_header)
     plt.ylabel("number of points")
-    plt.hist(data, 300)
-    plt.show()
+    plt.hist(data, 300, alpha=0.3, label=file_path)
+    # plt.yscale("log")
+    # plt.show()
 
 
 if __name__ == "__main__":
-    # plot_1d_histogram("data/stats/badges.csv", "UserId")
-    # plot_1d_histogram("data/stats/comments.csv", "UserId")
+    plot_1d_histogram("data/stats/badges.csv", "UserId")
+    plot_1d_histogram("data/stats/comments.csv", "UserId")
     plot_1d_histogram("data/stats/users.csv", "Id")
+    plt.legend()
+    plt.show()
 
     # plot_times()
