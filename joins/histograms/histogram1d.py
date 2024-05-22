@@ -24,13 +24,15 @@ class JoinHistogram(BaseHistogram):
 
     def fit(self, data: pd.DataFrame, headers: list, bins) -> None:
         # print(data)
-        groups = data.groupby(pd.cut(data[headers[0]], bins))
+        groups = data.groupby(pd.cut(data[headers[0]], bins), observed=False)
         self.counts = np.array(groups[headers[0]].count())
 
         uniques = pd.unique(data[headers[0]])
         # print("uniques\n", uniques)
         # uni = pd.cut(uniques, bins=bins)  # , labels=self.grid_x[:-1]
-        uni = pd.DataFrame(uniques, columns=["uni"]).groupby(pd.cut(uniques, bins))
+        uni = pd.DataFrame(uniques, columns=["uni"]).groupby(
+            pd.cut(uniques, bins), observed=False
+        )
         self.unique_counts = np.array(uni["uni"].count())
         # print("self.unique_counts\n", self.unique_counts)
 
