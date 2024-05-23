@@ -1,6 +1,9 @@
-import pandas as pd
+import pickle
+import time
+
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 from joins.tools import read_from_csv
 
@@ -18,6 +21,10 @@ class BaseHistogram:
 
     def join(self, hist1: "BaseHistogram") -> int:
         pass
+
+    def serialize(self):
+        bytes = pickle.dumps(self, pickle.HIGHEST_PROTOCOL)
+        return len(bytes)
 
 
 class JoinHistogram(BaseHistogram):
@@ -42,8 +49,7 @@ class JoinHistogram(BaseHistogram):
 
     def join(self, hist1: "JoinHistogram") -> int:
         mul = np.multiply(self.counts, hist1.counts)
-        maxs = np.maximum(self.unique_counts,
-                          hist1.unique_counts)
+        maxs = np.maximum(self.unique_counts, hist1.unique_counts)
         # print("max is ", maxs)
         # counts = np.divide(mul, maxs, out=np.zeros_like(mul), where=maxs != 0)
         counts = division(mul, maxs)
@@ -60,8 +66,7 @@ class UpperBoundHistogram(BaseHistogram):
         groups = data.groupby(pd.cut(data[headers[0]], bins), observed=False)
         self.counts = np.array(groups[headers[0]].count()).astype("float")
 
-        value_counts = groups.value_counts().groupby(
-            headers[0], observed=False).head(1)
+        value_counts = groups.value_counts().groupby(headers[0], observed=False).head(1)
         # print("value_counts\n", value_counts)
 
         mfv_counts = np.array(value_counts)
@@ -69,8 +74,10 @@ class UpperBoundHistogram(BaseHistogram):
         self.mfv_counts = mfv_counts.astype("float")
 
     def join(self, hist1: "UpperBoundHistogram") -> int:
-        res = np.minimum(division(self.counts, self.mfv_counts),
-                         division(hist1.counts, hist1.mfv_counts))
+        res = np.minimum(
+            division(self.counts, self.mfv_counts),
+            division(hist1.counts, hist1.mfv_counts),
+        )
         res = np.multiply(res, self.mfv_counts)
         res = np.multiply(res, hist1.mfv_counts)
         print("UpperBoundHistogram prediction is ", np.sum(res))
@@ -99,8 +106,9 @@ class UpperBoundHistogramTopK(BaseHistogram):
         )
         self.unique_counts = np.array(uni["uni"].count()).astype("float")
 
-        value_counts = groups.value_counts().groupby(
-            headers[0], observed=False).head(self.top_k)
+        value_counts = (
+            groups.value_counts().groupby(headers[0], observed=False).head(self.top_k)
+        )
         # print(type(value_counts))
         # print("value_counts\n", value_counts)
         # print("-"*80)
@@ -129,24 +137,23 @@ class UpperBoundHistogramTopK(BaseHistogram):
 
         self.top_k_container = top_k_container
         # print("self.top_k_container \n", self.top_k_container)
-        self.counts_top_k = np.array([sum(i.values())
-                                     for i in top_k_container])
+        self.counts_top_k = np.array([sum(i.values()) for i in top_k_container])
         self.unique_counts_top_k = np.array([len(i) for i in top_k_container])
         # print("self.counts_top_k \n", self.counts_top_k)
         # print("self.unique_counts_top_k \n", self.unique_counts_top_k)
 
-        self.unique_counts_no_top_k = self.unique_counts-self.unique_counts_top_k
-        self.counts_no_top_k = self.counts-self.counts_top_k
+        self.unique_counts_no_top_k = self.unique_counts - self.unique_counts_top_k
+        self.counts_no_top_k = self.counts - self.counts_top_k
 
         # mfv_counts = np.array(value_counts)
         # # print("mfv_counts\n", mfv_counts)
         # self.mfv_counts = mfv_counts.astype("float")
 
     def join(self, hist1: "UpperBoundHistogramTopK") -> int:
+        start = time.time()
         # not top k
         mul = np.multiply(self.counts_no_top_k, hist1.counts_no_top_k)
-        maxs = np.maximum(self.unique_counts_no_top_k,
-                          hist1.unique_counts_no_top_k)
+        maxs = np.maximum(self.unique_counts_no_top_k, hist1.unique_counts_no_top_k)
         counts_no_top_k = division(mul, maxs)
 
         # top k
@@ -156,12 +163,21 @@ class UpperBoundHistogramTopK(BaseHistogram):
             set_b = set(bb)
             cnt = 0
             for k in set_a.intersection(set_b):
-                cnt += aa[k]*bb[k]
+                cnt += aa[k] * bb[k]
             counts_top_k.append(cnt)
         counts_top_k = np.array(counts_top_k)
 
         counts = np.add(counts_top_k, counts_no_top_k)
-        print("UpperBoundHistogramTopK prediction is ", np.sum(counts))
+        end = time.time()
+        print(
+            "UpperBoundHistogramTopK prediction is ",
+            np.sum(counts),
+            "with time cost ",
+            end - start,
+            " seconds, and size ",
+            self.serialize(),
+            " bytes.",
+        )
         return counts
 
 
@@ -193,8 +209,7 @@ class TableJoin(BaseHistogram):
         self.size = len(self.df)
 
     def join(self, hist1: "TableJoin", bins) -> np.array:
-        df = self.df.merge(hist1.df, left_on=self.headers,
-                           right_on=hist1.headers)
+        df = self.df.merge(hist1.df, left_on=self.headers, right_on=hist1.headers)
         count, bins = np.histogram(df, bins=bins)
         # # print("df is \n", df)
         # # print("count:\n", count)
@@ -287,7 +302,7 @@ if __name__ == "__main__":
     ubtk_c.fit(c, ["UserId"], bins)
     ubtk = ubtk_b.join(ubtk_c)
 
-    ubtk_error = ubtk-tj  # division(ubtk-tj, tj)
+    ubtk_error = ubtk - tj  # division(ubtk-tj, tj)
     # print(ubtk_error)
     plt.hist(bins[:-1], bins, weights=ubtk_error)
     # plt.yscale("log")
