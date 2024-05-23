@@ -40,7 +40,7 @@ class TestHistogramMethod(unittest.TestCase):
                 self.p.max().values[0],
             ]
         )
-        self.bins = np.linspace(low, high, 300)
+        self.bins = np.linspace(low, high, 200)
 
     # def test_table_join(self):
     #     tj_b = TableJoin()
@@ -58,6 +58,13 @@ class TestHistogramMethod(unittest.TestCase):
     #     jh = jh_b.join(jh_c)
     #     self.assertTrue(abs(15900001 - np.sum(jh)) / 15900001.0 < 0.98)
 
+    #     # jh_u = JoinHistogram()
+    #     # jh_u.fit(self.u, ["Id"], self.bins)
+    #     # jh_p = JoinHistogram()
+    #     # jh_p.fit(self.p, ["OwnerUserId"], self.bins)
+    #     # jh = jh_p.join(jh_b, update_statistics=True).join(jh_u)
+    #     # self.assertTrue(abs(3728360 - np.sum(jh)) / 3728360.0 < 0.1)
+
     # def test_upper_bound_histogram(self):
     #     ub_b = UpperBoundHistogram()
     #     ub_b.fit(self.b, ["UserId"], self.bins)
@@ -67,21 +74,29 @@ class TestHistogramMethod(unittest.TestCase):
     #     self.assertTrue(abs(15900001 - np.sum(ub)) / 15900001.0 < 1)
 
     def test_upper_bound_histogram_top_k(self):
-        ubtk_b = UpperBoundHistogramTopK(5)
+        top_k = 5
+        ubtk_b = UpperBoundHistogramTopK(top_k)
         ubtk_b.fit(self.b, ["UserId"], self.bins)
-        ubtk_c = UpperBoundHistogramTopK(5)
+        ubtk_c = UpperBoundHistogramTopK(top_k)
         ubtk_c.fit(self.c, ["UserId"], self.bins)
-        ubtk_u = UpperBoundHistogramTopK(5)
+        ubtk_u = UpperBoundHistogramTopK(top_k)
         ubtk_u.fit(self.u, ["Id"], self.bins)
-        ubtk_p = UpperBoundHistogramTopK(5)
+        ubtk_p = UpperBoundHistogramTopK(top_k)
         ubtk_p.fit(self.p, ["OwnerUserId"], self.bins)
-        # ubtk = ubtk_b.join(ubtk_c)
-        # self.assertTrue(abs(15900001 - np.sum(ubtk)) / 15900001.0 < 0.1)
-        # ubtk = ubtk_p.join(ubtk_b, update_statistics=True).join(ubtk_c)
-        # self.assertTrue(abs(15131840763 - np.sum(ubtk)) / 15131840763.0 < 0.1)
+        ubtk = ubtk_b.join(ubtk_c)
+        self.assertTrue(abs(15900001 - np.sum(ubtk)) / 15900001.0 < 0.1)
+        ubtk = ubtk_p.join(ubtk_b, update_statistics=True).join(ubtk_c)
+        self.assertTrue(abs(15131840763 - np.sum(ubtk)) / 15131840763.0 < 0.1)
 
-        ubtk = ubtk_p.join(ubtk_b, update_statistics=True).join(ubtk_u)
+        ubtk = ubtk_p.join(ubtk_u, update_statistics=True).join(ubtk_b)
         self.assertTrue(abs(3728360 - np.sum(ubtk)) / 3728360.0 < 0.1)
+
+        ubtk = (
+            ubtk_p.join(ubtk_u, update_statistics=True)
+            .join(ubtk_b, update_statistics=True)
+            .join(ubtk_c)
+        )
+        self.assertTrue(abs(15131840763 - np.sum(ubtk)) / 15131840763.0 < 0.1)
 
 
 if __name__ == "__main__":

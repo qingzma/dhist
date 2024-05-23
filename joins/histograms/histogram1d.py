@@ -1,5 +1,6 @@
 import pickle
 import time
+from copy import deepcopy
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -47,13 +48,17 @@ class JoinHistogram(BaseHistogram):
         self.unique_counts = np.array(uni["uni"].count()).astype("float")
         # print("self.unique_counts\n", self.unique_counts)
 
-    def join(self, hist1: "JoinHistogram") -> int:
+    def join(self, hist1: "JoinHistogram", update_statistics=False) -> int:
         mul = np.multiply(self.counts, hist1.counts)
         maxs = np.maximum(self.unique_counts, hist1.unique_counts)
         # print("max is ", maxs)
         # counts = np.divide(mul, maxs, out=np.zeros_like(mul), where=maxs != 0)
         counts = division(mul, maxs)
         print("JoinHistogram prediction is ", np.sum(counts))
+        if update_statistics:
+            self.counts = counts
+            self.unique_counts = np.minimum(self.unique_counts, hist1.unique_counts)
+            return self
         return counts
 
 
@@ -94,6 +99,7 @@ class UpperBoundHistogramTopK(BaseHistogram):
         self.unique_counts_top_k = None
         self.top_k = top_k  # the number of dominating values to maintain
         self.top_k_container = None  # a list, containing a tree of [value, counter]
+        self.background_frequency = None
 
     def fit(self, data: pd.DataFrame, headers: list, bins) -> None:
         groups = data.groupby(pd.cut(data[headers[0]], bins), observed=False)
@@ -119,12 +125,12 @@ class UpperBoundHistogramTopK(BaseHistogram):
             # print(domain_value, counter)
             value = domain_value[1]
             if cnt < self.top_k:
-                if counter > 0:
+                if counter > 1:
                     container[value] = counter
                 cnt += 1
             else:
                 top_k_container.append(container)
-                if counter > 0:
+                if counter > 1:
                     container = {value: counter}
                 else:
                     container = {}
@@ -143,6 +149,10 @@ class UpperBoundHistogramTopK(BaseHistogram):
 
         self.unique_counts_no_top_k = self.unique_counts - self.unique_counts_top_k
         self.counts_no_top_k = self.counts - self.counts_top_k
+        self.background_frequency = division(
+            self.counts_no_top_k * 1.0, self.unique_counts_no_top_k
+        )
+        # print("background_frequency", self.background_frequency)
 
         # mfv_counts = np.array(value_counts)
         # # print("mfv_counts\n", mfv_counts)
@@ -158,13 +168,22 @@ class UpperBoundHistogramTopK(BaseHistogram):
         # top k
         counts_top_k = []
         top_k_container = []
-        for aa, bb in zip(self.top_k_container, hist1.top_k_container):
+        for aa, bb, fa, fb in zip(
+            self.top_k_container,
+            hist1.top_k_container,
+            self.background_frequency,
+            hist1.background_frequency,
+        ):
             set_a = set(aa)
             set_b = set(bb)
             # cnt = 0
             container = {}
             for k in set_a.intersection(set_b):
                 container[k] = aa[k] * bb[k]
+            for k in set_a - set_a.intersection(set_b):
+                container[k] = aa[k] * fb
+            for k in set_b - set_a.intersection(set_b):
+                container[k] = bb[k] * fa
                 # cnt += aa[k] * bb[k]
             # counts_top_k.append(cnt)
             top_k_container.append(container)
@@ -175,14 +194,17 @@ class UpperBoundHistogramTopK(BaseHistogram):
         counts = np.add(counts_top_k, counts_no_top_k)
 
         if update_statistics:
-            self.counts_no_top_k = counts_no_top_k
-            self.counts_top_k = counts_top_k
-            self.counts = np.add(counts_no_top_k, counts_top_k)
-            self.top_k_container = top_k_container
-            self.unique_counts_top_k = unique_counts_top_k
-            self.unique_counts = np.maximum(self.unique_counts, hist1.unique_counts)
-            self.unique_counts_no_top_k = self.unique_counts - self.unique_counts_top_k
-
+            hist = deepcopy(self)
+            hist.counts_no_top_k = counts_no_top_k
+            hist.counts_top_k = counts_top_k
+            hist.counts = np.add(counts_no_top_k, counts_top_k)
+            hist.top_k_container = top_k_container
+            hist.unique_counts_top_k = unique_counts_top_k
+            hist.unique_counts = np.minimum(self.unique_counts, hist1.unique_counts)
+            hist.unique_counts_no_top_k = self.unique_counts - self.unique_counts_top_k
+            hist.background_frequency = division(
+                hist.counts_no_top_k * 1.0, hist.unique_counts_no_top_k
+            )
         end = time.time()
         print(
             "UpperBoundHistogramTopK prediction is ",
@@ -194,7 +216,7 @@ class UpperBoundHistogramTopK(BaseHistogram):
             " bytes.",
         )
         if update_statistics:
-            return self
+            return hist
 
         return counts
 
@@ -354,6 +376,8 @@ if __name__ == "__main__":
     # 3728360
     # SELECT COUNT(*)  FROM badges as b,  posts as p,  comments as c WHERE c.UserId = p.OwnerUserId   AND c.UserId = b.UserId
     # 15131840763
+    # SELECT COUNT(*)  FROM badges as b,  posts as p,  users as u ,  comments as c WHERE u.Id = p.OwnerUserId   AND u.Id = b.UserId AND c.UserId = b.UserId
+    #
     ubtk_u = UpperBoundHistogramTopK(10)
     ubtk_u.fit(u, ["Id"], bins)
     ubtk_b = UpperBoundHistogramTopK(10)
