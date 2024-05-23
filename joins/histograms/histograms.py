@@ -13,6 +13,10 @@ def division(x: np.array, y: np.array):
     return np.divide(x, y, out=np.zeros_like(x), where=y != 0)
 
 
+def tops(s, n=3):
+    return s.value_counts().head(n)
+
+
 class BaseHistogram:
     def __init__(self) -> None:
         pass
@@ -23,8 +27,10 @@ class BaseHistogram:
     def join(self, hist1: "BaseHistogram") -> int:
         pass
 
-    def serialize(self):
+    def serialize(self, name="out"):
         bytes = pickle.dumps(self, pickle.HIGHEST_PROTOCOL)
+        # with open(name, "wb") as output_file:
+        #     pickle.dump(self, output_file, pickle.HIGHEST_PROTOCOL)
         return len(bytes)
 
 
@@ -78,7 +84,7 @@ class UpperBoundHistogram(BaseHistogram):
         # print("mfv_counts\n", mfv_counts)
         self.mfv_counts = mfv_counts.astype("float")
 
-    def join(self, hist1: "UpperBoundHistogram") -> int:
+    def join(self, hist1: "UpperBoundHistogram", update_statistics=False) -> int:
         res = np.minimum(
             division(self.counts, self.mfv_counts),
             division(hist1.counts, hist1.mfv_counts),
@@ -86,6 +92,9 @@ class UpperBoundHistogram(BaseHistogram):
         res = np.multiply(res, self.mfv_counts)
         res = np.multiply(res, hist1.mfv_counts)
         print("UpperBoundHistogram prediction is ", np.sum(res))
+        if update_statistics:
+            hist = deepcopy(self)
+
         return res
 
 
@@ -114,6 +123,179 @@ class UpperBoundHistogramTopK(BaseHistogram):
         value_counts = (
             groups.value_counts().groupby(headers[0], observed=False).head(self.top_k)
         )
+        # print(type(value_counts))
+        # print("value_counts\n", value_counts)
+        # print("-"*80)
+        top_k_container = []
+        cnt = 0
+        container = {}
+        # cntt = 0
+        for domain_value, counter in value_counts.items():
+            # print(domain_value, counter)
+            value = domain_value[1]
+            if cnt < self.top_k:
+                if counter > 1:
+                    container[value] = counter
+                cnt += 1
+            else:
+                top_k_container.append(container)
+                if counter > 1:
+                    container = {value: counter}
+                else:
+                    container = {}
+                cnt = 1
+        top_k_container.append(container)
+        # if cntt < 20:
+        #     print(domain_value[0], domain_value[1], counter)
+        # cntt += 1
+
+        self.top_k_container = top_k_container
+        # print("self.top_k_container \n", self.top_k_container)
+        self.counts_top_k = np.array([sum(i.values()) for i in top_k_container])
+        self.unique_counts_top_k = np.array([len(i) for i in top_k_container])
+        # print("self.counts_top_k \n", self.counts_top_k)
+        # print("self.unique_counts_top_k \n", self.unique_counts_top_k)
+
+        self.unique_counts_no_top_k = self.unique_counts - self.unique_counts_top_k
+        self.counts_no_top_k = self.counts - self.counts_top_k
+        self.background_frequency = division(
+            self.counts_no_top_k * 1.0, self.unique_counts_no_top_k
+        )
+        # print("background_frequency", self.background_frequency)
+
+        # mfv_counts = np.array(value_counts)
+        # # print("mfv_counts\n", mfv_counts)
+        # self.mfv_counts = mfv_counts.astype("float")
+
+    def join(self, hist1: "UpperBoundHistogramTopK", update_statistics=False) -> int:
+        start = time.time()
+        # not top k
+        mul = np.multiply(self.counts_no_top_k, hist1.counts_no_top_k)
+        maxs = np.maximum(self.unique_counts_no_top_k, hist1.unique_counts_no_top_k)
+        counts_no_top_k = division(mul, maxs)
+
+        # top k
+        counts_top_k = []
+        top_k_container = []
+        for aa, bb, fa, fb in zip(
+            self.top_k_container,
+            hist1.top_k_container,
+            self.background_frequency,
+            hist1.background_frequency,
+        ):
+            set_a = set(aa)
+            set_b = set(bb)
+            # cnt = 0
+            container = {}
+            for k in set_a.intersection(set_b):
+                container[k] = aa[k] * bb[k]
+            for k in set_a - set_a.intersection(set_b):
+                container[k] = aa[k] * fb
+            for k in set_b - set_a.intersection(set_b):
+                container[k] = bb[k] * fa
+                # cnt += aa[k] * bb[k]
+            # counts_top_k.append(cnt)
+            top_k_container.append(container)
+        # counts_top_k = np.array(counts_top_k)
+        counts_top_k = np.array([sum(i.values()) for i in top_k_container])
+        unique_counts_top_k = np.array([len(i) for i in top_k_container])
+
+        counts = np.add(counts_top_k, counts_no_top_k)
+
+        if update_statistics:
+            hist = deepcopy(self)
+            hist.counts_no_top_k = counts_no_top_k
+            hist.counts_top_k = counts_top_k
+            hist.counts = np.add(counts_no_top_k, counts_top_k)
+            hist.top_k_container = top_k_container
+            hist.unique_counts_top_k = unique_counts_top_k
+            hist.unique_counts = np.minimum(self.unique_counts, hist1.unique_counts)
+            hist.unique_counts_no_top_k = self.unique_counts - self.unique_counts_top_k
+            hist.background_frequency = division(
+                hist.counts_no_top_k * 1.0, hist.unique_counts_no_top_k
+            )
+        end = time.time()
+        print(
+            "UpperBoundHistogramTopK prediction is ",
+            np.sum(counts),
+            "with time cost ",
+            end - start,
+            " seconds, and size ",
+            self.serialize(),
+            " bytes.",
+        )
+        if update_statistics:
+            return hist
+
+        return counts
+
+
+class UpperBoundHistogramTopK2D(BaseHistogram):
+    def __init__(self, top_k=5) -> None:
+        self.counts = None
+        self.unique_counts = None
+        self.counts_no_top_k = None
+        self.unique_counts_no_top_k = None
+        self.counts_top_k = None
+        self.unique_counts_top_k = None
+        self.top_k = top_k  # the number of dominating values to maintain
+        self.top_k_container = None  # a list, containing a tree of [value, counter]
+        self.background_frequency = None
+
+    def fit(self, data: pd.DataFrame, headers: list, grid_x, grid_y) -> None:
+        assert len(headers) == 2
+        print(len(data))
+        data = data.astype(float)
+        data = data.dropna()
+        print(len(data))
+        df = data.assign(
+            x_cut=pd.cut(data[headers[0]], grid_x, include_lowest=True),
+            y_cut=pd.cut(data[headers[1]], grid_y, include_lowest=True),
+        )
+        print("df\n", df)
+        groups = df.groupby(["x_cut", "y_cut"], observed=False)
+        # print(groups[headers].count())
+        # print(groups.size().unstack())
+        tmp = groups.size().unstack().to_numpy()
+        print(tmp)
+
+        self.counts = groups.size().unstack().to_numpy().astype("float")
+
+        # groups = data.groupby(pd.cut(data[headers], bins), observed=False)
+        # self.counts = np.array(groups[headers[0]].count()).astype("float")
+
+        uniques = df.groupby(headers).size().reset_index().rename(columns={0: "count"})
+        uni = uniques.assign(
+            x_cut=pd.cut(uniques[headers[0]], grid_x, include_lowest=True),
+            y_cut=pd.cut(uniques[headers[1]], grid_y, include_lowest=True),
+        )
+        uni_groups = uni.groupby(
+            ["x_cut", "y_cut"], observed=False
+        )  # .size().unstack().to_numpy()
+        # print("uniques\n", uniques.head(30))
+        # print("uni_groups\n", uni_groups)
+        # uni = uniques.assign(
+        #     x_cut=pd.cut(data[headers[0]], grid_x),
+        #     y_cut=pd.cut(data[headers[1]], grid_y),
+        # )
+        self.unique_counts = uni_groups.size().unstack().to_numpy().astype("float")
+        print("self.unique_counts", self.unique_counts)
+        # print(self.unique_counts)
+        # TODO unique matix is abnormal, compared with counts matrix
+
+        print("groups", groups)
+        # print("value counts", groups.value_counts())
+        print("size is ", len(groups))
+        # value_counts = groups.head(5)
+        value_counts = groups[].apply(tops, n=self.top_k)
+        print("value_counts\n", value_counts)
+        # cc=0
+        # for k, v in groups:
+        #     print(k, v)
+        exit()
+        # value_counts = (
+        #     groups.value_counts().groupby(headers, observed=False).head(self.top_k)
+        # )
         # print(type(value_counts))
         # print("value_counts\n", value_counts)
         # print("-"*80)
