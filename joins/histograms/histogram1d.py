@@ -92,9 +92,8 @@ class UpperBoundHistogramTopK(BaseHistogram):
         self.unique_counts_no_top_k = None
         self.counts_top_k = None
         self.unique_counts_top_k = None
-        # self.mfv_counts = None
-        self.top_k = top_k
-        self.top_k_container = None
+        self.top_k = top_k  # the number of dominating values to maintain
+        self.top_k_container = None  # a list, containing a tree of [value, counter]
 
     def fit(self, data: pd.DataFrame, headers: list, bins) -> None:
         groups = data.groupby(pd.cut(data[headers[0]], bins), observed=False)
@@ -149,7 +148,7 @@ class UpperBoundHistogramTopK(BaseHistogram):
         # # print("mfv_counts\n", mfv_counts)
         # self.mfv_counts = mfv_counts.astype("float")
 
-    def join(self, hist1: "UpperBoundHistogramTopK") -> int:
+    def join(self, hist1: "UpperBoundHistogramTopK", update_statistics=False) -> int:
         start = time.time()
         # not top k
         mul = np.multiply(self.counts_no_top_k, hist1.counts_no_top_k)
@@ -158,16 +157,32 @@ class UpperBoundHistogramTopK(BaseHistogram):
 
         # top k
         counts_top_k = []
+        top_k_container = []
         for aa, bb in zip(self.top_k_container, hist1.top_k_container):
             set_a = set(aa)
             set_b = set(bb)
-            cnt = 0
+            # cnt = 0
+            container = {}
             for k in set_a.intersection(set_b):
-                cnt += aa[k] * bb[k]
-            counts_top_k.append(cnt)
-        counts_top_k = np.array(counts_top_k)
+                container[k] = aa[k] * bb[k]
+                # cnt += aa[k] * bb[k]
+            # counts_top_k.append(cnt)
+            top_k_container.append(container)
+        # counts_top_k = np.array(counts_top_k)
+        counts_top_k = np.array([sum(i.values()) for i in top_k_container])
+        unique_counts_top_k = np.array([len(i) for i in top_k_container])
 
         counts = np.add(counts_top_k, counts_no_top_k)
+
+        if update_statistics:
+            self.counts_no_top_k = counts_no_top_k
+            self.counts_top_k = counts_top_k
+            self.counts = np.add(counts_no_top_k, counts_top_k)
+            self.top_k_container = top_k_container
+            self.unique_counts_top_k = unique_counts_top_k
+            self.unique_counts = np.maximum(self.unique_counts, hist1.unique_counts)
+            self.unique_counts_no_top_k = self.unique_counts - self.unique_counts_top_k
+
         end = time.time()
         print(
             "UpperBoundHistogramTopK prediction is ",
@@ -178,6 +193,9 @@ class UpperBoundHistogramTopK(BaseHistogram):
             self.serialize(),
             " bytes.",
         )
+        if update_statistics:
+            return self
+
         return counts
 
 
@@ -225,9 +243,27 @@ if __name__ == "__main__":
     b = pd.read_csv("data/stats/badges.csv")[["UserId"]]
     c = pd.read_csv("data/stats/comments.csv")[["UserId"]]
     u = pd.read_csv("data/stats/users.csv")[["Id"]]
+    ph = pd.read_csv("data/stats/postHistory.csv")[["UserId"]]
+    p = pd.read_csv("data/stats/posts.csv")[["OwnerUserId"]]
 
-    low = np.min([b.min().values[0], c.min().values[0], u.min().values[0]])
-    high = np.max([b.max().values[0], c.max().values[0], u.max().values[0]])
+    low = np.min(
+        [
+            b.min().values[0],
+            c.min().values[0],
+            u.min().values[0],
+            ph.min().values[0],
+            p.min().values[0],
+        ]
+    )
+    high = np.max(
+        [
+            b.max().values[0],
+            c.max().values[0],
+            u.max().values[0],
+            ph.max().values[0],
+            p.max().values[0],
+        ]
+    )
     print("low ", low)
     print("high ", high)
     bins = np.linspace(low, high, 300)
@@ -265,45 +301,71 @@ if __name__ == "__main__":
     # # plt.yscale("log")
     # plt.show()
 
-    # upperBoundHistogramTopK
-    ubtk_b = UpperBoundHistogramTopK(1)
-    ubtk_b.fit(b, ["UserId"], bins)
-    ubtk_c = UpperBoundHistogramTopK(1)
-    ubtk_c.fit(c, ["UserId"], bins)
-    ubtk = ubtk_b.join(ubtk_c)
+    # # upperBoundHistogramTopK
+    # ubtk_b = UpperBoundHistogramTopK(1)
+    # ubtk_b.fit(b, ["UserId"], bins)
+    # ubtk_c = UpperBoundHistogramTopK(1)
+    # ubtk_c.fit(c, ["UserId"], bins)
+    # ubtk = ubtk_b.join(ubtk_c)
 
-    ubtk_b = UpperBoundHistogramTopK(3)
-    ubtk_b.fit(b, ["UserId"], bins)
-    ubtk_c = UpperBoundHistogramTopK(3)
-    ubtk_c.fit(c, ["UserId"], bins)
-    ubtk = ubtk_b.join(ubtk_c)
+    # ubtk_b = UpperBoundHistogramTopK(3)
+    # ubtk_b.fit(b, ["UserId"], bins)
+    # ubtk_c = UpperBoundHistogramTopK(3)
+    # ubtk_c.fit(c, ["UserId"], bins)
+    # ubtk = ubtk_b.join(ubtk_c)
 
-    ubtk_b = UpperBoundHistogramTopK(5)
-    ubtk_b.fit(b, ["UserId"], bins)
-    ubtk_c = UpperBoundHistogramTopK(5)
-    ubtk_c.fit(c, ["UserId"], bins)
-    ubtk = ubtk_b.join(ubtk_c)
+    # ubtk_b = UpperBoundHistogramTopK(5)
+    # ubtk_b.fit(b, ["UserId"], bins)
+    # ubtk_c = UpperBoundHistogramTopK(5)
+    # ubtk_c.fit(c, ["UserId"], bins)
+    # ubtk = ubtk_b.join(ubtk_c)
 
+    # ubtk_b = UpperBoundHistogramTopK(10)
+    # ubtk_b.fit(b, ["UserId"], bins)
+    # ubtk_c = UpperBoundHistogramTopK(10)
+    # ubtk_c.fit(c, ["UserId"], bins)
+    # ubtk = ubtk_b.join(ubtk_c)
+
+    # ubtk_b = UpperBoundHistogramTopK(20)
+    # ubtk_b.fit(b, ["UserId"], bins)
+    # ubtk_c = UpperBoundHistogramTopK(20)
+    # ubtk_c.fit(c, ["UserId"], bins)
+    # ubtk = ubtk_b.join(ubtk_c)
+
+    # ubtk_b = UpperBoundHistogramTopK(100)
+    # ubtk_b.fit(b, ["UserId"], bins)
+    # ubtk_c = UpperBoundHistogramTopK(100)
+    # ubtk_c.fit(c, ["UserId"], bins)
+    # ubtk = ubtk_b.join(ubtk_c)
+
+    # ubtk_error = ubtk - tj  # division(ubtk-tj, tj)
+    # # print(ubtk_error)
+    # plt.hist(bins[:-1], bins, weights=ubtk_error)
+    # # plt.yscale("log")
+    # plt.show()
+
+    # ubtk_ph = UpperBoundHistogramTopK(5)
+    # ubtk_ph.fit(ph, ["UserId"], bins)
+    # ubtk_c = UpperBoundHistogramTopK(5)
+    # ubtk_c.fit(c, ["UserId"], bins)
+    # ubtk = ubtk_ph.join(ubtk_c)
+
+    # SELECT COUNT(*)  FROM badges as b,  posts as p,  users as u  WHERE u.Id = p.OwnerUserId   AND u.Id = b.UserId
+    # 3728360
+    # SELECT COUNT(*)  FROM badges as b,  posts as p,  comments as c WHERE c.UserId = p.OwnerUserId   AND c.UserId = b.UserId
+    # 15131840763
+    ubtk_u = UpperBoundHistogramTopK(10)
+    ubtk_u.fit(u, ["Id"], bins)
     ubtk_b = UpperBoundHistogramTopK(10)
     ubtk_b.fit(b, ["UserId"], bins)
+    ubtk_p = UpperBoundHistogramTopK(10)
+    ubtk_p.fit(p, ["OwnerUserId"], bins)
     ubtk_c = UpperBoundHistogramTopK(10)
     ubtk_c.fit(c, ["UserId"], bins)
-    ubtk = ubtk_b.join(ubtk_c)
+    ubtk = ubtk_p.join(ubtk_b, update_statistics=True).join(ubtk_c)
 
-    ubtk_b = UpperBoundHistogramTopK(20)
-    ubtk_b.fit(b, ["UserId"], bins)
-    ubtk_c = UpperBoundHistogramTopK(20)
-    ubtk_c.fit(c, ["UserId"], bins)
-    ubtk = ubtk_b.join(ubtk_c)
+    # SELECT COUNT(*)  FROM badges as b,  users as u  WHERE  u.Id = b.UserId
+    # 79851
 
-    ubtk_b = UpperBoundHistogramTopK(100)
-    ubtk_b.fit(b, ["UserId"], bins)
-    ubtk_c = UpperBoundHistogramTopK(100)
-    ubtk_c.fit(c, ["UserId"], bins)
-    ubtk = ubtk_b.join(ubtk_c)
-
-    ubtk_error = ubtk - tj  # division(ubtk-tj, tj)
-    # print(ubtk_error)
-    plt.hist(bins[:-1], bins, weights=ubtk_error)
-    # plt.yscale("log")
-    plt.show()
+    # SELECT COUNT(*)  FROM badges as b,  posts as p WHERE p.OwnerUserId = b.UserId
+    # 3728360
