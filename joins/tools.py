@@ -1,6 +1,7 @@
 import os
 import time
 
+import numpy as np
 import pandas as pd
 
 
@@ -42,3 +43,7 @@ def save_predictions_to_file(preds, times, header1, header2, file_path):
 
 def read_from_csv(file_path, header):
     return pd.read_csv(file_path)[header].values
+
+
+def division(x: np.array, y: np.array):
+    return np.divide(x, y, out=np.zeros_like(x), where=y != 0)
