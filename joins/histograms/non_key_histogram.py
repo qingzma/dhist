@@ -1,10 +1,92 @@
-from bisect import bisect_left
+from bisect import bisect
 
 import numpy as np
 import pandas as pd
 
 from joins.domain import Domain
 from joins.tools import division
+
+
+def interp(x, y, point):
+    # print("x is ", x)
+    # print("y is ", y)
+    # print("point is ", point)
+    return (y[1] - y[0]) * (point - x[0]) / (x[1] - x[0]) + y[0]
+
+
+class NonKeyCumulativeHistogram:
+    def __init__(self, n_top_k=30, n_total=100, n_categorical=3) -> None:
+        assert n_total >= n_top_k
+        self.n_top_k = n_top_k
+        self.n_total = n_total
+        self.n_categorical = n_categorical
+        self.bins = None
+        self.is_categorical = False
+        self.cdf = None
+        self.size = None
+        self.bin_width = 1.0
+
+    def fit(self, data: pd.DataFrame, headers: list) -> None:
+        assert len(headers) == 1
+        self.size = data.shape[0]
+        uniques = np.sort(pd.unique(data[headers[0]]))
+        if len(uniques) < self.n_categorical:
+            self.is_categorical = True
+            self.bins = uniques
+        else:
+            self.bins = np.linspace(uniques[0], uniques[-1], self.n_total)
+            self.bin_width = self.bins[1] - self.bins[0]
+
+        data["count"] = pd.cut(data[headers[0]], bins=self.bins, labels=self.bins[:-1])
+        # print(data)
+        counts = (
+            data.groupby(["count"], observed=False, dropna=False).count().to_numpy()
+        )
+        # treat Nan Group
+        counts = np.reshape(counts, (1, -1))[0]
+        counts = np.insert(counts, 0, counts[-1])
+        counts = counts[:-1]
+        print("bins", self.bins)
+
+        counts = np.cumsum(counts, axis=0)
+        print("counts", counts)
+
+        self.cdf = counts
+
+    def selectivity(self, domain: Domain, frac=True) -> float:
+        # print("domain is ", domain)
+        error_rate = 1e-6
+        if not domain.left:
+            domain.min += error_rate * self.bin_width
+            domain.left = True
+        else:
+            # fix issue for query with low bound equals the max bin value
+            if domain.min == self.bins[-1]:
+                return self.cdf[-1] - self.cdf[-2]
+        if domain.right:
+            domain.max += error_rate * self.bin_width
+        else:
+            domain.right = True
+            domain.max -= 1 * self.bin_width
+        # print("domain changed to ", domain)
+
+        cnt = self._cdf(domain.max) - self._cdf(domain.min)
+        if frac:
+            return 1.0 * cnt / self.size
+        return cnt
+
+    def _cdf(self, x) -> float:
+        idx = np.searchsorted(self.bins, x)
+        # print("idx is ", idx)
+        # print("x is ", x)
+        if idx == 0:
+            return 0.0
+        if idx == len(self.bins):
+            # print("meet max", self.cdf[-1])
+            return float(self.cdf[-1])
+        # print("-" * 50)
+
+        return interp(self.bins[idx - 1 : idx + +1], self.cdf[idx - 1 : idx + 1], x)
 
 
 class NonKeyHistogram:
@@ -23,6 +105,7 @@ class NonKeyHistogram:
         self.is_categorical = False
         self.n_categorical = n_categorical
         self.n_bins = n_bins
+        self.bins = None
 
     def fit(self, data: pd.DataFrame, headers: list) -> None:
         assert len(headers) == 1
