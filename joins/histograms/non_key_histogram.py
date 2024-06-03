@@ -15,7 +15,7 @@ def interp(x, y, point):
 
 
 class NonKeyCumulativeHistogram:
-    def __init__(self, n_top_k=30, n_total=100, n_categorical=3) -> None:
+    def __init__(self, n_top_k=30, n_total=100, n_categorical=300) -> None:
         assert n_total >= n_top_k
         self.n_top_k = n_top_k
         self.n_total = n_total

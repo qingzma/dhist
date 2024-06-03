@@ -56,33 +56,93 @@ class TestHistogramMethod(unittest.TestCase):
         # self.grid_x, self.grid_y = np.meshgrid(self.bins, self.bins1)
         # self.grid = np.array([self.grid_x.flatten(), self.grid_y.flatten()]).T
 
-    def test_NonKeyCumulativeHistogram(self):
+    # def test_NonKeyCumulativeHistogram_simple(self):
+
+    #     data = []
+    #     for i in reversed(range(1, 5)):
+    #         # for i in range(1, 5):
+    #         for _ in range(i):
+    #             data.append(i)
+    #     data = pd.DataFrame(data, columns=["a"])
+    #     hist = NonKeyCumulativeHistogram(n_top_k=3, n_total=20)
+    #     hist.fit(data, headers=["a"])
+
+    #     domain = Domain(mins=1, left=True, right=True)
+    #     self.assertEqual(10, hist.selectivity(domain, frac=False))
+    #     domain = Domain(mins=0, left=True, right=True)
+    #     self.assertEqual(10, hist.selectivity(domain, frac=False))
+    #     domain = Domain(mins=6, left=True, right=True)
+    #     self.assertEqual(0, hist.selectivity(domain, frac=False))
+
+    #     # [1,], (1,)
+    #     domain = Domain(mins=1, left=False, right=True)
+    #     self.assertTrue(abs(hist.selectivity(domain, frac=False) - 9) < 1e-5)
+    #     domain = Domain(mins=1, left=True, right=True)
+    #     self.assertTrue(abs(hist.selectivity(domain, frac=False) - 10) < 1e-5)
+    #     domain = Domain(mins=0.9, left=False, right=True)
+    #     self.assertTrue(abs(hist.selectivity(domain, frac=False) - 10) < 1e-5)
+    #     domain = Domain(mins=0.9, left=True, right=True)
+    #     self.assertTrue(abs(hist.selectivity(domain, frac=False) - 10) < 1e-5)
+
+    #     # (,1), (,1]
+    #     domain = Domain(maxs=1, left=False, right=True)
+    #     self.assertTrue(abs(hist.selectivity(domain, frac=False) - 1) < 1e-5)
+    #     domain = Domain(maxs=1, left=True, right=False)
+    #     self.assertTrue(abs(hist.selectivity(domain, frac=False) - 0) < 1e-5)
+    #     domain = Domain(maxs=0.9, left=False, right=True)
+    #     self.assertTrue(abs(hist.selectivity(domain, frac=False) - 0) < 1e-5)
+    #     domain = Domain(maxs=0.9, left=True, right=False)
+    #     self.assertTrue(abs(hist.selectivity(domain, frac=False) - 0) < 1e-5)
+
+    #     # normal case
+    #     domain = Domain(mins=1, left=True, maxs=4, right=False)
+    #     self.assertTrue(abs(hist.selectivity(domain, frac=False) - 6) < 1e-5)
+    #     domain = Domain(mins=1, left=False, maxs=4, right=False)
+    #     self.assertTrue(abs(hist.selectivity(domain, frac=False) - 5) < 1e-5)
+    #     domain = Domain(mins=1, left=True, maxs=4, right=True)
+    #     self.assertTrue(abs(hist.selectivity(domain, frac=False) - 10) < 1e-5)
+    #     domain = Domain(mins=1, left=False, maxs=4, right=True)
+    #     self.assertTrue(abs(hist.selectivity(domain, frac=False) - 9) < 1e-5)
+
+    #     # [4,], (4,)
+    #     domain = Domain(mins=4, left=False, right=True)
+    #     self.assertTrue(abs(hist.selectivity(domain, frac=False) - 0) < 1e-5)
+    #     domain = Domain(mins=4, left=True, right=True)
+    #     self.assertTrue(abs(hist.selectivity(domain, frac=False) - 4) < 1e-5)
+    #     domain = Domain(mins=4.1, left=False, right=True)
+    #     self.assertTrue(abs(hist.selectivity(domain, frac=False) - 0) < 1e-5)
+    #     domain = Domain(mins=4.1, left=True, right=True)
+    #     self.assertTrue(abs(hist.selectivity(domain, frac=False) - 0) < 1e-5)
+
+    def test_NonKeyCumulativeHistogram_large(self):
 
         data = []
-        for i in reversed(range(1, 5)):
+        for i in reversed(range(1, 120)):
             # for i in range(1, 5):
             for _ in range(i):
                 data.append(i)
         data = pd.DataFrame(data, columns=["a"])
+        print(data)
         hist = NonKeyCumulativeHistogram(n_top_k=3, n_total=20)
         hist.fit(data, headers=["a"])
 
         domain = Domain(mins=1, left=True, right=True)
-        self.assertEqual(10, hist.selectivity(domain, frac=False))
+        self.assertEqual(7140, hist.selectivity(domain, frac=False))
         domain = Domain(mins=0, left=True, right=True)
-        self.assertEqual(10, hist.selectivity(domain, frac=False))
-        domain = Domain(mins=6, left=True, right=True)
-        self.assertEqual(0, hist.selectivity(domain, frac=False))
+        self.assertEqual(7140, hist.selectivity(domain, frac=False))
+        domain = Domain(mins=5, left=True, right=True)
+        self.assertEqual(7125, hist.selectivity(domain, frac=False))
 
         # [1,], (1,)
         domain = Domain(mins=1, left=False, right=True)
-        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 9) < 1e-5)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 7139) < 1e-5)
         domain = Domain(mins=1, left=True, right=True)
-        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 10) < 1e-5)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 7140) < 1e-5)
         domain = Domain(mins=0.9, left=False, right=True)
-        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 10) < 1e-5)
+        print(hist.selectivity(domain, frac=False))
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 7140) < 1e-5)
         domain = Domain(mins=0.9, left=True, right=True)
-        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 10) < 1e-5)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 7140) < 1e-5)
 
         # (,1), (,1]
         domain = Domain(maxs=1, left=False, right=True)
@@ -104,14 +164,14 @@ class TestHistogramMethod(unittest.TestCase):
         domain = Domain(mins=1, left=False, maxs=4, right=True)
         self.assertTrue(abs(hist.selectivity(domain, frac=False) - 9) < 1e-5)
 
-        # [4,], (4,)
-        domain = Domain(mins=4, left=False, right=True)
+        # [119,], (119,)
+        domain = Domain(mins=119, left=False, right=True)
         self.assertTrue(abs(hist.selectivity(domain, frac=False) - 0) < 1e-5)
-        domain = Domain(mins=4, left=True, right=True)
-        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 4) < 1e-5)
-        domain = Domain(mins=4.1, left=False, right=True)
+        domain = Domain(mins=119, left=True, right=True)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 119) < 1e-5)
+        domain = Domain(mins=119.1, left=False, right=True)
         self.assertTrue(abs(hist.selectivity(domain, frac=False) - 0) < 1e-5)
-        domain = Domain(mins=4.1, left=True, right=True)
+        domain = Domain(mins=119.1, left=True, right=True)
         self.assertTrue(abs(hist.selectivity(domain, frac=False) - 0) < 1e-5)
 
 
