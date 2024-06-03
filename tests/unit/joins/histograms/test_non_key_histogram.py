@@ -121,9 +121,11 @@ class TestHistogramMethod(unittest.TestCase):
             # for i in range(1, 5):
             for _ in range(i):
                 data.append(i)
+        for i in range(10):
+            data.append(117)
         data = pd.DataFrame(data, columns=["a"])
         print(data)
-        hist = NonKeyCumulativeHistogram(n_top_k=3, n_total=20)
+        hist = NonKeyCumulativeHistogram(n_top_k=5, n_total=20)
         hist.fit(data, headers=["a"])
 
         domain = Domain(mins=1, left=True, right=True)

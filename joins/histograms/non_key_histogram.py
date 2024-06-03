@@ -1,3 +1,4 @@
+import random
 from bisect import bisect
 
 import numpy as np
@@ -15,7 +16,7 @@ def interp(x, y, point):
 
 
 class NonKeyCumulativeHistogram:
-    def __init__(self, n_top_k=30, n_total=100, n_categorical=300) -> None:
+    def __init__(self, n_top_k=30, n_total=100, n_categorical=50) -> None:
         assert n_total >= n_top_k
         self.n_top_k = n_top_k
         self.n_total = n_total
@@ -24,7 +25,7 @@ class NonKeyCumulativeHistogram:
         self.is_categorical = False
         self.cdf = None
         self.size = None
-        self.bin_width = 1.0
+        self.bin_width = 1.0  # for categorical attributes, the default width is 1.0, modify it  if necessary
 
     def fit(self, data: pd.DataFrame, headers: list) -> None:
         assert len(headers) == 1
@@ -36,6 +37,17 @@ class NonKeyCumulativeHistogram:
         else:
             self.bins = np.linspace(uniques[0], uniques[-1], self.n_total)
             self.bin_width = self.bins[1] - self.bins[0]
+            # tops = data.value_counts().head(self.n_top_k).index.to_list()
+            # tops = [i[0] for i in tops]
+            # print("value counts", self.n_top_k)
+            # print(tops)
+            # extras = random.sample(
+            #     list(set(uniques).difference(set(tops))), self.n_total - self.n_top_k
+            # )
+            # print(extras)
+            # keys = tops + extras
+            # print(keys)
+            # self.bins = np.array(sorted(keys))
 
         data["count"] = pd.cut(data[headers[0]], bins=self.bins, labels=self.bins[:-1])
         # print(data)
