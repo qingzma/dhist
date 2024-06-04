@@ -302,15 +302,15 @@ class TestHistogramMethod(unittest.TestCase):
     def test_NonKeyTopKHistogram_large_continuous(self):
 
         data = []
-        # for i in reversed(range(1, 120)):
-        for i in range(1, 120):
+        for i in reversed(range(1, 120)):
+            # for i in range(1, 120):
             for _ in range(i):
                 data.append(i)
         for i in range(10):
             data.append(117)
         data = pd.DataFrame(data, columns=["a"])
         # print(data)
-        hist = NonKeyTopKHistogram(n_top_k=5, n_bins=50, n_categorical=50)
+        hist = NonKeyTopKHistogram(n_top_k=5, n_bins=100, n_categorical=50)
         hist.fit(data, headers=["a"])
 
         domain = Domain(mins=1, left=True, right=True)
@@ -373,6 +373,83 @@ class TestHistogramMethod(unittest.TestCase):
         self.assertTrue(abs(hist.selectivity(domain, frac=False) - 0) < 1e-5)
         domain = Domain(mins=119.1, left=True, right=True)
         self.assertTrue(abs(hist.selectivity(domain, frac=False) - 0) < 1e-5)
+
+    def test_NonKeyTopKHistogram_large_continuous_less_bin(self):
+
+        data = []
+        for i in reversed(range(1, 120)):
+            # for i in range(1, 120):
+            for _ in range(i):
+                data.append(i)
+        for i in range(10):
+            data.append(117)
+        data = pd.DataFrame(data, columns=["a"])
+        # print(data)
+        hist = NonKeyTopKHistogram(n_top_k=5, n_bins=20, n_categorical=50)
+        hist.fit(data, headers=["a"])
+
+        error = 4
+        domain = Domain(mins=1, left=True, right=True)
+        self.assertEqual(7150, hist.selectivity(domain, frac=False))
+        domain = Domain(mins=0, left=True, right=True)
+        self.assertTrue(abs(7150 - hist.selectivity(domain, frac=False)) < error)
+        domain = Domain(mins=5, left=False, right=True)
+        self.assertTrue(abs(7135 - hist.selectivity(domain, frac=False)) < error)
+        domain = Domain(mins=5, left=True, right=True)
+        self.assertTrue(abs(7140 - hist.selectivity(domain, frac=False)) < error)
+
+        # [1,], (1,)
+        domain = Domain(mins=1, left=False, right=True)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 7149) < error)
+        domain = Domain(mins=1, left=True, right=True)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 7150) < error)
+        domain = Domain(mins=0.9, left=False, right=True)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 7150) < error)
+        domain = Domain(mins=0.9, left=True, right=True)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 7150) < error)
+
+        # (,5),(,5]
+        domain = Domain(maxs=5, left=False, right=True)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 15) < error)
+        domain = Domain(maxs=5, left=True, right=False)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 10) < error)
+
+        # (,1), (,1]
+        domain = Domain(maxs=1, left=False, right=True)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 1) < error)
+        domain = Domain(maxs=1, left=True, right=False)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 0) < error)
+        domain = Domain(maxs=0.9, left=False, right=True)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 0) < error)
+        domain = Domain(maxs=0.9, left=True, right=False)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 0) < error)
+
+        # normal case
+        domain = Domain(mins=2, left=False, maxs=9, right=True)
+        # print("prediction ", hist.selectivity(domain, frac=False))
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 42) < error)
+        domain = Domain(mins=2, left=False, maxs=6, right=True)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 18) < error)
+        domain = Domain(mins=2, left=False, maxs=4, right=True)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 7) < error)
+        domain = Domain(mins=2, left=False, maxs=3, right=True)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 3) < error)
+        domain = Domain(mins=1, left=False, maxs=4, right=False)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 5) < error)
+        domain = Domain(mins=1, left=True, maxs=4, right=False)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 6) < error)
+        domain = Domain(mins=1, left=True, maxs=4, right=True)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 10) < error)
+
+        # [119,], (119,)
+        domain = Domain(mins=119, left=False, right=True)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 0) < error)
+        domain = Domain(mins=119, left=True, right=True)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 119) < error)
+        domain = Domain(mins=119.1, left=False, right=True)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 0) < error)
+        domain = Domain(mins=119.1, left=True, right=True)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 0) < error)
 
 
 if __name__ == "__main__":
