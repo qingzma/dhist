@@ -283,16 +283,16 @@ class NonKeyTopKHistogram:
 
             # interpret left incomplete bin
             # dominating term
-            # if domain.min > self.bins[0]:
-            cnt += interp_dominating_item(self.top_k_container[idx_left], domain)
-            print(
-                "dominating plus:",
-                interp_dominating_item(self.top_k_container[idx_left], domain),
-            )
-            if idx_right > idx_left:  # and not np.isinf(domain.max):
-                cnt += interp_dominating_item(self.top_k_container[idx_right], domain)
+            if domain.min > self.bins[0]:
+                cnt += interp_dominating_item(self.top_k_container[idx_left], domain)
                 print(
                     "dominating plus:",
+                    interp_dominating_item(self.top_k_container[idx_left], domain),
+                )
+            if idx_right > idx_left:  # and domain.max < self.max:
+                cnt += interp_dominating_item(self.top_k_container[idx_right], domain)
+                print(
+                    "dominating plus1:",
                     interp_dominating_item(self.top_k_container[idx_right], domain),
                 )
             print("dominating:", cnt)
