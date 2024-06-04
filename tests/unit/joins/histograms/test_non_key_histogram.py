@@ -327,7 +327,6 @@ class TestHistogramMethod(unittest.TestCase):
 
         # [1,], (1,)
         domain = Domain(mins=1, left=False, right=True)
-        print(hist.selectivity(domain, frac=False))
         self.assertTrue(abs(hist.selectivity(domain, frac=False) - 7149) < 1e-5)
         domain = Domain(mins=1, left=True, right=True)
         self.assertTrue(abs(hist.selectivity(domain, frac=False) - 7150) < 1e-5)
@@ -337,14 +336,10 @@ class TestHistogramMethod(unittest.TestCase):
         self.assertTrue(abs(hist.selectivity(domain, frac=False) - 7150) < 1e-5)
 
         # (,5),(,5]
-        # domain = Domain(maxs=5, left=False, right=True)
-        # print(
-        #     "hist.selectivity(domain, frac=False) ",
-        #     hist.selectivity(domain, frac=False),
-        # )
-        # self.assertTrue(abs(hist.selectivity(domain, frac=False) - 15) < 1e-5)
-        # domain = Domain(maxs=5, left=True, right=False)
-        # self.assertTrue(abs(hist.selectivity(domain, frac=False) - 10) < 1e-5)
+        domain = Domain(maxs=5, left=False, right=True)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 15) < 1e-5)
+        domain = Domain(maxs=5, left=True, right=False)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 10) < 1e-5)
 
         # (,1), (,1]
         domain = Domain(maxs=1, left=False, right=True)
@@ -365,19 +360,19 @@ class TestHistogramMethod(unittest.TestCase):
         self.assertTrue(abs(hist.selectivity(domain, frac=False) - 7) < 1e-5)
         domain = Domain(mins=2, left=False, maxs=3, right=True)
         self.assertTrue(abs(hist.selectivity(domain, frac=False) - 3) < 1e-5)
-        # domain = Domain(mins=1, left=False, maxs=4, right=False)
+        domain = Domain(mins=1, left=False, maxs=4, right=False)
         # print(hist.selectivity(domain, frac=False))
-        # self.assertTrue(abs(hist.selectivity(domain, frac=False) - 5) < 1e-5)
-        # domain = Domain(mins=1, left=True, maxs=4, right=False)
-        # self.assertTrue(abs(hist.selectivity(domain, frac=False) - 6) < 1e-5)
-        # domain = Domain(mins=1, left=True, maxs=4, right=True)
-        # self.assertTrue(abs(hist.selectivity(domain, frac=False) - 10) < 1e-5)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 5) < 1e-5)
+        domain = Domain(mins=1, left=True, maxs=4, right=False)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 6) < 1e-5)
+        domain = Domain(mins=1, left=True, maxs=4, right=True)
+        self.assertTrue(abs(hist.selectivity(domain, frac=False) - 10) < 1e-5)
 
         # [119,], (119,)
         domain = Domain(mins=119, left=False, right=True)
         self.assertTrue(abs(hist.selectivity(domain, frac=False) - 0) < 1e-5)
         domain = Domain(mins=119, left=True, right=True)
-        print(hist.selectivity(domain, frac=False))
+        # print(hist.selectivity(domain, frac=False))
         self.assertTrue(abs(hist.selectivity(domain, frac=False) - 119) < 1e-5)
         domain = Domain(mins=119.1, left=False, right=True)
         self.assertTrue(abs(hist.selectivity(domain, frac=False) - 0) < 1e-5)

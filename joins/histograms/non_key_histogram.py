@@ -9,15 +9,11 @@ from joins.tools import division
 
 
 def interp(x, y, point):
-    # print("x is ", x)
-    # print("y is ", y)
-    # print("point is ", point)
     return (y[1] - y[0]) * (point - x[0]) / (x[1] - x[0]) + y[0]
 
 
 def interp_dominating_item(dic: dict, domain: Domain):
     filtered = [v for k, v in dic.items() if domain.contain(k)]
-    print("kv", filtered)
     return np.sum(filtered)
 
 
@@ -212,12 +208,12 @@ class NonKeyTopKHistogram:
         self.background_frequency = division(
             self.counts_no_top_k * 1.0, self.unique_counts_no_top_k
         )
-        print("bins", self.bins)
-        print("counts", self.counts)
-        print("unique_counts", self.unique_counts)
-        print("top_k_container", self.top_k_container)
-        print("backgroud", self.background_frequency)
-        print("notopk ", self.counts_no_top_k)
+        # print("bins", self.bins)
+        # print("counts", self.counts)
+        # print("unique_counts", self.unique_counts)
+        # print("top_k_container", self.top_k_container)
+        # print("backgroud", self.background_frequency)
+        # print("notopk ", self.counts_no_top_k)
 
     def selectivity(self, domain: Domain, frac=True) -> float:
         if np.isinf(domain.max):
@@ -250,52 +246,29 @@ class NonKeyTopKHistogram:
                 cnt = 0.0
         else:
             # normal cases
-            # print("domain is ", domain)
-            # error_rate = 1e-6
-            # if not domain.left:
-            #     domain.min += error_rate * self.bin_width
-            #     domain.left = True
-            # else:
-            #     # fix issue for query with low bound equals the max bin value
-            #     if domain.min == self.bins[-1]:
-            #         return (
-            #             (self.cdf[-1] - self.cdf[-2]) * 1.0 / (self.bins[1] - self.bins[0])
-            #         )
-            # if domain.right:
-            #     domain.max += error_rate * self.bin_width
-            # else:
-            #     domain.right = True
-            #     domain.max -= 1 * self.bin_width
-            # print("domain changed to ", domain)
-
             idxs = np.searchsorted(self.bins, [domain.min, domain.max])
-            print("idxs is ", idxs)
+            if idxs[0] == 0:
+                idxs[0] = 1
+
             idx_left = max(0, idxs[0] - 1)
             idx_right = min(idxs[1] - 1, len(self.counts) - 1)
             if idx_right - idx_left > 1:
                 cnt = np.sum(self.counts[idxs[0] : idxs[1] - 1])
             else:
                 cnt = 0.0
-            print("middle is ", self.counts[idxs[0] : idxs[1] - 1])
-            print("sum asdfasdf ", cnt)
-            print("left bin ", idx_left, self.counts[idx_left])
-            print("right bin ", idx_right, self.counts[idx_right])
+            # print("middle is ", self.counts[idxs[0] : idxs[1] - 1])
+            # print("sum asdfasdf ", cnt)
+            # print("left bin ", idx_left, self.counts[idx_left])
+            # print("right bin ", idx_right, self.counts[idx_right])
 
             # interpret left incomplete bin
             # dominating term
-            if domain.min > self.bins[0]:
-                cnt += interp_dominating_item(self.top_k_container[idx_left], domain)
-                print(
-                    "dominating plus:",
-                    interp_dominating_item(self.top_k_container[idx_left], domain),
-                )
+            # if domain.min > self.bins[0]:
+            cnt += interp_dominating_item(self.top_k_container[idx_left], domain)
+
             if idx_right > idx_left:  # and domain.max < self.max:
                 cnt += interp_dominating_item(self.top_k_container[idx_right], domain)
-                print(
-                    "dominating plus1:",
-                    interp_dominating_item(self.top_k_container[idx_right], domain),
-                )
-            print("dominating:", cnt)
+
             # uniform assumption term
             if idx_left == idx_right:
                 cnt += (
@@ -306,12 +279,6 @@ class NonKeyTopKHistogram:
                 )
             else:
                 # add right part
-                print("domain is ", domain)
-                # if np.isinf(domain.max):
-                #     print("is inf ", self.counts_no_top_k[-1])
-                #     cnt -= self.counts_no_top_k[-1]
-                #     print("cnt changed to ", cnt)
-                # else:
                 cnt += (
                     1.0
                     * self.counts_no_top_k[idx_right]
@@ -326,44 +293,6 @@ class NonKeyTopKHistogram:
                     * (self.bins[idx_left + 1] - domain.min)
                 )
 
-            # # if idxs[0] == idxs[1]:
-            # #     cnt = self.counts[idxs[0]]
-            # # else:
-            # #     cnt = np.sum(self.counts[idxs[0] : idxs[1]])
-
-            # # print("temp sum is ", cnt)
-            # # if cnt == 0.0:
-            # #     return 0.0
-
-            # if domain.min == self.bins[idxs[0]]:
-            #     if not domain.left:
-            #         ids = idxs[0]
-            #         if ids >= len(self.background_frequency):
-            #             ids = len(self.background_frequency) - 1
-            #         val = self.background_frequency[ids]
-            #         if domain.min in self.top_k_container[ids]:
-            #             val = self.top_k_container[ids][domain.min]
-            #         print("left val is ", val)
-            #         cnt -= val
-            # if idxs[1] < len(self.bins):
-            #     if domain.max == self.bins[idxs[1]]:
-            #         # print("hehre")
-            #         if not domain.right:
-            #             ids = idxs[1]
-            #             # if ids >= len(self.background_frequency):
-            #             #     ids = len(self.background_frequency) - 1
-            #             val = self.background_frequency[ids]
-            #             # print(self.top_k_container[idxs[1]])
-            #             # print(self.top_k_container[idxs[1] + 1])
-            #             if domain.max in self.top_k_container[idxs[1] - 1]:
-            #                 val = self.top_k_container[idxs[1] - 1][domain.max]
-            #             # print("val is ", val)
-            #             print("right val is ", val)
-            #             cnt -= val
-            # else:
-            #     pass  # do not need to do anything for such situations.
-
-        # cnt = self._cdf(domain.max) - self._cdf(domain.min)
         if frac:
             return 1.0 * cnt / self.size
         return cnt
