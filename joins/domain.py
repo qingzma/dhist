@@ -1,4 +1,5 @@
 import copy
+
 import numpy as np
 
 from joins.base_logger import logger
@@ -30,6 +31,16 @@ class Domain:
         if d1.max < self.max:
             self.max = d1.max
             self.right = d1.right
+
+    def contain(self, p):
+        if self.left and self.right:
+            return p >= self.min and p <= self.max
+        if self.left and not self.right:
+            return p >= self.min and p < self.max
+        if not self.left and self.right:
+            return p > self.min and p <= self.max
+        if not self.left and not self.right:
+            return p > self.min and p < self.max
 
     def __str__(self) -> str:
         low = ""

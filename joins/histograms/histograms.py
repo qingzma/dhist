@@ -107,12 +107,14 @@ class UpperBoundHistogramTopK(BaseHistogram):
         self.background_frequency = None
 
     def fit(self, data: pd.DataFrame, headers: list, bins) -> None:
-        groups = data.groupby(pd.cut(data[headers[0]], bins), observed=False)
+        groups = data.groupby(
+            pd.cut(data[headers[0]], bins, include_lowest=True), observed=False
+        )
         self.counts = np.array(groups[headers[0]].count()).astype("float")
 
         uniques = pd.unique(data[headers[0]])
         uni = pd.DataFrame(uniques, columns=["uni"]).groupby(
-            pd.cut(uniques, bins), observed=False
+            pd.cut(uniques, bins, include_lowest=True), observed=False
         )
         self.unique_counts = np.array(uni["uni"].count()).astype("float")
 
