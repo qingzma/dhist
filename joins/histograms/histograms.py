@@ -8,6 +8,19 @@ import pandas as pd
 
 from joins.tools import division, read_from_csv
 
+colors = [
+    "#1f77b4",
+    "#ff7f0e",
+    "#2ca02c",
+    "#d62728",
+    "#9467bd",
+    "#8c564b",
+    "#e377c2",
+    "#7f7f7f",
+    "#bcbd22",
+    "#17becf",
+]
+
 
 def tops(s, n=3):
     return s.value_counts().head(n)
@@ -477,38 +490,54 @@ if __name__ == "__main__":
     tj_c.fit(c, ["UserId"])
     tj = tj_b.join(tj_c, bins=bins)
 
-    # # join-histogram
-    # jh_b = JoinHistogram()
-    # jh_b.fit(b, ["UserId"], bins)
-    # jh_c = JoinHistogram()
-    # jh_c.fit(c, ["UserId"], bins)
-    # jh = jh_b.join(jh_c)
+    # join-histogram
+    jh_b = JoinHistogram()
+    jh_b.fit(b, ["UserId"], bins)
+    jh_c = JoinHistogram()
+    jh_c.fit(c, ["UserId"], bins)
+    jh = jh_b.join(jh_c)
 
-    # jh_error = division(jh-tj, tj)
-    # # print(jh_error)
-    # plt.hist(bins[:-1], bins, weights=jh_error)
-    # # plt.yscale("log")
+    jh_error = division(jh, tj)
+    # print(jh_error)
+    # plt.hist(bins[:-1], bins, weights=jh_error, label="Join-Histogram")
+    # plt.yscale("log")
     # plt.show()
 
-    # # upperBoundHistogram
-    # ub_b = UpperBoundHistogram()
-    # ub_b.fit(b, ["UserId"], bins)
-    # ub_c = UpperBoundHistogram()
-    # ub_c.fit(c, ["UserId"], bins)
-    # ub = ub_b.join(ub_c)
+    # upperBoundHistogram
+    ub_b = UpperBoundHistogram()
+    ub_b.fit(b, ["UserId"], bins)
+    ub_c = UpperBoundHistogram()
+    ub_c.fit(c, ["UserId"], bins)
+    ub = ub_b.join(ub_c)
+    print("estimation from upper bound ", np.sum(ub))
 
-    # ub_error = division(ub-tj, tj)
-    # # print(ub_error)
-    # plt.hist(bins[:-1], bins, weights=ub_error)
-    # # plt.yscale("log")
+    plt.figure(dpi=300)
+    ub_error = division(ub, tj)
+    # print(ub_error)
+    plt.hist(bins[:-1], bins, weights=ub_error, label="Upper Bound", color=colors[2])
+    # plt.yscale("log")
     # plt.show()
 
-    # # upperBoundHistogramTopK
-    # ubtk_b = UpperBoundHistogramTopK(1)
-    # ubtk_b.fit(b, ["UserId"], bins)
-    # ubtk_c = UpperBoundHistogramTopK(1)
-    # ubtk_c.fit(c, ["UserId"], bins)
-    # ubtk = ubtk_b.join(ubtk_c)
+    # upperBoundHistogramTopK
+    ubtk_b = UpperBoundHistogramTopK(10)
+    ubtk_b.fit(b, ["UserId"], bins)
+    ubtk_c = UpperBoundHistogramTopK(10)
+    ubtk_c.fit(c, ["UserId"], bins)
+    ubtk = ubtk_b.join(ubtk_c)
+
+    print("estimation from top K ", np.sum(ubtk))
+
+    ubtk_error = division(ubtk, tj)
+    # print(ub_error)
+    plt.hist(bins[:-1], bins, weights=ubtk_error, label="DHist", color=colors[0])
+    # plt.yscale("log")
+
+    plt.hist(bins[:-1], bins, weights=jh_error, label="Join-Histogram", color=colors[1])
+    plt.legend()
+    plt.xlabel("Join Key: UserId")
+    plt.ylabel("Accuracy: predction/truth")
+
+    plt.show()
 
     # ubtk_b = UpperBoundHistogramTopK(3)
     # ubtk_b.fit(b, ["UserId"], bins)
