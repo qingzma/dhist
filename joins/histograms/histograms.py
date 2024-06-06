@@ -226,15 +226,15 @@ class UpperBoundHistogramTopK(BaseHistogram):
                 hist.counts_no_top_k * 1.0, hist.unique_counts_no_top_k
             )
         end = time.time()
-        print(
-            "UpperBoundHistogramTopK prediction is ",
-            np.sum(counts),
-            "with time cost ",
-            end - start,
-            " seconds, and size ",
-            self.serialize(),
-            " bytes.",
-        )
+        # print(
+        #     "UpperBoundHistogramTopK prediction is ",
+        #     np.sum(counts),
+        #     "with time cost ",
+        #     end - start,
+        #     " seconds, and size ",
+        #     self.serialize(),
+        #     " bytes.",
+        # )
         if update_statistics:
             return hist
 

@@ -7,6 +7,8 @@ import pandas as pd
 from joins.domain import Domain
 from joins.tools import division
 
+pd.options.mode.chained_assignment = None  # default='warn'
+
 
 def interp(x, y, point):
     return (y[1] - y[0]) * (point - x[0]) / (x[1] - x[0]) + y[0]
@@ -32,6 +34,9 @@ class NonKeyCumulativeHistogram:
     def fit(self, data: pd.DataFrame, headers: list) -> None:
         assert len(headers) == 1
         self.size = data.shape[0]
+
+        data = data.dropna()
+
         uniques = np.sort(pd.unique(data[headers[0]]))
         if len(uniques) < self.n_categorical:
             self.is_categorical = True
@@ -108,7 +113,7 @@ class NonKeyCumulativeHistogram:
 
 
 class NonKeyTopKHistogram:
-    def __init__(self, n_top_k=30, n_bins=100, n_categorical=50) -> None:
+    def __init__(self, n_top_k=10, n_bins=100, n_categorical=50) -> None:
         self.n_top_k = n_top_k
         self.n_bins = n_bins
         self.n_categorical = n_categorical

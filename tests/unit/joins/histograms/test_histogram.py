@@ -105,6 +105,7 @@ class TestHistogramMethod(unittest.TestCase):
         self.assertTrue(abs(15131840763 - np.sum(ubtk)) / 15131840763.0 < 0.1)
 
         ubtk = ubtk_p.join(ubtk_u, update_statistics=True).join(ubtk_b)
+        # print("prediction is ", np.sum(ubtk))
         self.assertTrue(abs(3728360 - np.sum(ubtk)) / 3728360.0 < 0.1)
 
         ubtk = (

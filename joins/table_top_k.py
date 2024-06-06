@@ -46,7 +46,7 @@ class TableContainerTopK:
             column = KeyColumnTopK()
             # print("bin_info", bin_info)
             # print("join key", join_key)
-            if join_key in bin_info:
+            if self.name in bin_info and join_key in bin_info[self.name]:
                 bins = np.linspace(
                     bin_info[self.name][join_key][0],
                     bin_info[self.name][join_key][1],

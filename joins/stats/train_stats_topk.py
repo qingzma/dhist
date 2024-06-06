@@ -25,7 +25,7 @@ def train_stats_topk(args):
     for t in schema.tables:
         print("table is ", t)
         table_path = os.path.join(data_path, t.table_name) + ".csv"
-        logger.debug("training model for file %s", table_path)
+        # logger.debug("training model for file %s", table_path)
         tableContainer = TableContainerTopK()
         tableContainer.fit(
             table_path,
