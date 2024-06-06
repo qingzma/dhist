@@ -148,7 +148,16 @@ def multi_query_with_same_column(models, conditions, join_cond, join_paths):
     hist1 = models[tbl1].key_hist[jk1].pdf
     res = hist.join(hist1)
 
-    return np.sum(res)
+    selectivity = 1.0
+    for tbl in conditions:
+        for cond in conditions[tbl]:
+            if cond.non_key is not None:
+                model = models[tbl].non_key_hist[cond.non_key.split(".")[
+                    1]].pdf
+                domain_query = cond.non_key_condition
+                selectivity *= model.selectivity(domain_query)
+
+    return np.sum(res)*selectivity
 
 
 def vec_sel_single_table_query(
