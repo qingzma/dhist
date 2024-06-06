@@ -44,13 +44,12 @@ class EngineTopK:
 
     def query(self, query_str):
         logger.info("QUERY [%s]", query_str)
-        tables_all, table_query, join_cond, join_keys = parse_query_simple(query_str)
+        tables_all, table_query, join_cond, join_keys = parse_query_simple(
+            query_str)
         conditions = generate_push_down_conditions(
             tables_all, table_query, join_cond, join_keys
         )
         # max_dim = get_max_dim(join_keys)
-        join_paths = parse_join_paths(join_cond)
-        max_dim = len(join_paths)
 
         # logger.info("join_cond is %s", join_cond)
         # logger.info("tables_all is %s", tables_all)
@@ -62,20 +61,18 @@ class EngineTopK:
 
         # single table query
         if len(tables_all) == 1:
-            vec_sel = vec_sel_single_table_query(
-                self.models, conditions, self.grid_size_x
-            )
-            tbl = list(conditions.keys())[0]
-            n = self.models[tbl].size
-            return np.sum(vec_sel) * n
+            res = single_table_query(self.models, conditions)
+            return res
 
         # join query
+        join_paths = parse_join_paths(join_cond)
+        max_dim = len(join_paths)
 
         # only a single join key is allowed in a table
         if max_dim == 2:
             return 2
-            # logger.debug("!!!!in 2 mode!!!!")
-        elif max_dim > 2:
+
+        if max_dim > 2:
             logger.error("length is  [%i]", max_dim)
             logger.error("is 3 [%s]", query_str)
             exit()
@@ -86,7 +83,28 @@ class EngineTopK:
             self.models, conditions, join_cond, join_paths
         )
 
-        return res  # np.sum(pred) * n / width  # * width
+        return res
+
+
+def single_table_query(models: dict[str, TableContainerTopK], conditions):
+    # logger.info("models are %s", models)
+    # logger.info("condtions are %s", conditions)
+    assert len(conditions) == 1
+    tbl = list(conditions.keys())[0]
+    conds = conditions[tbl]
+
+    if len(conds) == 1 and conds[0].non_key is None:
+        return models[tbl].size
+
+    selectivity = 1.0
+    for cond in conds:
+        model = models[tbl].non_key_hist[cond.non_key.split(".")[1]].pdf
+        # logger.info("cond is %s", cond.non_key_condition)
+        domain_query = cond.non_key_condition
+        selectivity *= model.selectivity(domain_query)
+        # logger.info("cond is %s", domain_query)
+        # logger.info("selectivity is %s", model.selectivity(domain_query))
+    return models[tbl].size*selectivity
 
 
 def parse_join_paths(join_cond: list):
@@ -361,7 +379,8 @@ def vec_sel_single_table_query(
     # logger.info("predx is %s", np.sum(pred_x))
     pred = np.ones_like(pred_x)
     for pred_xyi in pred_xys:
-        pred = vec_sel_multiply(pred, vec_sel_divide(pred_xyi, pred_x)) / width_x
+        pred = vec_sel_multiply(
+            pred, vec_sel_divide(pred_xyi, pred_x)) / width_x
 
     # logger.info("width x is %s", width_x)
     res = vec_sel_multiply(pred, pred_x)
