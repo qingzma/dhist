@@ -207,47 +207,47 @@ class TestTopkEngineMethod(unittest.TestCase):
     #     logger.info("time cost is %.5f s.", t2 - t1)
     #     self.assertTrue(q_error(res, truth) < 5)
 
-    # def test_multi_way_no_selection_4(self):
-    #     query = """SELECT COUNT(*)  FROM badges as b,  comments as c,  posts as p,  users as u  WHERE u.Id = p.OwnerUserId    AND u.Id = c.UserId  AND u.Id = b.UserId"""
+    def test_multi_way_no_selection_4_b_c_p_u(self):
+        query = """SELECT COUNT(*)  FROM badges as b,  comments as c,  posts as p,  users as u  WHERE u.Id = p.OwnerUserId    AND u.Id = c.UserId  AND u.Id = b.UserId"""
+        with open("models/" + self.model_name + ".pkl", "rb") as f:
+            model = pickle.load(f)
+        engine = Engine(model, use_cdf=self.args.cdf)
+        t1 = time.time()
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
+        t2 = time.time()
+        truth = 15131840763
+        logger.info("result %.6E", res)
+        logger.info("truth %.6E", truth)
+        logger.info("time cost is %.5f s.", t2 - t1)
+        self.assertTrue(q_error(res, truth) < 100)
+
+    # def test_multi_way_no_selection_4_b_v_p_u(self):
+    #     query = """SELECT COUNT(*)  FROM badges as b,   votes as v,  posts as p,  users as u  WHERE u.Id = p.OwnerUserId    AND u.Id = v.UserId  AND u.Id = b.UserId"""
     #     with open("models/" + self.model_name + ".pkl", "rb") as f:
     #         model = pickle.load(f)
     #     engine = Engine(model, use_cdf=self.args.cdf)
     #     t1 = time.time()
     #     res = engine.query(query) if self.use_pushed_down else engine.query(query)
     #     t2 = time.time()
-    #     truth = 15131840763
+    #     truth = 535001368  # correct
     #     logger.info("result %.6E", res)
     #     logger.info("truth %.6E", truth)
     #     logger.info("time cost is %.5f s.", t2 - t1)
     #     self.assertTrue(q_error(res, truth) < 100)
 
-    def test_multi_way_no_selection_4_b_v_p_u(self):
-        query = """SELECT COUNT(*)  FROM badges as b,   votes as v,  posts as p,  users as u  WHERE u.Id = p.OwnerUserId    AND u.Id = v.UserId  AND u.Id = b.UserId"""
-        with open("models/" + self.model_name + ".pkl", "rb") as f:
-            model = pickle.load(f)
-        engine = Engine(model, use_cdf=self.args.cdf)
-        t1 = time.time()
-        res = engine.query(query) if self.use_pushed_down else engine.query(query)
-        t2 = time.time()
-        truth = 535001368
-        logger.info("result %.6E", res)
-        logger.info("truth %.6E", truth)
-        logger.info("time cost is %.5f s.", t2 - t1)
-        self.assertTrue(q_error(res, truth) < 100)
-
-    def test_multi_way_no_selection_4_b_v_p_ph(self):
-        query = """SELECT COUNT(*)  FROM badges as b,   votes as v,  posts as p,  postHistory as ph  WHERE ph.UserId = p.OwnerUserId    AND ph.UserId = v.UserId  AND ph.UserId = b.UserId"""
-        with open("models/" + self.model_name + ".pkl", "rb") as f:
-            model = pickle.load(f)
-        engine = Engine(model, use_cdf=self.args.cdf)
-        t1 = time.time()
-        res = engine.query(query) if self.use_pushed_down else engine.query(query)
-        t2 = time.time()
-        truth = 535001368
-        logger.info("result %.6E", res)
-        logger.info("truth %.6E", truth)
-        logger.info("time cost is %.5f s.", t2 - t1)
-        self.assertTrue(q_error(res, truth) < 100)
+    # def test_multi_way_no_selection_4_b_v_p_ph(self):
+    #     query = """SELECT COUNT(*)  FROM badges as b,   votes as v,  posts as p,  postHistory as ph  WHERE ph.UserId = p.OwnerUserId    AND ph.UserId = v.UserId  AND ph.UserId = b.UserId"""
+    #     with open("models/" + self.model_name + ".pkl", "rb") as f:
+    #         model = pickle.load(f)
+    #     engine = Engine(model, use_cdf=self.args.cdf)
+    #     t1 = time.time()
+    #     res = engine.query(query) if self.use_pushed_down else engine.query(query)
+    #     t2 = time.time()
+    #     truth = 535001368
+    #     logger.info("result %.6E", res)
+    #     logger.info("truth %.6E", truth)
+    #     logger.info("time cost is %.5f s.", t2 - t1)
+    #     self.assertTrue(q_error(res, truth) < 100)
 
     # def test_multi_way_no_selection_5(self):
     #     query = """SELECT COUNT(*)  FROM badges as b,  comments as c,  posts as p,  users as u, votes as v  WHERE u.Id = p.OwnerUserId    AND u.Id = c.UserId  AND u.Id = b.UserId AND u.Id = v.UserId"""
