@@ -9,7 +9,8 @@ from joins.histograms.histograms import (  # UpperBoundHistogramTopK2D,
     UpperBoundHistogram,
     UpperBoundHistogramTopK,
 )
-from joins.histograms.non_key_histogram import NonKeyHistogram
+
+# from joins.histograms.non_key_histogram import NonKeyHistogram
 
 
 class TestHistogramMethod(unittest.TestCase):

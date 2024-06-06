@@ -134,6 +134,8 @@ class NonKeyTopKHistogram:
         assert len(headers) == 1
         self.size = data.shape[0]
         uniques = np.sort(pd.unique(data[headers[0]]))
+        uniques = uniques[~np.isnan(uniques)]
+        # print("uniques", uniques)
         self.min = uniques[0]
         self.max = uniques[-1]
         # print("uniques,", uniques)
@@ -155,6 +157,7 @@ class NonKeyTopKHistogram:
             # print(keys)
             # self.bins = np.array(sorted(keys))
         # print("self.bins", self.bins)
+        data = data.dropna()
         groups = data.groupby(
             pd.cut(data[headers[0]], self.bins, include_lowest=True), observed=False
         )

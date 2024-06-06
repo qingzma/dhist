@@ -4,11 +4,11 @@ import pandas as pd
 from matplotlib import ticker
 
 from joins.base_logger import logger
+from joins.cnts.cnts import CumulativeDistinctCounter
 from joins.pdf.fast_kde import FastKde1D, FastKde2D
 from joins.pdf.kde import Kde1D, Kde2D
 from joins.pdf.kdepy import KdePy1D, KdePy2D, plot1d
 from joins.pdf.normalizing_flow.nflow import Nflow2D
-from joins.cnts.cnts import CumulativeDistinctCounter
 
 
 class TableContainer:
@@ -60,7 +60,7 @@ class TableContainer:
             self.counters[join_key] = counter
 
         for relev_key in relevant_keys[self.name]:
-            logger.info("col is %s", relev_key)
+            # logger.info("col is %s", relev_key)
             df_col = df[relev_key]  # .fillna(-1)  # replace NULL with -1 !
             column = Column()
             column.fit(df_col, self.name, args=args)

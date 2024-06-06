@@ -5,9 +5,20 @@ from enum import Enum
 class Table:
     """Represents a table with foreign key and primary key relationships"""
 
-    def __init__(self, table_name, primary_key=["id"], table_nn_attribute=None, table_size=1000, csv_file_location=None,
-                 attributes=None, irrelevant_attributes=None, keep_fk_attributes=None, sample_rate=1.0, fd_list=None,
-                 no_compression=None):
+    def __init__(
+        self,
+        table_name,
+        primary_key=["id"],
+        table_nn_attribute=None,
+        table_size=1000,
+        csv_file_location=None,
+        attributes=None,
+        irrelevant_attributes=None,
+        keep_fk_attributes=None,
+        sample_rate=1.0,
+        fd_list=None,
+        no_compression=None,
+    ):
 
         self.table_name = table_name
         self.table_size = table_size
@@ -28,12 +39,14 @@ class Table:
         if fd_list is None:
             self.fd_list = []
         else:
-            self.fd_list = [(table_name + '.' + fd_source, table_name + '.' + fd_dest) for fd_source, fd_dest in
-                            fd_list]
+            self.fd_list = [
+                (table_name + "." + fd_source, table_name + "." + fd_dest)
+                for fd_source, fd_dest in fd_list
+            ]
 
         # additional attribute indicating whether tuple is NULL (can occur since we learn SPN on FULL OUTER JOIN)
         if table_nn_attribute is None:
-            self.table_nn_attribute = self.table_name + '_nn'
+            self.table_nn_attribute = self.table_name + "_nn"
 
         # FK references
         self.outgoing_relationships = []
@@ -43,10 +56,14 @@ class Table:
         self.sample_rate = sample_rate
 
     def children_fd_attributes(self, attribute):
-        return [fd_source for fd_source, fd_dest in self.fd_list if fd_dest == attribute]
+        return [
+            fd_source for fd_source, fd_dest in self.fd_list if fd_dest == attribute
+        ]
 
     def parent_fd_attributes(self, attribute):
-        return [fd_dest for fd_source, fd_dest in self.fd_list if fd_source == attribute]
+        return [
+            fd_dest for fd_source, fd_dest in self.fd_list if fd_source == attribute
+        ]
 
 
 class Relationship:
@@ -63,10 +80,11 @@ class Relationship:
         self.multiplier_attribute_name = multiplier_attribute_name
 
         # matching tuples (not NULL)
-        self.multiplier_attribute_name_nn = multiplier_attribute_name + '_nn'
+        self.multiplier_attribute_name_nn = multiplier_attribute_name + "_nn"
 
-        self.identifier = self.start + '.' + self.start_attr + \
-            ' = ' + self.end + '.' + self.end_attr
+        self.identifier = (
+            self.start + "." + self.start_attr + " = " + self.end + "." + self.end_attr
+        )
 
         # for start table we are outgoing relationship
         start.outgoing_relationships.append(self)
@@ -81,25 +99,35 @@ class SchemaGraph:
         self.relationships = []
         self.table_dictionary = {}
         self.relationship_dictionary = {}
+        self.pk_bins = {}
 
     def add_table(self, table):
         self.tables.append(table)
         self.table_dictionary[table.table_name] = table
 
-    def add_relationship(self, start_name, start_attr, end_name, end_attr, multiplier_attribute_name=None):
+    def add_relationship(
+        self, start_name, start_attr, end_name, end_attr, multiplier_attribute_name=None
+    ):
         if multiplier_attribute_name is None:
-            multiplier_attribute_name = 'mul_' + start_name + '.' + start_attr
+            multiplier_attribute_name = "mul_" + start_name + "." + start_attr
 
-        relationship = Relationship(self.table_dictionary[start_name],
-                                    self.table_dictionary[end_name],
-                                    start_attr,
-                                    end_attr,
-                                    multiplier_attribute_name)
+        relationship = Relationship(
+            self.table_dictionary[start_name],
+            self.table_dictionary[end_name],
+            start_attr,
+            end_attr,
+            multiplier_attribute_name,
+        )
 
         self.relationships.append(relationship)
         self.relationship_dictionary[relationship.identifier] = relationship
 
         return relationship.identifier
+
+    def add_pk_bins(self, table, k, low, high):
+        if table not in self.pk_bins:
+            self.pk_bins[table] = {}
+        self.pk_bins[table][k] = [low, high]
 
 
 class QueryType(Enum):
@@ -134,23 +162,33 @@ class Query:
 
     def remove_conditions_for_attributes(self, table, attributes):
         def conflicting(condition):
-            return any([condition.startswith(attribute + ' ') or condition.startswith(attribute + '<') or
-                        condition.startswith(attribute + '>') or condition.startswith(attribute + '=') for
-                        attribute in attributes])
+            return any(
+                [
+                    condition.startswith(attribute + " ")
+                    or condition.startswith(attribute + "<")
+                    or condition.startswith(attribute + ">")
+                    or condition.startswith(attribute + "=")
+                    for attribute in attributes
+                ]
+            )
 
         if self.table_where_condition_dict.get(table) is not None:
-            self.table_where_condition_dict[table] = [condition for condition in
-                                                      self.table_where_condition_dict[table]
-                                                      if not conflicting(condition)]
-        self.conditions = [(cond_table, condition) for cond_table, condition in self.conditions
-                           if not (cond_table == table and conflicting(condition))]
+            self.table_where_condition_dict[table] = [
+                condition
+                for condition in self.table_where_condition_dict[table]
+                if not conflicting(condition)
+            ]
+        self.conditions = [
+            (cond_table, condition)
+            for cond_table, condition in self.conditions
+            if not (cond_table == table and conflicting(condition))
+        ]
 
     def copy_cardinality_query(self):
         query = Query(self.schema_graph)
         query.table_set = copy.copy(self.table_set)
         query.relationship_set = copy.copy(self.relationship_set)
-        query.table_where_condition_dict = copy.copy(
-            self.table_where_condition_dict)
+        query.table_where_condition_dict = copy.copy(self.table_where_condition_dict)
         query.conditions = copy.copy(self.conditions)
         return query
 
@@ -167,7 +205,9 @@ class Query:
 
     def add_join_condition(self, relationship_identifier):
 
-        relationship = self.schema_graph.relationship_dictionary[relationship_identifier]
+        relationship = self.schema_graph.relationship_dictionary[
+            relationship_identifier
+        ]
         self.table_set.add(relationship.start)
         self.table_set.add(relationship.end)
 
@@ -211,11 +251,10 @@ def identify_key_values(schema: SchemaGraph):
             # set the keys[-1] as the identifier of this equivalent join key group for convenience.
             equivalent_keys[keys[-1]] = set(keys)
 
-    assert len(all_keys) == sum(
-        [len(equivalent_keys[k]) for k in equivalent_keys])
+    assert len(all_keys) == sum([len(equivalent_keys[k]) for k in equivalent_keys])
 
     for ks in all_keys:
-        t, k = ks.split(".")[0], ks.split('.')[1]
+        t, k = ks.split(".")[0], ks.split(".")[1]
         if t not in table_keys:
             table_keys[t] = set({k})
         else:
@@ -252,6 +291,8 @@ def identify_conditions(table_query, join_keys):
                     non_key_conditions[table] = {}
                 if condition_key not in non_key_conditions[table]:
                     non_key_conditions[table][condition_key] = {}
-                non_key_conditions[table][condition_key] = table_query[table][condition_key]
+                non_key_conditions[table][condition_key] = table_query[table][
+                    condition_key
+                ]
 
     return key_conditions, non_key_conditions
