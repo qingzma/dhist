@@ -9,14 +9,14 @@ from joins.stats.evaluate_stats import evaluate_stats
 from joins.stats.train_stats import train_stats
 from joins.tools import convert_time_to_int
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
 
-    os.makedirs('logs', exist_ok=True)
+    os.makedirs("logs", exist_ok=True)
 
-    logger.info('Start running experiment for %s', args.dataset)
+    logger.info("Start running experiment for %s", args.dataset)
 
-    if args.dataset == 'stats':
+    if args.dataset == "stats":
         if args.preprocess:
             logger.info("start pre-processing the data")
             convert_time_to_int(args.data_folder)
@@ -27,7 +27,9 @@ if __name__ == '__main__':
             train_stats(args)
             end_time = time.time()
             logger.info(
-                "Training completed: total training time is %.6f s.", end_time - start_time)
+                "Training completed: total training time is %.6f s.",
+                end_time - start_time,
+            )
 
         elif args.evaluate:
             logger.info("start evaluating models")
@@ -35,4 +37,6 @@ if __name__ == '__main__':
             evaluate_stats(args)
             end_time = time.time()
             logger.info(
-                "Evaluation completed: total evaluation time is %.6f s.", end_time - start_time)
+                "Evaluation completed: total evaluation time is %.6f s.",
+                end_time - start_time,
+            )

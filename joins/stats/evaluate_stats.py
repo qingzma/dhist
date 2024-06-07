@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from joins.approximate_engine import ApproximateEngine
-from joins.engine import Engine
 from joins.base_logger import logger
+from joins.engine_topk import EngineTopK as Engine
 from joins.tools import save_predictions_to_file
 
 

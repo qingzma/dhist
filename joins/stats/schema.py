@@ -169,6 +169,7 @@ def gen_stats_light_schema(hdf_path):
     schema.add_pk_bins("postHistory", "PostId", 1, 115378)
     schema.add_pk_bins("votes", "PostId", 1, 115378)
     schema.add_pk_bins("postLinks", "RelatedPostId", 1, 115378)
+    schema.add_pk_bins("tags", "ExcerptPostId", 1, 115378)
 
     return schema
 
