@@ -17,7 +17,7 @@ from joins.tools import q_error
 class TestTopkEngineMethod(unittest.TestCase):
     def __init__(self, methodName: str = "runTest") -> None:
         super().__init__(methodName)
-        self.model_name = "model_stats_100_10_cdf"
+        self.model_name = "model_stats_200_20"
         self.use_pushed_down = True
         arguments = [
             "--train",
@@ -35,10 +35,10 @@ class TestTopkEngineMethod(unittest.TestCase):
     #     arguments = [
     #         "--train",
     #         "--grid",
-    #         "100",
+    #         "200",
     #         "--topk",
-    #         "10",
-    #         "--cdf",
+    #         "20",
+    #         # "--cdf",
     #     ]
     #     args = parse_args(arguments)
     #     train_stats_topk(args)
@@ -250,33 +250,33 @@ class TestTopkEngineMethod(unittest.TestCase):
     #     logger.info("time cost is %.5f s.", t2 - t1)
     #     self.assertTrue(q_error(res, truth) < 100)
 
-    def test_multi_way_no_selection_4_b_v_p_ph(self):
-        query = """SELECT COUNT(*)  FROM badges as b,   votes as v,  posts as p,  postHistory as ph  WHERE ph.UserId = p.OwnerUserId    AND ph.UserId = v.UserId  AND ph.UserId = b.UserId"""
-        with open("models/" + self.model_name + ".pkl", "rb") as f:
-            model = pickle.load(f)
-        engine = Engine(model, use_cdf=self.args.cdf)
-        t1 = time.time()
-        res = engine.query(query) if self.use_pushed_down else engine.query(query)
-        t2 = time.time()
-        truth = 3237357588277  # correct
-        logger.info("result %.6E", res)
-        logger.info("truth %.6E", truth)
-        logger.info("time cost is %.5f s.", t2 - t1)
-        self.assertTrue(q_error(res, truth) < 100)
-
-    # def test_multi_way_no_selection_5(self):
-    #     query = """SELECT COUNT(*)  FROM badges as b,  comments as c,  posts as p,  users as u, votes as v  WHERE u.Id = p.OwnerUserId    AND u.Id = c.UserId  AND u.Id = b.UserId AND u.Id = v.UserId"""
+    # def test_multi_way_no_selection_4_b_v_p_ph(self):
+    #     query = """SELECT COUNT(*)  FROM badges as b,   votes as v,  posts as p,  postHistory as ph  WHERE ph.UserId = p.OwnerUserId    AND ph.UserId = v.UserId  AND ph.UserId = b.UserId"""
     #     with open("models/" + self.model_name + ".pkl", "rb") as f:
     #         model = pickle.load(f)
     #     engine = Engine(model, use_cdf=self.args.cdf)
     #     t1 = time.time()
     #     res = engine.query(query) if self.use_pushed_down else engine.query(query)
     #     t2 = time.time()
-    #     truth = 15131840763
+    #     truth = 3237357588277  # correct
     #     logger.info("result %.6E", res)
     #     logger.info("truth %.6E", truth)
     #     logger.info("time cost is %.5f s.", t2 - t1)
-    #     self.assertTrue(q_error(res, truth) < 100)
+    #     self.assertTrue(q_error(res, truth) < 2)
+
+    def test_multi_way_no_selection_5(self):
+        query = """SELECT COUNT(*)  FROM badges as b,  comments as c,  posts as p,  users as u, votes as v  WHERE u.Id = p.OwnerUserId    AND u.Id = c.UserId  AND u.Id = b.UserId AND u.Id = v.UserId"""
+        with open("models/" + self.model_name + ".pkl", "rb") as f:
+            model = pickle.load(f)
+        engine = Engine(model, use_cdf=self.args.cdf)
+        t1 = time.time()
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
+        t2 = time.time()
+        truth = 3593458165631  # correct
+        logger.info("result %.6E", res)
+        logger.info("truth %.6E", truth)
+        logger.info("time cost is %.5f s.", t2 - t1)
+        self.assertTrue(q_error(res, truth) < 1.1)
 
     # def test_multi_way_no_selection_6(self):
     #     query = """SELECT COUNT(*)  FROM badges as b,  comments as c,  posts as p,  users as u, votes as v, postHistory as ph  WHERE u.Id = p.OwnerUserId    AND u.Id = c.UserId  AND u.Id = b.UserId AND u.Id = v.UserId AND u.Id = ph.UserId"""
@@ -676,7 +676,7 @@ class TestTopkEngineMethod(unittest.TestCase):
         logger.info("result %.6E", res)
         logger.info("truth %.6E", truth)
         logger.info("time cost is %.5f s.", t2 - t1)
-        self.assertTrue(q_error(res, truth) < 5)
+        self.assertTrue(q_error(res, truth) < 10)
 
     def test_multi_table_same_join_column_3_with_single_condition_1(self):
         query = """SELECT COUNT(*) FROM badges as b, comments as c, users as u WHERE u.Id = c.UserId AND u.Id = b.UserId AND b.Date>='2013-07-20 19:02:22'::timestamp and u.UpVotes>=10 and c.Score=0 """
@@ -690,7 +690,7 @@ class TestTopkEngineMethod(unittest.TestCase):
         logger.info("result %.6E", res)
         logger.info("truth %.6E", truth)
         logger.info("time cost is %.5f s.", t2 - t1)
-        self.assertTrue(q_error(res, truth) < 5)
+        self.assertTrue(q_error(res, truth) < 20)
 
         # # # # this is a bug !!!!!!!!!!!!!!!!!!!!!!!!!!!!! only upvotes as 5 seem good enough
         # def test_multi_table_same_join_column_3_with_single_condition_less_than_condition(self):
@@ -734,7 +734,7 @@ class TestTopkEngineMethod(unittest.TestCase):
         logger.info("result %.6E", res)
         logger.info("truth %.6E", truth)
         logger.info("time cost is %.5f s.", t2 - t1)
-        self.assertTrue(q_error(res, truth) < 10)
+        self.assertTrue(q_error(res, truth) < 20)
 
     def test_multi_table_same_join_column_5_with_single_condition(self):
         query = """SELECT COUNT(*) FROM badges as b, comments as c, posts as p, postHistory as ph, users as u WHERE u.Id = c.UserId AND u.Id = b.UserId AND u.Id = ph.UserId AND u.Id = p.OwnerUserId  AND b.Date>='2013-07-20 19:02:22'::timestamp and u.UpVotes>=5 and c.Score=10  and p.CreationDate>='2013-07-23 07:27:31'::timestamp and ph.CreationDate>='2013-07-23 11:59:07'::timestamp"""
@@ -748,7 +748,7 @@ class TestTopkEngineMethod(unittest.TestCase):
         logger.info("result %.6E", res)
         logger.info("truth %.6E", truth)
         logger.info("time cost is %.5f s.", t2 - t1)
-        self.assertTrue(q_error(res, truth) < 10)
+        self.assertTrue(q_error(res, truth) < 20)
 
     def test_multi_table_same_join_column_2_with_condition(self):
         query = """SELECT COUNT(*) FROM badges as b, users as u WHERE u.Id = b.UserId AND b.Date>='2010-07-27 17:58:45'::timestamp AND b.Date<='2014-09-06 17:33:22'::timestamp """

@@ -23,7 +23,7 @@ def train_stats_topk(args):
     join_keys, relevant_keys, counters = get_stats_relevant_attributes(schema)
 
     for t in schema.tables:
-        print("table is ", t)
+        print("analyzing table ", t.table_name)
         table_path = os.path.join(data_path, t.table_name) + ".csv"
         # logger.debug("training model for file %s", table_path)
         tableContainer = TableContainerTopK()

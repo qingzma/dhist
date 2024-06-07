@@ -5,9 +5,9 @@ import unittest
 
 import numpy as np
 
-from joins.engine_topk import EngineTopK as Engine
 from joins.args import parse_args
 from joins.base_logger import logger
+from joins.engine_topk import EngineTopK as Engine
 from joins.stats.train_stats_topk import train_stats_topk
 from joins.tools import q_error
 
@@ -15,31 +15,31 @@ from joins.tools import q_error
 class TestApproximateEngineMethod(unittest.TestCase):
     def __init__(self, methodName: str = "runTest") -> None:
         super().__init__(methodName)
-        self.model_name = "model_stats_100_10_cdf"
+        self.model_name = "model_stats_100_10"
         self.use_pushed_down = True
         arguments = [
             "--train",
             "--grid",
             "100",
-            "--cdf",
+            # "--cdf",
         ]  # "--cdf"
         self.args = parse_args(arguments)
 
         # train needed models
 
-    # @classmethod
-    # def setUpClass(cls):
-    #     # ['biweight', 'box', 'cosine', 'epa', 'exponential', 'gaussian', 'tri', 'tricube', 'triweight']
-    #     arguments = [
-    #         "--train",
-    #         "--grid",
-    #         "100",
-    #         "--topk",
-    #         "10",
-    #         "--cdf",
-    #     ]
-    #     args = parse_args(arguments)
-    #     train_stats_topk(args)
+    @classmethod
+    def setUpClass(cls):
+        # ['biweight', 'box', 'cosine', 'epa', 'exponential', 'gaussian', 'tri', 'tricube', 'triweight']
+        arguments = [
+            "--train",
+            "--grid",
+            "100",
+            "--topk",
+            "10",
+            # "--cdf",
+        ]
+        args = parse_args(arguments)
+        train_stats_topk(args)
 
     # # remove trained models for test purposes
     # # @classmethod
@@ -55,8 +55,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 79851
         logger.info("result %.6E", res)
@@ -70,8 +69,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 42238
         logger.info("result %.6E", res)
@@ -85,8 +83,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 42172
         logger.info("result %.6E", res)
@@ -100,8 +97,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 39532
         logger.info("result %.6E", res)
@@ -115,8 +111,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 38103
         logger.info("result %.6E", res)
@@ -130,8 +125,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 36820
         logger.info("result %.6E", res)
@@ -145,8 +139,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 297438
         logger.info("result %.6E", res)
@@ -160,8 +153,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 42308
         logger.info("result %.6E", res)
@@ -175,8 +167,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 1740
         logger.info("result %.6E", res)
@@ -190,8 +181,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 66005
         logger.info("result %.6E", res)
@@ -205,8 +195,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 13246
         logger.info("result %.6E", res)
@@ -220,8 +209,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 1301
         logger.info("result %.6E", res)
@@ -231,62 +219,58 @@ class TestApproximateEngineMethod(unittest.TestCase):
 
     def test_test(self):
         query = "SELECT COUNT(*) FROM badges as b where b.Date<='2014-09-11 14:33:06'::timestamp"
-        with open("models/"+self.model_name+".pkl", 'rb') as f:
+        with open("models/" + self.model_name + ".pkl", "rb") as f:
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 79633
         logger.info("result %.6E", res)
         logger.info("truth %.6E", truth)
-        logger.info("time cost is %.5f s.", t2-t1)
+        logger.info("time cost is %.5f s.", t2 - t1)
         self.assertTrue(q_error(res, truth) < 3)
 
     def test_test1(self):
         query = "SELECT COUNT(*) FROM comments as c where c.Score>=0 AND c.Score<=10"
-        with open("models/"+self.model_name+".pkl", 'rb') as f:
+        with open("models/" + self.model_name + ".pkl", "rb") as f:
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 174151
         logger.info("result %.6E", res)
         logger.info("truth %.6E", truth)
-        logger.info("time cost is %.5f s.", t2-t1)
+        logger.info("time cost is %.5f s.", t2 - t1)
         self.assertTrue(q_error(res, truth) < 3)
 
     def test_single_table_0_selection(self):
         query = """SELECT COUNT(*) FROM  posts as p"""
-        with open("models/"+self.model_name+".pkl", 'rb') as f:
+        with open("models/" + self.model_name + ".pkl", "rb") as f:
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 91976
         logger.info("result %.6E", res)
         logger.info("truth %.6E", truth)
-        logger.info("time cost is %.5f s.", t2-t1)
+        logger.info("time cost is %.5f s.", t2 - t1)
         self.assertTrue(q_error(res, truth) < 3)
 
     def test_single_table_1_selection(self):
         query = """SELECT COUNT(*) FROM  posts as p WHERE  p.PostTypeId=1"""
-        with open("models/"+self.model_name+".pkl", 'rb') as f:
+        with open("models/" + self.model_name + ".pkl", "rb") as f:
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 42921
         logger.info("result %.6E", res)
         logger.info("truth %.6E", truth)
-        logger.info("time cost is %.5f s.", t2-t1)
+        logger.info("time cost is %.5f s.", t2 - t1)
         self.assertTrue(q_error(res, truth) < 3)
 
     def test_single_table_2_selection(self):
@@ -295,8 +279,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 42804
         logger.info("result %.6E", res)
@@ -310,8 +293,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 17870
         logger.info("result %.6E", res)
@@ -325,8 +307,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 17839
         logger.info("result %.6E", res)
@@ -336,17 +317,16 @@ class TestApproximateEngineMethod(unittest.TestCase):
 
     def test_single_table_5_selection(self):
         query = """SELECT COUNT(*) FROM  posts as p WHERE  p.PostTypeId=1  AND p.Score<=35  AND p.AnswerCount=1  AND p.CommentCount<=17  AND p.FavoriteCount>=0  """
-        with open("models/"+self.model_name+".pkl", 'rb') as f:
+        with open("models/" + self.model_name + ".pkl", "rb") as f:
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 5209
         logger.info("result %.6E", res)
         logger.info("truth %.6E", truth)
-        logger.info("time cost is %.5f s.", t2-t1)
+        logger.info("time cost is %.5f s.", t2 - t1)
         self.assertTrue(q_error(res, truth) < 5)
 
     def test_single_table_4_selection_1(self):
@@ -355,8 +335,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 5209
         logger.info("result %.6E", res)
@@ -370,8 +349,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 42921
         logger.info("result %.6E", res)
@@ -385,8 +363,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 35660
         logger.info("result %.6E", res)
@@ -400,8 +377,7 @@ class TestApproximateEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 6223
         logger.info("result %.6E", res)

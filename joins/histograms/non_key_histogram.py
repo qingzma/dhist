@@ -57,12 +57,10 @@ class NonKeyCumulativeHistogram:
             # print(keys)
             # self.bins = np.array(sorted(keys))
         # print("data", data)
-        data["count"] = pd.cut(
-            data[headers[0]], bins=self.bins, labels=self.bins[:-1])
+        data["count"] = pd.cut(data[headers[0]], bins=self.bins, labels=self.bins[:-1])
         # print(data)
         counts = (
-            data.groupby(["count"], observed=False,
-                         dropna=False).count().to_numpy()
+            data.groupby(["count"], observed=False, dropna=False).count().to_numpy()
         )
         # print(data.groupby(["count"], observed=False, dropna=False).count())
         # treat Nan Group
@@ -79,7 +77,11 @@ class NonKeyCumulativeHistogram:
 
     def selectivity(self, domain: Domain, frac=True) -> float:
         if domain.min == domain.max:
-            return self.selectivity(Domain(mins=domain.min-0.5, maxs=domain.max+0.5, left=True, right=True))
+            return self.selectivity(
+                Domain(
+                    mins=domain.min - 0.5, maxs=domain.max + 0.5, left=True, right=True
+                )
+            )
         # print("domain is ", domain)
         error_rate = 1e-6
         if not domain.left:
@@ -89,8 +91,7 @@ class NonKeyCumulativeHistogram:
             # fix issue for query with low bound equals the max bin value
             if domain.min == self.bins[-1]:
                 return (
-                    (self.cdf[-1] - self.cdf[-2]) *
-                    1.0 / (self.bins[1] - self.bins[0])
+                    (self.cdf[-1] - self.cdf[-2]) * 1.0 / (self.bins[1] - self.bins[0])
                 )
         if domain.right:
             domain.max += error_rate * self.bin_width
@@ -115,7 +116,7 @@ class NonKeyCumulativeHistogram:
             return float(self.cdf[-1])
         # print("-" * 50)
 
-        return interp(self.bins[idx - 1: idx + +1], self.cdf[idx - 1: idx + 1], x)
+        return interp(self.bins[idx - 1 : idx + +1], self.cdf[idx - 1 : idx + 1], x)
 
 
 class NonKeyTopKHistogram:
@@ -184,8 +185,7 @@ class NonKeyTopKHistogram:
         self.unique_counts = np.array(uni["uni"].count()).astype("float")
 
         value_counts = (
-            groups.value_counts().groupby(
-                headers[0], observed=False).head(self.n_top_k)
+            groups.value_counts().groupby(headers[0], observed=False).head(self.n_top_k)
         )
         # print(type(value_counts))
         # print("value_counts\n", value_counts)
@@ -195,9 +195,8 @@ class NonKeyTopKHistogram:
         container = {}
         # cntt = 0
         for domain_value, counter in value_counts.items():
-            # print(domain_value, counter)
             value = domain_value[1]
-            if cnt < self.n_top_k:
+            if cnt < min(self.n_top_k, len(uniques)):
                 if counter >= 1:
                     container[value] = counter
                 cnt += 1
@@ -215,9 +214,9 @@ class NonKeyTopKHistogram:
 
         self.top_k_container = top_k_container
         # print("self.top_k_container \n", self.top_k_container)
-        self.counts_top_k = np.array([sum(i.values())
-                                     for i in top_k_container])
+        self.counts_top_k = np.array([sum(i.values()) for i in top_k_container])
         self.unique_counts_top_k = np.array([len(i) for i in top_k_container])
+        # print("self.unique_counts \n", self.unique_counts)
         # print("self.counts_top_k \n", self.counts_top_k)
         # print("self.unique_counts_top_k \n", self.unique_counts_top_k)
 
@@ -271,7 +270,7 @@ class NonKeyTopKHistogram:
             idx_left = max(0, idxs[0] - 1)
             idx_right = min(idxs[1] - 1, len(self.counts) - 1)
             if idx_right - idx_left > 1:
-                cnt = np.sum(self.counts[idxs[0]: idxs[1] - 1])
+                cnt = np.sum(self.counts[idxs[0] : idxs[1] - 1])
             else:
                 cnt = 0.0
             # print("middle is ", self.counts[idxs[0] : idxs[1] - 1])
@@ -282,12 +281,10 @@ class NonKeyTopKHistogram:
             # interpret left incomplete bin
             # dominating term
             # if domain.min > self.bins[0]:
-            cnt += interp_dominating_item(
-                self.top_k_container[idx_left], domain)
+            cnt += interp_dominating_item(self.top_k_container[idx_left], domain)
 
             if idx_right > idx_left:  # and domain.max < self.max:
-                cnt += interp_dominating_item(
-                    self.top_k_container[idx_right], domain)
+                cnt += interp_dominating_item(self.top_k_container[idx_right], domain)
 
             # uniform assumption term
             if idx_left == idx_right:
@@ -328,7 +325,7 @@ class NonKeyTopKHistogram:
             return float(np.sum(self.counts))
         # print("-" * 50)
 
-        return interp(self.bins[idx - 1: idx + +1], self.cdf[idx - 1: idx + 1], x)
+        return interp(self.bins[idx - 1 : idx + +1], self.cdf[idx - 1 : idx + 1], x)
 
 
 # class NonKeyHistogram:
