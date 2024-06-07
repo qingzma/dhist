@@ -230,25 +230,39 @@ class TestTopkEngineMethod(unittest.TestCase):
     #     t1 = time.time()
     #     res = engine.query(query) if self.use_pushed_down else engine.query(query)
     #     t2 = time.time()
-    #     truth = 535001368  # correct
+    #     truth = 15131840763
     #     logger.info("result %.6E", res)
     #     logger.info("truth %.6E", truth)
     #     logger.info("time cost is %.5f s.", t2 - t1)
     #     self.assertTrue(q_error(res, truth) < 100)
 
-    # def test_multi_way_no_selection_4_b_v_p_ph(self):
-    #     query = """SELECT COUNT(*)  FROM badges as b,   votes as v,  posts as p,  postHistory as ph  WHERE ph.UserId = p.OwnerUserId    AND ph.UserId = v.UserId  AND ph.UserId = b.UserId"""
+    # def test_multi_way_no_selection_4_b_v_p_u(self):
+    #     query = """SELECT COUNT(*)  FROM badges as b,   votes as v,  posts as p,  users as u  WHERE u.Id = p.OwnerUserId    AND u.Id = v.UserId  AND u.Id = b.UserId"""
     #     with open("models/" + self.model_name + ".pkl", "rb") as f:
     #         model = pickle.load(f)
     #     engine = Engine(model, use_cdf=self.args.cdf)
     #     t1 = time.time()
     #     res = engine.query(query) if self.use_pushed_down else engine.query(query)
     #     t2 = time.time()
-    #     truth = 535001368
+    #     truth = 535001368  # correct
     #     logger.info("result %.6E", res)
     #     logger.info("truth %.6E", truth)
     #     logger.info("time cost is %.5f s.", t2 - t1)
     #     self.assertTrue(q_error(res, truth) < 100)
+
+    def test_multi_way_no_selection_4_b_v_p_ph(self):
+        query = """SELECT COUNT(*)  FROM badges as b,   votes as v,  posts as p,  postHistory as ph  WHERE ph.UserId = p.OwnerUserId    AND ph.UserId = v.UserId  AND ph.UserId = b.UserId"""
+        with open("models/" + self.model_name + ".pkl", "rb") as f:
+            model = pickle.load(f)
+        engine = Engine(model, use_cdf=self.args.cdf)
+        t1 = time.time()
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
+        t2 = time.time()
+        truth = 3237357588277  # correct
+        logger.info("result %.6E", res)
+        logger.info("truth %.6E", truth)
+        logger.info("time cost is %.5f s.", t2 - t1)
+        self.assertTrue(q_error(res, truth) < 100)
 
     # def test_multi_way_no_selection_5(self):
     #     query = """SELECT COUNT(*)  FROM badges as b,  comments as c,  posts as p,  users as u, votes as v  WHERE u.Id = p.OwnerUserId    AND u.Id = c.UserId  AND u.Id = b.UserId AND u.Id = v.UserId"""
@@ -284,8 +298,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 41718
         logger.info("result %.6E", res)
@@ -299,8 +312,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 36120
         logger.info("result %.6E", res)
@@ -314,8 +326,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 36113
         logger.info("result %.6E", res)
@@ -344,8 +355,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 328064
         logger.info("result %.6E", res)
@@ -359,8 +369,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 79851
         logger.info("result %.6E", res)
@@ -374,8 +383,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 171470
         logger.info("result %.6E", res)
@@ -389,8 +397,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 79851
         logger.info("result %.6E", res)
@@ -404,8 +411,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 2489
         logger.info("result %.6E", res)
@@ -414,19 +420,19 @@ class TestTopkEngineMethod(unittest.TestCase):
         self.assertTrue(q_error(res, truth) < 20)
 
     # def test_multi_way_2_join_key_hard(self):
-        # query = """SELECT COUNT(*) FROM users as u, comments as c, postHistory as ph, badges as b, votes as v WHERE c.UserId = u.Id AND b.UserId = u.Id AND ph.UserId = u.Id AND v.UserId = u.Id AND u.UpVotes>=50 AND c.CreationDate>='2010-07-20 21:37:31'::timestamp AND ph.PostHistoryTypeId>=5"""
-        # with open("models/" + self.model_name + ".pkl", "rb") as f:
-        #     model = pickle.load(f)
-        # engine = Engine(model, use_cdf=self.args.cdf)
-        # t1 = time.time()
-        # res = engine.query(
-        #     query) if self.use_pushed_down else engine.query(query)
-        # t2 = time.time()
-        # truth = 32734
-        # logger.info("result %.6E", res)
-        # logger.info("truth %.6E", truth)
-        # logger.info("time cost is %.5f s.", t2 - t1)
-        # self.assertTrue(q_error(res, truth) < 40)
+    # query = """SELECT COUNT(*) FROM users as u, comments as c, postHistory as ph, badges as b, votes as v WHERE c.UserId = u.Id AND b.UserId = u.Id AND ph.UserId = u.Id AND v.UserId = u.Id AND u.UpVotes>=50 AND c.CreationDate>='2010-07-20 21:37:31'::timestamp AND ph.PostHistoryTypeId>=5"""
+    # with open("models/" + self.model_name + ".pkl", "rb") as f:
+    #     model = pickle.load(f)
+    # engine = Engine(model, use_cdf=self.args.cdf)
+    # t1 = time.time()
+    # res = engine.query(
+    #     query) if self.use_pushed_down else engine.query(query)
+    # t2 = time.time()
+    # truth = 32734
+    # logger.info("result %.6E", res)
+    # logger.info("truth %.6E", truth)
+    # logger.info("time cost is %.5f s.", t2 - t1)
+    # self.assertTrue(q_error(res, truth) < 40)
 
     # def test_multi_way_2_join_key_hard_reduce1(self):
     #     query = """SELECT COUNT(*) FROM  users as u,  comments as c,  votes as v , badges as b WHERE c.UserId = u.Id  AND v.UserId = u.Id  AND b.UserId = u.Id  AND u.UpVotes=0  AND c.CreationDate>='2010-07-20 21:37:31'::timestamp """
@@ -458,18 +464,18 @@ class TestTopkEngineMethod(unittest.TestCase):
     #     logger.info("time cost is %.5f s.", t2 - t1)
     #     self.assertTrue(q_error(res, truth) < 5)
 
-        # BUG JOIN KEY NULL VALUE noT FILTERED OUT!!
-        # select count(*) from votes where userid is not NULL;
-        # count
-        # -------
-        # 34789
-        # (1 row)
+    # BUG JOIN KEY NULL VALUE noT FILTERED OUT!!
+    # select count(*) from votes where userid is not NULL;
+    # count
+    # -------
+    # 34789
+    # (1 row)
 
-        # select count(*) from votes where userid>=3 and userid<=55706;
-        # count
-        # -------
-        # 34773
-        # (1 row)
+    # select count(*) from votes where userid>=3 and userid<=55706;
+    # count
+    # -------
+    # 34773
+    # (1 row)
 
     # def test_multi_way_2_join_key_hard_reduce3(self):
     #     query = """SELECT COUNT(*) FROM  users as u,  comments as c WHERE c.UserId = u.Id  AND u.UpVotes=0  AND c.CreationDate>='2010-07-20 21:37:31'::timestamp  """
@@ -492,8 +498,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 31529
         logger.info("result %.6E", res)
@@ -522,8 +527,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 5121
         logger.info("result %.6E", res)
@@ -537,8 +541,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 73766
         logger.info("result %.6E", res)
@@ -552,8 +555,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 24666983
         logger.info("result %.6E", res)
@@ -567,8 +569,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 64145760515
         logger.info("result %.6E", res)
@@ -584,8 +585,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 79851
         logger.info("result %.6E", res)
@@ -599,8 +599,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 15900001
         logger.info("result %.6E", res)
@@ -614,8 +613,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 15131840763
         logger.info("result %.6E", res)
@@ -644,8 +642,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 35227  # 1379  #
         logger.info("result %.6E", res)
@@ -659,8 +656,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 13391
         logger.info("result %.6E", res)
@@ -674,8 +670,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 4260125  # 67211  #
         logger.info("result %.6E", res)
@@ -689,8 +684,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 4229950  # 67211  #
         logger.info("result %.6E", res)
@@ -720,8 +714,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 4285046
         logger.info("result %.6E", res)
@@ -735,8 +728,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 981758  # 2102603883
         logger.info("result %.6E", res)
@@ -750,8 +742,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 3244103433
         logger.info("result %.6E", res)
@@ -765,8 +756,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 78392
         logger.info("result %.6E", res)
@@ -780,8 +770,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 445767
         logger.info("result %.6E", res)
@@ -795,8 +784,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 154993
         logger.info("result %.6E", res)
@@ -810,8 +798,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 154993
         logger.info("result %.6E", res)
@@ -840,8 +827,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 52988984588
         logger.info("result %.6E", res)
@@ -855,8 +841,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 12741
         logger.info("result %.6E", res)
@@ -871,8 +856,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 15900001
         logger.info("result %.6E", res)
