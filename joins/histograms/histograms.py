@@ -72,7 +72,8 @@ class JoinHistogram(BaseHistogram):
         print("JoinHistogram prediction is ", np.sum(counts))
         if update_statistics:
             self.counts = counts
-            self.unique_counts = np.minimum(self.unique_counts, hist1.unique_counts)
+            self.unique_counts = np.minimum(
+                self.unique_counts, hist1.unique_counts)
             return self
         return counts
 
@@ -86,7 +87,8 @@ class UpperBoundHistogram(BaseHistogram):
         groups = data.groupby(pd.cut(data[headers[0]], bins), observed=False)
         self.counts = np.array(groups[headers[0]].count()).astype("float")
 
-        value_counts = groups.value_counts().groupby(headers[0], observed=False).head(1)
+        value_counts = groups.value_counts().groupby(
+            headers[0], observed=False).head(1)
         # print("value_counts\n", value_counts)
 
         mfv_counts = np.array(value_counts)
@@ -116,7 +118,8 @@ class UpperBoundHistogramTopK(BaseHistogram):
         self.counts_top_k = None
         self.unique_counts_top_k = None
         self.top_k = top_k  # the number of dominating values to maintain
-        self.top_k_container = None  # a list, containing a tree of [value, counter]
+        # a list, containing a tree of [value, counter]
+        self.top_k_container = None
         self.background_frequency = None
 
     def fit(self, data: pd.DataFrame, headers: list, bins) -> None:
@@ -132,7 +135,8 @@ class UpperBoundHistogramTopK(BaseHistogram):
         self.unique_counts = np.array(uni["uni"].count()).astype("float")
 
         value_counts = (
-            groups.value_counts().groupby(headers[0], observed=False).head(self.top_k)
+            groups.value_counts().groupby(
+                headers[0], observed=False).head(self.top_k)
         )
         # print(type(value_counts))
         # print("value_counts\n", value_counts)
@@ -162,7 +166,8 @@ class UpperBoundHistogramTopK(BaseHistogram):
 
         self.top_k_container = top_k_container
         # print("self.top_k_container \n", self.top_k_container)
-        self.counts_top_k = np.array([sum(i.values()) for i in top_k_container])
+        self.counts_top_k = np.array([sum(i.values())
+                                     for i in top_k_container])
         self.unique_counts_top_k = np.array([len(i) for i in top_k_container])
         # print("self.counts_top_k \n", self.counts_top_k)
         # print("self.unique_counts_top_k \n", self.unique_counts_top_k)
@@ -182,7 +187,8 @@ class UpperBoundHistogramTopK(BaseHistogram):
         start = time.time()
         # not top k
         mul = np.multiply(self.counts_no_top_k, hist1.counts_no_top_k)
-        maxs = np.maximum(self.unique_counts_no_top_k, hist1.unique_counts_no_top_k)
+        maxs = np.maximum(self.unique_counts_no_top_k,
+                          hist1.unique_counts_no_top_k)
         counts_no_top_k = division(mul, maxs)
 
         # top k
@@ -200,10 +206,11 @@ class UpperBoundHistogramTopK(BaseHistogram):
             container = {}
             for k in set_a.intersection(set_b):
                 container[k] = aa[k] * bb[k]
-            for k in set_a - set_a.intersection(set_b):
-                container[k] = aa[k] * fb
-            for k in set_b - set_a.intersection(set_b):
-                container[k] = bb[k] * fa
+            # TODO: proper handling here, need to store more data for skewed data!!
+            # for k in set_a - set_a.intersection(set_b):
+            #     container[k] = aa[k] * fb
+            # for k in set_b - set_a.intersection(set_b):
+            #     container[k] = bb[k] * fa
                 # cnt += aa[k] * bb[k]
             # counts_top_k.append(cnt)
             top_k_container.append(container)
@@ -220,7 +227,8 @@ class UpperBoundHistogramTopK(BaseHistogram):
             hist.counts = np.add(counts_no_top_k, counts_top_k)
             hist.top_k_container = top_k_container
             hist.unique_counts_top_k = unique_counts_top_k
-            hist.unique_counts = np.minimum(self.unique_counts, hist1.unique_counts)
+            hist.unique_counts = np.minimum(
+                self.unique_counts, hist1.unique_counts)
             hist.unique_counts_no_top_k = self.unique_counts - self.unique_counts_top_k
             hist.background_frequency = division(
                 hist.counts_no_top_k * 1.0, hist.unique_counts_no_top_k
@@ -442,7 +450,8 @@ class TableJoin(BaseHistogram):
         self.size = len(self.df)
 
     def join(self, hist1: "TableJoin", bins) -> np.array:
-        df = self.df.merge(hist1.df, left_on=self.headers, right_on=hist1.headers)
+        df = self.df.merge(hist1.df, left_on=self.headers,
+                           right_on=hist1.headers)
         count, bins = np.histogram(df, bins=bins)
         # # print("df is \n", df)
         # # print("count:\n", count)
@@ -514,7 +523,8 @@ if __name__ == "__main__":
     plt.figure(dpi=300)
     ub_error = division(ub, tj)
     # print(ub_error)
-    plt.hist(bins[:-1], bins, weights=ub_error, label="Upper Bound", color=colors[2])
+    plt.hist(bins[:-1], bins, weights=ub_error,
+             label="Upper Bound", color=colors[2])
     # plt.yscale("log")
     # plt.show()
 
@@ -529,10 +539,12 @@ if __name__ == "__main__":
 
     ubtk_error = division(ubtk, tj)
     # print(ub_error)
-    plt.hist(bins[:-1], bins, weights=ubtk_error, label="DHist", color=colors[0])
+    plt.hist(bins[:-1], bins, weights=ubtk_error,
+             label="DHist", color=colors[0])
     # plt.yscale("log")
 
-    plt.hist(bins[:-1], bins, weights=jh_error, label="Join-Histogram", color=colors[1])
+    plt.hist(bins[:-1], bins, weights=jh_error,
+             label="Join-Histogram", color=colors[1])
     plt.legend()
     plt.xlabel("Join Key: UserId")
     plt.ylabel("Accuracy: predction/truth")

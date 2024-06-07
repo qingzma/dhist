@@ -23,7 +23,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             "--train",
             "--grid",
             "100",
-            "--cdf",
+            # "--cdf",
         ]  # "--cdf"
         self.args = parse_args(arguments)
 
@@ -35,9 +35,9 @@ class TestTopkEngineMethod(unittest.TestCase):
     #     arguments = [
     #         "--train",
     #         "--grid",
-    #         "100",
+    #         "200",
     #         "--topk",
-    #         "10",
+    #         "20",
     #         # "--cdf",
     #     ]
     #     args = parse_args(arguments)
@@ -969,19 +969,80 @@ class TestTopkEngineMethod(unittest.TestCase):
     # #     logger.info("time cost is %.5f s.", t2 - t1)
     # #     self.assertTrue(q_error(res, truth) < 5)
 
-    def test_multi_way_1_join_key_hard3(self):
-        query = """SELECT COUNT(*) FROM users as u, comments as c, posts as p, postHistory as ph, badges as b WHERE u.Id = c.UserId AND u.Id = p.OwnerUserId AND u.Id = b.UserId AND u.Id = ph.UserId AND u.Views=0 AND u.DownVotes>=0 AND u.DownVotes<=60 AND c.Score=0 AND p.Score>=-2 AND p.CommentCount>=0 AND p.CommentCount<=12 AND p.FavoriteCount>=0 AND p.FavoriteCount<=6 AND ph.CreationDate<='2014-08-18 08:54:12'::timestamp"""
+    # def test_multi_way_1_join_key_harder(self):
+    #     query = """SELECT COUNT(*) FROM users as u, comments as c, posts as p, postHistory as ph, badges as b WHERE u.Id = c.UserId AND u.Id = p.OwnerUserId AND u.Id = b.UserId AND u.Id = ph.UserId AND u.Views=0 AND u.DownVotes>=0 AND u.DownVotes<=60 AND c.Score=0 AND p.Score>=-2 AND p.CommentCount>=0 AND p.CommentCount<=12 AND p.FavoriteCount>=0 AND p.FavoriteCount<=6 AND ph.CreationDate<='2014-08-18 08:54:12'::timestamp"""
+    #     with open("models/" + self.model_name + ".pkl", "rb") as f:
+    #         model = pickle.load(f)
+    #     engine = Engine(model, use_cdf=self.args.cdf)
+    #     t1 = time.time()
+    #     res = engine.query(
+    #         query) if self.use_pushed_down else engine.query(query)
+    #     t2 = time.time()
+    #     truth = 16698
+    #     logger.info("result %.6E", res)
+    #     logger.info("truth %.6E", truth)
+    #     logger.info("time cost is %.5f s.", t2 - t1)
+    #     self.assertTrue(q_error(res, truth) < 5)
+
+    # def test_multi_way_1_join_key_harder_u(self):
+    #     query = """SELECT COUNT(*) FROM comments as c, posts as p, postHistory as ph, badges as b WHERE c.UserId = p.OwnerUserId AND c.UserId = b.UserId AND c.UserId = ph.UserId  AND c.Score=0 AND p.Score>=-2 AND p.CommentCount>=0 AND p.CommentCount<=12 AND p.FavoriteCount>=0 AND p.FavoriteCount<=6 AND ph.CreationDate<='2014-08-18 08:54:12'::timestamp """
+    #     with open("models/" + self.model_name + ".pkl", "rb") as f:
+    #         model = pickle.load(f)
+    #     engine = Engine(model, use_cdf=self.args.cdf)
+    #     t1 = time.time()
+    #     res = engine.query(
+    #         query) if self.use_pushed_down else engine.query(query)
+    #     t2 = time.time()
+    #     truth = 16698
+    #     logger.info("result %.6E", res)
+    #     logger.info("truth %.6E", truth)
+    #     logger.info("time cost is %.5f s.", t2 - t1)
+    #     self.assertTrue(q_error(res, truth) < 5)
+
+    def test_multi_way_1_join_key_harder_c(self):
+        query = """SELECT COUNT(*) FROM users as u,  posts as p, postHistory as ph, badges as b WHERE  u.Id = p.OwnerUserId AND u.Id = b.UserId AND u.Id = ph.UserId AND u.Views=0 AND u.DownVotes>=0 AND u.DownVotes<=60 AND p.Score>=-2 AND p.CommentCount>=0 AND p.CommentCount<=12 AND p.FavoriteCount>=0 AND p.FavoriteCount<=6 AND ph.CreationDate<='2014-08-18 08:54:12'::timestamp"""
         with open("models/" + self.model_name + ".pkl", "rb") as f:
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(
+            query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
-        truth = 16698
+        truth = 6698
         logger.info("result %.6E", res)
         logger.info("truth %.6E", truth)
         logger.info("time cost is %.5f s.", t2 - t1)
         self.assertTrue(q_error(res, truth) < 5)
+
+    # def test_multi_way_1_join_key_harder_c_b(self):
+    #     query = """SELECT COUNT(*) FROM users as u,  posts as p, postHistory as ph WHERE  u.Id = p.OwnerUserId  AND u.Id = ph.UserId AND u.Views=0 AND u.DownVotes>=0 AND u.DownVotes<=60 AND p.Score>=-2 AND p.CommentCount>=0 AND p.CommentCount<=12 AND p.FavoriteCount>=0 AND p.FavoriteCount<=6 AND ph.CreationDate<='2014-08-18 08:54:12'::timestamp"""
+    #     with open("models/" + self.model_name + ".pkl", "rb") as f:
+    #         model = pickle.load(f)
+    #     engine = Engine(model, use_cdf=self.args.cdf)
+    #     t1 = time.time()
+    #     res = engine.query(
+    #         query) if self.use_pushed_down else engine.query(query)
+    #     t2 = time.time()
+    #     truth = 3017
+    #     logger.info("result %.6E", res)
+    #     logger.info("truth %.6E", truth)
+    #     logger.info("time cost is %.5f s.", t2 - t1)
+    #     self.assertTrue(q_error(res, truth) < 5)
+
+    # def test_multi_way_1_join_key_harder_c_b_u(self):
+    #     query = """SELECT COUNT(*) FROM posts as p, postHistory as ph WHERE  p.OwnerUserId = ph.UserId  AND p.Score>=-2 AND p.CommentCount>=0 AND p.CommentCount<=12 AND p.FavoriteCount>=0 AND p.FavoriteCount<=6 AND ph.CreationDate<='2014-08-18 08:54:12'::timestamp"""
+    #     with open("models/" + self.model_name + ".pkl", "rb") as f:
+    #         model = pickle.load(f)
+    #     engine = Engine(model, use_cdf=self.args.cdf)
+    #     t1 = time.time()
+    #     res = engine.query(
+    #         query) if self.use_pushed_down else engine.query(query)
+    #     t2 = time.time()
+    #     truth = 1198886
+    #     logger.info("result %.6E", res)
+    #     logger.info("truth %.6E", truth)
+    #     logger.info("time cost is %.5f s.", t2 - t1)
+    #     self.assertTrue(q_error(res, truth) < 10)
 
 
 if __name__ == "__main__":

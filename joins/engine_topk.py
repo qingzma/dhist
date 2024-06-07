@@ -44,7 +44,8 @@ class EngineTopK:
 
     def query(self, query_str):
         logger.info("QUERY [%s]", query_str)
-        tables_all, table_query, join_cond, join_keys = parse_query_simple(query_str)
+        tables_all, table_query, join_cond, join_keys = parse_query_simple(
+            query_str)
         conditions = generate_push_down_conditions(
             tables_all, table_query, join_cond, join_keys
         )
@@ -151,10 +152,12 @@ def multi_query_with_same_column(models, conditions, join_cond, join_paths):
     for tbl in conditions:
         for cond in conditions[tbl]:
             if cond.non_key is not None:
-                model = models[tbl].non_key_hist[cond.non_key.split(".")[1]].pdf
+                model = models[tbl].non_key_hist[cond.non_key.split(".")[
+                    1]].pdf
                 domain_query = cond.non_key_condition
                 selectivity *= model.selectivity(domain_query)
-                # logger.info("selectivity is %s", model.selectivity(domain_query))
+                logger.info("selectivity is %s",
+                            model.selectivity(domain_query))
 
     return np.sum(res) * selectivity
 
@@ -387,7 +390,8 @@ def vec_sel_single_table_query(
     # logger.info("predx is %s", np.sum(pred_x))
     pred = np.ones_like(pred_x)
     for pred_xyi in pred_xys:
-        pred = vec_sel_multiply(pred, vec_sel_divide(pred_xyi, pred_x)) / width_x
+        pred = vec_sel_multiply(
+            pred, vec_sel_divide(pred_xyi, pred_x)) / width_x
 
     # logger.info("width x is %s", width_x)
     res = vec_sel_multiply(pred, pred_x)
