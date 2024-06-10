@@ -5,8 +5,11 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import heapq
+from operator import itemgetter
 
 from joins.tools import division, read_from_csv
+from collections import ChainMap
 
 colors = [
     "#1f77b4",
@@ -24,6 +27,13 @@ colors = [
 
 def tops(s, n=3):
     return s.value_counts().head(n)
+
+
+def get_dominating_items_in_histograms(top_k_container, n=100, size=None):
+    merged_dict = dict(ChainMap(*top_k_container))
+    top_n = dict(heapq.nlargest(n, merged_dict.items(), key=itemgetter(1)))
+    # print("top n is ", top_n)
+    return top_n
 
 
 class BaseHistogram:
@@ -183,8 +193,8 @@ class UpperBoundHistogramTopK(BaseHistogram):
         # # print("mfv_counts\n", mfv_counts)
         # self.mfv_counts = mfv_counts.astype("float")
 
-    def join(self, hist1: "UpperBoundHistogramTopK", update_statistics=False) -> int:
-        start = time.time()
+    def join(self, hist1: "UpperBoundHistogramTopK", id_filtered=None) -> "UpperBoundHistogramTopK":
+        # start = time.time()
         # not top k
         mul = np.multiply(self.counts_no_top_k, hist1.counts_no_top_k)
         maxs = np.maximum(self.unique_counts_no_top_k,
@@ -202,17 +212,33 @@ class UpperBoundHistogramTopK(BaseHistogram):
         ):
             set_a = set(aa)
             set_b = set(bb)
+            id_filtered = set(id_filtered) if id_filtered else set()
+            # if id_filtered:
+            #     set_a = set_a.intersection(set(id_filtered))
+            #     set_b = set_b.intersection(set(id_filtered))
             # cnt = 0
             container = {}
-            for k in set_a.intersection(set_b):
+            # print("-"*80)
+            # if strategy == "keep":
+            common_ids = set_a.intersection(
+                set_b)-id_filtered if id_filtered else set_a.intersection(set_b)
+            for k in common_ids:
                 container[k] = aa[k] * bb[k]
+            # print("keys are ", container.keys())
             # TODO: proper handling here, need to store more data for skewed data!!
-            # for k in set_a - set_a.intersection(set_b):
-            #     container[k] = aa[k] * fb
-            # for k in set_b - set_a.intersection(set_b):
-            #     container[k] = bb[k] * fa
+            # if strategy == "keep":
+            common_a_not_b = set_a - \
+                set_a.intersection(
+                    set_b) - id_filtered if id_filtered else set_a - set_a.intersection(set_b)
+            for k in common_a_not_b:
+                container[k] = aa[k] * fb
+            common_b_not_a = set_b - \
+                set_a.intersection(
+                    set_b) - id_filtered if id_filtered else set_b - set_a.intersection(set_b)
+            for k in common_b_not_a:
+                container[k] = bb[k] * fa
                 # cnt += aa[k] * bb[k]
-            # counts_top_k.append(cnt)
+                # counts_top_k.append(cnt)
             top_k_container.append(container)
         # counts_top_k = np.array(counts_top_k)
         counts_top_k = np.array([sum(i.values()) for i in top_k_container])
@@ -220,20 +246,20 @@ class UpperBoundHistogramTopK(BaseHistogram):
 
         counts = np.add(counts_top_k, counts_no_top_k)
 
-        if update_statistics:
-            hist = deepcopy(self)
-            hist.counts_no_top_k = counts_no_top_k
-            hist.counts_top_k = counts_top_k
-            hist.counts = np.add(counts_no_top_k, counts_top_k)
-            hist.top_k_container = top_k_container
-            hist.unique_counts_top_k = unique_counts_top_k
-            hist.unique_counts = np.minimum(
-                self.unique_counts, hist1.unique_counts)
-            hist.unique_counts_no_top_k = self.unique_counts - self.unique_counts_top_k
-            hist.background_frequency = division(
-                hist.counts_no_top_k * 1.0, hist.unique_counts_no_top_k
-            )
-        end = time.time()
+        # if update_statistics:
+        hist = deepcopy(self)
+        hist.counts_no_top_k = counts_no_top_k
+        hist.counts_top_k = counts_top_k
+        hist.counts = counts  # np.add(counts_no_top_k, counts_top_k)
+        hist.top_k_container = top_k_container
+        hist.unique_counts_top_k = unique_counts_top_k
+        hist.unique_counts = np.minimum(
+            self.unique_counts, hist1.unique_counts)
+        hist.unique_counts_no_top_k = self.unique_counts - self.unique_counts_top_k
+        hist.background_frequency = division(
+            hist.counts_no_top_k * 1.0, hist.unique_counts_no_top_k
+        )
+        # end = time.time()
         # print(
         #     "UpperBoundHistogramTopK prediction is ",
         #     np.sum(counts),
@@ -243,10 +269,11 @@ class UpperBoundHistogramTopK(BaseHistogram):
         #     self.serialize(),
         #     " bytes.",
         # )
-        if update_statistics:
-            return hist
+        # if update_statistics:
+        #     return hist
 
-        return counts
+        # return counts
+        return hist
 
 
 # class UpperBoundHistogramTopK2D(BaseHistogram):
