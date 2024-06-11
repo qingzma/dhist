@@ -56,13 +56,11 @@ class EngineTopK:
         )
         # max_dim = get_max_dim(join_keys)
 
-        # logger.info("join_cond is %s", join_cond)
-        # logger.info("tables_all is %s", tables_all)
-        # logger.info("table_query is %s", table_query)
-        # # logger.info("join_keys is %s", join_keys)
-        # logger.info("conditions %s", conditions)
-        # logger.info("max_dim %s", max_dim)
-        # logger.info("join_paths %s", join_paths)
+        logger.info("join_cond is %s", join_cond)
+        logger.info("tables_all is %s", tables_all)
+        logger.info("table_query is %s", table_query)
+        logger.info("join_keys is %s", join_keys)
+        logger.info("conditions %s", conditions)
 
         # single table query
         if len(tables_all) == 1:
@@ -73,9 +71,23 @@ class EngineTopK:
         join_paths = parse_join_paths(join_cond)
         max_dim = len(join_paths)
 
+        logger.info("max_dim %s", max_dim)
+        logger.info("join_paths %s", join_paths)
+
         # only a single join key is allowed in a table
         if max_dim == 2:
-            return 2
+            res1 = multi_query_with_same_column(
+                self.models, conditions, join_cond, [
+                    join_paths[0]], n_dominating_counter
+            )
+            res2 = multi_query_with_same_column(
+                self.models, conditions, join_cond, [
+                    join_paths[1]], n_dominating_counter, b_disable_selectivity=True
+            )
+            logger.info("res1 %s", res1)
+            logger.info("res2 %s", res2)
+            res = res1*res2/91976
+            return res
 
         if max_dim > 2:
             logger.error("length is  [%i]", max_dim)
@@ -149,6 +161,7 @@ def multi_query_with_same_column(
     n_dominating_counter=-1,
     b_primary_table_filter=True,
     b_foreign_table_filter=False,
+    b_disable_selectivity=False,
 ):
     # conditions = copy.deepcopy(conditions)
     # filter top k dominating items, which will be exclude by range predicates.
@@ -242,14 +255,16 @@ def multi_query_with_same_column(
     res = hist.join(hist1, id_filtered=id_filtered_out)
 
     selectivity = 1.0
-    for tbl in conditions:
-        for cond in conditions[tbl]:
-            if cond.non_key is not None:
-                model = models[tbl].non_key_hist[cond.non_key.split(".")[
-                    1]].pdf
-                domain_query = cond.non_key_condition
-                selectivity *= model.selectivity(domain_query)
-                # logger.info("selectivity is %s", model.selectivity(domain_query))
+    if not b_disable_selectivity:
+        for tbl in conditions:
+            for cond in conditions[tbl]:
+                if cond.non_key is not None:
+                    model = models[tbl].non_key_hist[cond.non_key.split(".")[
+                        1]].pdf
+                    domain_query = cond.non_key_condition
+                    selectivity *= model.selectivity(domain_query)
+                    logger.info("selectivity is %s",
+                                model.selectivity(domain_query))
 
     if n_dominating_counter > 0:
         return (
