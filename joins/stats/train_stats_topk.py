@@ -29,7 +29,8 @@ def train_stats_topk(args):
         schema, all_keys, equivalent_keys, table_keys = process_stats_data(
             dataset, data_path, model_folder, kernel=kernel
         )
-        join_keys, relevant_keys, counters = get_stats_relevant_attributes(schema)
+        join_keys, relevant_keys, counters = get_stats_relevant_attributes(
+            schema)
 
         for t in schema.tables:
             print("analyze table ", t.table_name)
@@ -67,7 +68,8 @@ def train_stats_topk(args):
             schema, all_keys, equivalent_keys, table_keys = process_stats_data(
                 dataset, data_path, model_folder, kernel=kernel
             )
-            join_keys, relevant_keys, counters = get_stats_relevant_attributes(schema)
+            join_keys, relevant_keys, counters = get_stats_relevant_attributes(
+                schema)
 
             for query in schema.join_paths:
                 engine = EngineTopK(model, use_cdf=args.cdf)
@@ -75,18 +77,18 @@ def train_stats_topk(args):
                     query, n_dominating_counter=4000
                 )
 
-                logger.info("top_container %s", top_container)
-                logger.info("join_path %s", join_path)
+                # logger.info("top_container %s", top_container)
+                # logger.info("join_path %s", join_path)
 
                 # ["posts"]:  # : [i.table_name for i in schema.tables]
                 for t in [i.table_name for i in schema.tables]:
                     table_path = os.path.join(data_path, t) + ".csv"
                     jks = [jk for jk in join_path if t in jk]
-                    logger.info("table is %s", t)
-                    logger.info("jks %s", jks)
+                    # logger.info("table is %s", t)
+                    # logger.info("jks %s", jks)
                     assert len(jks) <= 1
                     if len(jks) == 1:
-                        logger.info("jks is %s", jks)
+                        # logger.info("jks is %s", jks)
                         jks = jks[0].replace(t, "").replace(".", "")
                         model[t].fit_join_key_corrector(
                             table_path,

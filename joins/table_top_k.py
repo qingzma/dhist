@@ -76,35 +76,35 @@ class TableContainerTopK:
             # else:
             #     self.pdfs[relev_key] = column
 
-        if self.name in schema.categoricals:
-            for jk in schema.categoricals[self.name]:
-                if jk not in self.categorical_hist:
-                    self.categorical_hist[jk] = {}
-                for cate_key in schema.categoricals[self.name][jk]:
-                    logger.info("!!!%s,%s,%s", self.name, jk, cate_key)
+        # if self.name in schema.categoricals:
+        #     for jk in schema.categoricals[self.name]:
+        #         if jk not in self.categorical_hist:
+        #             self.categorical_hist[jk] = {}
+        #         for cate_key in schema.categoricals[self.name][jk]:
+        #             logger.info("!!!%s,%s,%s", self.name, jk, cate_key)
 
-                    if cate_key not in self.categorical_hist[jk]:
-                        self.categorical_hist[jk][cate_key] = {}
+        #             if cate_key not in self.categorical_hist[jk]:
+        #                 self.categorical_hist[jk][cate_key] = {}
 
-                    cate_values = df[cate_key].unique()
-                    cate_values = cate_values[~np.isnan(cate_values)]
-                    for cate_val in cate_values:
-                        df_jk = df.loc[df[cate_key] == cate_val][[jk]]
-                        logger.info("df_jk\n %s", df_jk)
+        #             cate_values = df[cate_key].unique()
+        #             cate_values = cate_values[~np.isnan(cate_values)]
+        #             for cate_val in cate_values:
+        #                 df_jk = df.loc[df[cate_key] == cate_val][[jk]]
+        #                 logger.info("df_jk\n %s", df_jk)
 
-                        column = KeyColumnTopK()
+        #                 column = KeyColumnTopK()
 
-                        if self.name in bin_info and jk in bin_info[self.name]:
-                            bins = np.linspace(
-                                bin_info[self.name][jk][0],
-                                bin_info[self.name][jk][1],
-                                args.grid,
-                            )
-                            column.fit(df_col, bins=bins, args=args)
-                            self.categorical_hist[jk][cate_key][cate_val] = column
-                        else:
-                            logger.error("bin info is not provided.")
-                            exit()
+        #                 if self.name in bin_info and jk in bin_info[self.name]:
+        #                     bins = np.linspace(
+        #                         bin_info[self.name][jk][0],
+        #                         bin_info[self.name][jk][1],
+        #                         args.grid,
+        #                     )
+        #                     column.fit(df_col, bins=bins, args=args)
+        #                     self.categorical_hist[jk][cate_key][cate_val] = column
+        #                 else:
+        #                     logger.error("bin info is not provided.")
+        #                     exit()
 
     def fit_join_key_corrector(
         self,
@@ -149,7 +149,7 @@ class TableContainerTopK:
                 .to_dict()
             )  # TODO check if needs to find the min or max, currently, it is random one
             self.jk_corrector[jks][col] = d
-        logger.info("jk_corrector \n%s", self.jk_corrector)
+        # logger.info("jk_corrector \n%s", self.jk_corrector)
 
     def filter_join_key_by_query(self, domain: Domain, col: str, jks, ids: list = []):
         # logger.info("jk_corrector %s", self.jk_corrector.keys())

@@ -49,7 +49,8 @@ class EngineTopK:
 
     def query(self, query_str, n_dominating_counter=-1):
         logger.info("QUERY [%s]", query_str)
-        tables_all, table_query, join_cond, join_keys = parse_query_simple(query_str)
+        tables_all, table_query, join_cond, join_keys = parse_query_simple(
+            query_str)
         conditions = generate_push_down_conditions(
             tables_all, table_query, join_cond, join_keys
         )
@@ -244,7 +245,8 @@ def multi_query_with_same_column(
     for tbl in conditions:
         for cond in conditions[tbl]:
             if cond.non_key is not None:
-                model = models[tbl].non_key_hist[cond.non_key.split(".")[1]].pdf
+                model = models[tbl].non_key_hist[cond.non_key.split(".")[
+                    1]].pdf
                 domain_query = cond.non_key_condition
                 selectivity *= model.selectivity(domain_query)
                 # logger.info("selectivity is %s", model.selectivity(domain_query))
@@ -252,7 +254,8 @@ def multi_query_with_same_column(
     if n_dominating_counter > 0:
         return (
             get_dominating_items_in_histograms(
-                res.top_k_container, n=n_dominating_counter, size=np.sum(res.counts)
+                res.top_k_container, n=n_dominating_counter, size=np.sum(
+                    res.counts)
             ),
             join_paths[0],
         )
