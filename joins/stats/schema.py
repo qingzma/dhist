@@ -48,8 +48,7 @@ def gen_stats_light_schema(hdf_path):
         Table(
             "postHistory",
             primary_key=["Id"],
-            attributes=["Id", "PostHistoryTypeId",
-                        "PostId", "CreationDate", "UserId"],
+            attributes=["Id", "PostHistoryTypeId", "PostId", "CreationDate", "UserId"],
             csv_file_location=hdf_path.format("postHistory"),
             irrelevant_attributes=[],  # ['Id'],
             no_compression=["PostHistoryTypeId"],
@@ -118,8 +117,7 @@ def gen_stats_light_schema(hdf_path):
         Table(
             "postLinks",
             primary_key=["Id"],
-            attributes=["Id", "CreationDate", "PostId",
-                        "RelatedPostId", "LinkTypeId"],
+            attributes=["Id", "CreationDate", "PostId", "RelatedPostId", "LinkTypeId"],
             csv_file_location=hdf_path.format("postLinks"),
             irrelevant_attributes=[],  # ["Id"],
             no_compression=[],
@@ -173,7 +171,15 @@ def gen_stats_light_schema(hdf_path):
     schema.add_pk_bins("postLinks", "RelatedPostId", 1, 115378)
     schema.add_pk_bins("tags", "ExcerptPostId", 1, 115378)
 
-    schema.add_join_path("SELECT COUNT(*) FROM  users as u, badges as b, comments as c, votes as v, posts as p, postHistory as ph    WHERE  u.Id = b.UserId AND u.Id=c.UserId AND u.Id=v.UserId AND u.Id=p.OwnerUserId  AND u.Id=ph.UserId")
+    schema.add_join_path(
+        "SELECT COUNT(*) FROM  users as u, badges as b, comments as c, votes as v, posts as p, postHistory as ph    WHERE  u.Id = b.UserId AND u.Id=c.UserId AND u.Id=v.UserId AND u.Id=p.OwnerUserId  AND u.Id=ph.UserId"
+    )
+    schema.add_join_path(
+        "SELECT COUNT(*) FROM  posts as p, postLinks as pl, comments as c, postHistory as ph, votes as v      WHERE  p.Id = pl.PostId AND p.Id = c.PostId AND p.Id = ph.PostId AND p.Id = v.PostId"
+    )
+    schema.add_join_path(
+        "SELECT COUNT(*) FROM  posts as p, postLinks as pl, comments as c, postHistory as ph, votes as v      WHERE  p.Id = pl.RelatedPostId AND p.Id = c.PostId AND p.Id = ph.PostId AND p.Id = v.PostId"
+    )
     # schema.add_join_path(["posts.Id", "postLinks.PostId", "comments.PostId", "postHistory.PostId",
     #                       "votes.PostId", "tags.ExcerptPostId"])
 

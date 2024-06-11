@@ -72,54 +72,70 @@ class TableContainerTopK:
             # else:
             #     self.pdfs[relev_key] = column
 
-    def fit_join_key_corrector(self, file, join_keys, relevant_keys, bin_info, top_container, join_path, jks, args=None):
+    def fit_join_key_corrector(
+        self,
+        file,
+        join_keys,
+        relevant_keys,
+        bin_info,
+        top_container,
+        join_path,
+        jks,
+        args=None,
+    ):
         df = pd.read_csv(file, sep=",")
 
-        logger.info("join keys %s", join_keys)
-        logger.info("jks %s", jks)
+        # logger.info("join keys %s", join_keys)
+        # logger.info("jks %s", jks)
         # for jk  in join_keys[self.name]:
-        logger.info("relev %s", relevant_keys[self.name])
-        cols = list(set(relevant_keys[self.name])-set([jks]))
-        df1 = df[[jks]+cols]
+        # logger.info("relev %s", relevant_keys[self.name])
+        cols = list(set(relevant_keys[self.name]) - set([jks]))
+        df1 = df[[jks] + cols]
         # exit()
-        logger.info("df1 \n %s", df1)
+        # logger.info("df1 \n %s", df1)
 
         top_ids = list(top_container.keys())
-        logger.info("top id is %s", top_ids)
+        # logger.info("top id is %s", top_ids)
         top_ids = [int(i) for i in top_ids]
-        logger.info("top id is %s", top_ids)
+        # logger.info("top id is %s", top_ids)
         df_filtered = df1[df1[jks].isin(top_ids)]
-        logger.info("df_filtered is \n%s", df_filtered)
+        # logger.info("df_filtered is \n%s", df_filtered)
         cols = df_filtered.columns.to_list()
         col_key = cols[0]
 
         self.jk_corrector[jks] = {}
         for col in cols[1:]:
-            d = pd.Series(df_filtered[col].values,
-                          index=df_filtered[col_key]).dropna().to_dict()  # TODO check if needs to find the min or max, currently, it is random one
+            d = (
+                pd.Series(df_filtered[col].values, index=df_filtered[col_key])
+                .dropna()
+                .to_dict()
+            )  # TODO check if needs to find the min or max, currently, it is random one
             self.jk_corrector[jks][col] = d
-        logger.info("jk_corrector \n%s", self.jk_corrector)
+        # logger.info("jk_corrector \n%s", self.jk_corrector)
 
     def filter_join_key_by_query(self, domain: Domain, col: str, jks, ids: list = []):
-        logger.info("jk_corrector %s", self.jk_corrector.keys())
-        # id_considered = set(self.jk_corrector[col].keys())
-        # if ids:
-        #     id_considered = id_considered.intersection(set(ids))
-        logger.info("self.jk_corrector %s", self.jk_corrector[jks][col])
-        # exit()
-        hh = KeyColumnTopK()
-        # hh.pdf.top_k_container
-        logger.info("self.key_hist[jks] %s",
-                    self.key_hist.keys())
-        # TODO here:lambda filter
-        filtered_top_k_not_included = [
-            list(filter(lambda x: not domain.contain(x), list(d.keys()))) for d in self.key_hist[jks].pdf.top_k_container]
-        logger.info("filtered_top_k_not_included %s",
-                    filtered_top_k_not_included)
+        # logger.info("jk_corrector %s", self.jk_corrector.keys())
+        # # id_considered = set(self.jk_corrector[col].keys())
+        # # if ids:
+        # #     id_considered = id_considered.intersection(set(ids))
+        # logger.info("self.jk_corrector %s", self.jk_corrector[jks][col])
+        # # exit()
+        # hh = KeyColumnTopK()
+        # # hh.pdf.top_k_container
+        # logger.info("self.key_hist[jks] %s",
+        #             self.key_hist.keys())
+        # # TODO here:lambda filter
+        # filtered_top_k_not_included = [
+        #     list(filter(lambda x: not domain.contain(x), list(d.keys()))) for d in self.key_hist[jks].pdf.top_k_container]
+        # logger.info("filtered_top_k_not_included %s",
+        #             filtered_top_k_not_included)
 
         # exit()
         filtered_dict = {
-            k: v for k, v in self.jk_corrector[jks][col].items() if not domain.contain(v)}
+            k: v
+            for k, v in self.jk_corrector[jks][col].items()
+            if not domain.contain(v)
+        }
 
         filtered_out_id = list(filtered_dict.keys())
 

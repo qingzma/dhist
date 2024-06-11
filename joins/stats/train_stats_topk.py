@@ -29,8 +29,7 @@ def train_stats_topk(args):
         schema, all_keys, equivalent_keys, table_keys = process_stats_data(
             dataset, data_path, model_folder, kernel=kernel
         )
-        join_keys, relevant_keys, counters = get_stats_relevant_attributes(
-            schema)
+        join_keys, relevant_keys, counters = get_stats_relevant_attributes(schema)
 
         for t in schema.tables:
             print("analyze table ", t.table_name)
@@ -56,7 +55,7 @@ def train_stats_topk(args):
             pickle.dump(dict(model_container), f, pickle.HIGHEST_PROTOCOL)
         logger.info("models save at %s", model_path)
 
-    if os.path.exists(model_path+".dom"):
+    if os.path.exists(model_path + ".dom"):
         logger.warning("model[%s] has dominating model, skip training.")
     else:
         with open("models/" + model_name + ".pkl", "rb") as f:
@@ -67,13 +66,13 @@ def train_stats_topk(args):
             schema, all_keys, equivalent_keys, table_keys = process_stats_data(
                 dataset, data_path, model_folder, kernel=kernel
             )
-            join_keys, relevant_keys, counters = get_stats_relevant_attributes(
-                schema)
+            join_keys, relevant_keys, counters = get_stats_relevant_attributes(schema)
 
             for query in schema.join_paths:
                 engine = EngineTopK(model, use_cdf=args.cdf)
                 top_container, join_path = engine.query(
-                    query, n_dominating_counter=20)
+                    query, n_dominating_counter=4000
+                )
 
                 logger.info("top_container %s", top_container)
                 logger.info("join_path %s", join_path)
@@ -88,14 +87,16 @@ def train_stats_topk(args):
                     if len(jks) == 1:
                         logger.info("jks is %s", jks)
                         jks = jks[0].replace(t, "").replace(".", "")
-                        model[t].fit_join_key_corrector(table_path,
-                                                        join_keys=join_keys,
-                                                        relevant_keys=relevant_keys,
-                                                        bin_info=schema.pk_bins,
-                                                        top_container=top_container,
-                                                        join_path=join_path,
-                                                        jks=jks,
-                                                        args=args,)
+                        model[t].fit_join_key_corrector(
+                            table_path,
+                            join_keys=join_keys,
+                            relevant_keys=relevant_keys,
+                            bin_info=schema.pk_bins,
+                            top_container=top_container,
+                            join_path=join_path,
+                            jks=jks,
+                            args=args,
+                        )
             with open(model_path, "wb") as f:
                 pickle.dump(dict(model), f, pickle.HIGHEST_PROTOCOL)
             logger.info("models save at %s", model_path)

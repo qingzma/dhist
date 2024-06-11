@@ -15,7 +15,10 @@ from joins.domain import (
     generate_push_down_conditions,
     get_idx_in_lists,
 )
-from joins.histograms.histograms import UpperBoundHistogramTopK, get_dominating_items_in_histograms
+from joins.histograms.histograms import (
+    UpperBoundHistogramTopK,
+    get_dominating_items_in_histograms,
+)
 from joins.join_graph import get_join_hyper_graph
 from joins.parser import get_max_dim, get_two_chained_query, parse_query_simple
 from joins.plots import plot_line, plot_vec_sel_array
@@ -45,8 +48,7 @@ class EngineTopK:
 
     def query(self, query_str, n_dominating_counter=-1):
         logger.info("QUERY [%s]", query_str)
-        tables_all, table_query, join_cond, join_keys = parse_query_simple(
-            query_str)
+        tables_all, table_query, join_cond, join_keys = parse_query_simple(query_str)
         conditions = generate_push_down_conditions(
             tables_all, table_query, join_cond, join_keys
         )
@@ -137,26 +139,36 @@ def parse_join_paths(join_cond: list):
     return pathss
 
 
-def multi_query_with_same_column(models: dict[str, TableContainerTopK], conditions, join_cond, join_paths, n_dominating_counter=-1):
+def multi_query_with_same_column(
+    models: dict[str, TableContainerTopK],
+    conditions,
+    join_cond,
+    join_paths,
+    n_dominating_counter=-1,
+):
     # filter top k dominating items, which will be exclude by range predicates.
     id_filtered_out = []
     for tbl in conditions:  # conditions:
         for cond in conditions[tbl]:
             if cond.non_key is not None:
-                logger.info("model predicates %s", models[tbl].jk_corrector)
+                # logger.info("model predicates %s", models[tbl].jk_corrector)
                 domain_query = cond.non_key_condition
-                logger.info("join key is %s", cond.join_keys)
+                # logger.info("join key is %s", cond.join_keys)
                 jks = cond.join_keys[0].split(".")[1]
                 # exit()
                 id_filtered_out = models[tbl].filter_join_key_by_query(
-                    domain_query, col=cond.non_key.split(".")[1], jks=jks, ids=id_filtered_out)
+                    domain_query,
+                    col=cond.non_key.split(".")[1],
+                    jks=jks,
+                    ids=id_filtered_out,
+                )
     logger.info("final id is %s", id_filtered_out)
 
     splits = join_paths[0][0].split(".")
     tbl = splits[0]
     jk = splits[1]
 
-    logger.info("join_paths %s", join_paths)
+    # logger.info("join_paths %s", join_paths)
 
     hist: UpperBoundHistogramTopK = models[tbl].key_hist[jk].pdf
     for table_join_key in join_paths[0][1:-1]:
@@ -176,15 +188,17 @@ def multi_query_with_same_column(models: dict[str, TableContainerTopK], conditio
     for tbl in conditions:
         for cond in conditions[tbl]:
             if cond.non_key is not None:
-                model = models[tbl].non_key_hist[cond.non_key.split(".")[
-                    1]].pdf
+                model = models[tbl].non_key_hist[cond.non_key.split(".")[1]].pdf
                 domain_query = cond.non_key_condition
                 selectivity *= model.selectivity(domain_query)
-                logger.info("selectivity is %s",
-                            model.selectivity(domain_query))
+                logger.info("selectivity is %s", model.selectivity(domain_query))
 
     # logger.info("top k is %s", res.top_k_container)
     if n_dominating_counter > 0:
-        return get_dominating_items_in_histograms(
-            res.top_k_container, n=n_dominating_counter, size=np.sum(res.counts)), join_paths[0]
+        return (
+            get_dominating_items_in_histograms(
+                res.top_k_container, n=n_dominating_counter, size=np.sum(res.counts)
+            ),
+            join_paths[0],
+        )
     return np.sum(res.counts) * selectivity
