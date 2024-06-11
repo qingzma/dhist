@@ -29,19 +29,19 @@ class TestTopkEngineMethod(unittest.TestCase):
 
         # train needed models
 
-    # @classmethod
-    # def setUpClass(cls):
-    #     # ['biweight', 'box', 'cosine', 'epa', 'exponential', 'gaussian', 'tri', 'tricube', 'triweight']
-    #     arguments = [
-    #         "--train",
-    #         "--grid",
-    #         "200",
-    #         "--topk",
-    #         "20",
-    #         # "--cdf",
-    #     ]
-    #     args = parse_args(arguments)
-    #     train_stats_topk(args)
+    @classmethod
+    def setUpClass(cls):
+        # ['biweight', 'box', 'cosine', 'epa', 'exponential', 'gaussian', 'tri', 'tricube', 'triweight']
+        arguments = [
+            "--train",
+            "--grid",
+            "200",
+            "--topk",
+            "20",
+            # "--cdf",
+        ]
+        args = parse_args(arguments)
+        train_stats_topk(args)
 
     # # remove trained models for test purposes
     # # @classmethod

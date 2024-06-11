@@ -101,6 +101,7 @@ class SchemaGraph:
         self.relationship_dictionary = {}
         self.pk_bins = {}
         self.join_paths = []
+        self.categoricals = {}
 
     def add_table(self, table):
         self.tables.append(table)
@@ -132,6 +133,11 @@ class SchemaGraph:
 
     def add_join_path(self, path):
         self.join_paths.append(path)
+
+    def add_categorical(self, tbl, join_key, list_of_categorical):
+        if tbl not in self.categoricals:
+            self.categoricals[tbl] = {}
+        self.categoricals[tbl][join_key] = list_of_categorical
 
 
 class QueryType(Enum):
@@ -192,8 +198,7 @@ class Query:
         query = Query(self.schema_graph)
         query.table_set = copy.copy(self.table_set)
         query.relationship_set = copy.copy(self.relationship_set)
-        query.table_where_condition_dict = copy.copy(
-            self.table_where_condition_dict)
+        query.table_where_condition_dict = copy.copy(self.table_where_condition_dict)
         query.conditions = copy.copy(self.conditions)
         return query
 
@@ -256,8 +261,7 @@ def identify_key_values(schema: SchemaGraph):
             # set the keys[-1] as the identifier of this equivalent join key group for convenience.
             equivalent_keys[keys[-1]] = set(keys)
 
-    assert len(all_keys) == sum(
-        [len(equivalent_keys[k]) for k in equivalent_keys])
+    assert len(all_keys) == sum([len(equivalent_keys[k]) for k in equivalent_keys])
 
     for ks in all_keys:
         t, k = ks.split(".")[0], ks.split(".")[1]

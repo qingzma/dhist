@@ -183,6 +183,8 @@ def gen_stats_light_schema(hdf_path):
     # schema.add_join_path(["posts.Id", "postLinks.PostId", "comments.PostId", "postHistory.PostId",
     #                       "votes.PostId", "tags.ExcerptPostId"])
 
+    schema.add_categorical("postHistory", "UserId", ["PostHistoryTypeId"])
+    schema.add_categorical("users", "Id", ["Views"])
     return schema
 
 

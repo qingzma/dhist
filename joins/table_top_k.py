@@ -15,6 +15,7 @@ from joins.pdf.fast_kde import FastKde1D, FastKde2D
 from joins.pdf.kde import Kde1D, Kde2D
 from joins.pdf.kdepy import KdePy1D, KdePy2D, plot1d
 from joins.pdf.normalizing_flow.nflow import Nflow2D
+from joins.schema_base import SchemaGraph
 
 
 class TableContainerTopK:
@@ -27,8 +28,11 @@ class TableContainerTopK:
         self.key_hist = {}
         self.non_key_hist = {}
         self.jk_corrector = {}  # {topKey:ValueWhereChanged}
+        self.categorical_hist = {}
 
-    def fit(self, file, join_keys, relevant_keys, bin_info, args=None) -> None:
+    def fit(
+        self, file, join_keys, relevant_keys, bin_info, schema: SchemaGraph, args=None
+    ) -> None:
         df = pd.read_csv(file, sep=",")
         self.size = df.shape[0]
         self.file_path = file
@@ -72,6 +76,36 @@ class TableContainerTopK:
             # else:
             #     self.pdfs[relev_key] = column
 
+        if self.name in schema.categoricals:
+            for jk in schema.categoricals[self.name]:
+                if jk not in self.categorical_hist:
+                    self.categorical_hist[jk] = {}
+                for cate_key in schema.categoricals[self.name][jk]:
+                    logger.info("!!!%s,%s,%s", self.name, jk, cate_key)
+
+                    if cate_key not in self.categorical_hist[jk]:
+                        self.categorical_hist[jk][cate_key] = {}
+
+                    cate_values = df[cate_key].unique()
+                    cate_values = cate_values[~np.isnan(cate_values)]
+                    for cate_val in cate_values:
+                        df_jk = df.loc[df[cate_key] == cate_val][[jk]]
+                        logger.info("df_jk\n %s", df_jk)
+
+                        column = KeyColumnTopK()
+
+                        if self.name in bin_info and jk in bin_info[self.name]:
+                            bins = np.linspace(
+                                bin_info[self.name][jk][0],
+                                bin_info[self.name][jk][1],
+                                args.grid,
+                            )
+                            column.fit(df_col, bins=bins, args=args)
+                            self.categorical_hist[jk][cate_key][cate_val] = column
+                        else:
+                            logger.error("bin info is not provided.")
+                            exit()
+
     def fit_join_key_corrector(
         self,
         file,
@@ -105,13 +139,17 @@ class TableContainerTopK:
 
         self.jk_corrector[jks] = {}
         for col in cols[1:]:
+            # print(df_filtered[[col_key, col]])
+            # if jks == "UserId" and col == "PostHistoryTypeId":
+            #     print("df_filtered:\n", df_filtered)
+            #     exit()
             d = (
                 pd.Series(df_filtered[col].values, index=df_filtered[col_key])
                 .dropna()
                 .to_dict()
             )  # TODO check if needs to find the min or max, currently, it is random one
             self.jk_corrector[jks][col] = d
-        # logger.info("jk_corrector \n%s", self.jk_corrector)
+        logger.info("jk_corrector \n%s", self.jk_corrector)
 
     def filter_join_key_by_query(self, domain: Domain, col: str, jks, ids: list = []):
         # logger.info("jk_corrector %s", self.jk_corrector.keys())

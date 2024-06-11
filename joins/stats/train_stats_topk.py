@@ -41,6 +41,7 @@ def train_stats_topk(args):
                 join_keys=join_keys,
                 relevant_keys=relevant_keys,
                 bin_info=schema.pk_bins,
+                schema=schema,
                 args=args,
             )
             model_container[t.table_name] = tableContainer
