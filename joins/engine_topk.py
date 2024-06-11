@@ -146,78 +146,77 @@ def multi_query_with_same_column(
     join_cond,
     join_paths,
     n_dominating_counter=-1,
+    b_primary_table_filter=True,
+    b_foreign_table_filter=False,
 ):
-    conditions = copy.deepcopy(conditions)
+    # conditions = copy.deepcopy(conditions)
     # filter top k dominating items, which will be exclude by range predicates.
     id_filtered_out = []
-    for tbl in conditions:  # ["users"]:  # conditions:  # conditions:
-        for cond in conditions[tbl]:
-            if cond.non_key is not None:
-                # logger.info("model predicates %s", models[tbl].jk_corrector)
-                domain_query = cond.non_key_condition
-                # logger.info("join key is %s", cond.join_keys)
-                jks = cond.join_keys[0].split(".")[1]
-                # logger.info("jks is %s", jks)
-                # exit()
-                if (
-                    jks == "Id"
-                ):  # TODO this is a tempary soluiton to identify the primary table
-                    id_filtered_out = models[tbl].filter_join_key_by_query(
-                        domain_query,
-                        col=cond.non_key.split(".")[1],
-                        jks=jks,
-                        ids=id_filtered_out,
-                    )
-    # logger.info("final id is %s", id_filtered_out)
+    if b_primary_table_filter:
+        for tbl in conditions:  # ["users"]:  # conditions:  # conditions:
+            for cond in conditions[tbl]:
+                if cond.non_key is not None:
+                    domain_query = cond.non_key_condition
+                    jks = cond.join_keys[0].split(".")[1]
+                    # TODO below is a tempary soluiton to identify the primary table
+                    if jks == "Id":
+                        id_filtered_out = models[tbl].filter_join_key_by_query(
+                            domain_query,
+                            col=cond.non_key.split(".")[1],
+                            jks=jks,
+                            ids=id_filtered_out,
+                        )
+        # logger.info("final id is %s", id_filtered_out)
+
+    schema = models["schema"]
+
+    # check for categorical attribute in foreigh tables
+    # selectivity = 1.0
+    cate_hists = {}
+    if b_foreign_table_filter:
+        for tbl in conditions:
+            for cond in conditions[tbl]:
+                if cond.non_key is not None:
+                    relev_key = cond.non_key.split(".")[1]
+                    join_key = cond.join_keys[0].split(".")[1]
+                    relev_domain = cond.non_key_condition
+
+                    # model = models[tbl].non_key_hist[cond.non_key.split(".")[1]].pdf
+                    # domain_query = cond.non_key_condition
+                    # selectivity *= model.selectivity(domain_query)
+                    # logger.info("selectivity is %s", model.selectivity(domain_query))
+
+                    if (
+                        tbl in schema.categoricals
+                        and join_key in schema.categoricals[tbl]
+                        and relev_key in schema.categoricals[tbl][join_key]
+                    ):
+                        if relev_domain.min == relev_domain.max:
+                            relev_val = relev_domain.min
+                            col_model = models[tbl].categorical_hist[join_key][
+                                relev_key
+                            ][relev_val]
+                            cate_hists["-".join([tbl, join_key])] = col_model
+                            # conds = copy.deepcopy(conditions[tbl])
+                            # conds.remove(cond)
+                            # conditions[tbl] = conds
+                            # TODO implement this remove funciton here
+                            # selectivity /= model.selectivity(domain_query)
 
     splits = join_paths[0][0].split(".")
     tbl = splits[0]
     jk = splits[1]
-    hist: UpperBoundHistogramTopK = models[tbl].key_hist[jk].pdf
-    # logger.info("join_paths %s", join_paths)
-    # sg = SchemaGraph()
-    # sg.categoricals
-    # con = SingleTablePushedDownCondition()
-    # cond
-    schema = models["schema"]
-    # logger.info("model schema %s", models["schema"])
-    # exit()
-    # check for categorical attribute
-    cate_hists = {}
-    for tbl in conditions:
-        for cond in conditions[tbl]:
-            if cond.non_key is not None:
-                relev_key = cond.non_key.split(".")[1]
-                join_key = cond.join_keys[0].split(".")[1]
-                relev_domain = cond.non_key_condition
-
-                # logger.info("hahaha %s, %s, %s", join_key, relev_key, relev_domain)
-
-                if (
-                    tbl in schema.categoricals
-                    and join_key in schema.categoricals[tbl]
-                    and relev_key in schema.categoricals[tbl][join_key]
-                ):
-                    # logger.info("non_key_condition %s", relev_domain)
-                    if relev_domain.min == relev_domain.max:
-                        relev_val = relev_domain.min
-                        # logger.info("relev_val %s", relev_val)
-                        col_model = models[tbl].categorical_hist[join_key][relev_key][
-                            relev_val
-                        ]
-                        cate_hists["-".join([tbl, join_key])] = col_model
-                        # conds = copy.deepcopy(conditions[tbl])
-                        # conds.remove(cond)
-                        # conditions[tbl] = conds
-                        # TODO implement this remove funciton here
+    cate_hist_key = "-".join([tbl, jk])
+    hist: UpperBoundHistogramTopK = (
+        models[tbl].key_hist[jk].pdf
+        if cate_hist_key not in cate_hists
+        else cate_hists[cate_hist_key].pdf
+    )
     for table_join_key in join_paths[0][1:-1]:
         splits1 = table_join_key.split(".")
         tbl1 = splits1[0]
         jk1 = splits1[1]
-
         cate_hist_key = "-".join([tbl1, jk1])
-        # logger.info("cate_hist_key %s", cate_hist_key)
-        # logger.info("cate_hists %s", cate_hists)
 
         hist1 = (
             cate_hists[cate_hist_key].pdf
@@ -225,7 +224,7 @@ def multi_query_with_same_column(
             else models[tbl1].key_hist[jk1].pdf
         )
 
-        hist = hist.join(hist1)  # , update_statistics=True
+        hist = hist.join(hist1)
 
     splits1 = join_paths[0][-1].split(".")
     tbl1 = splits1[0]
@@ -250,7 +249,6 @@ def multi_query_with_same_column(
                 selectivity *= model.selectivity(domain_query)
                 # logger.info("selectivity is %s", model.selectivity(domain_query))
 
-    # logger.info("top k is %s", res.top_k_container)
     if n_dominating_counter > 0:
         return (
             get_dominating_items_in_histograms(
