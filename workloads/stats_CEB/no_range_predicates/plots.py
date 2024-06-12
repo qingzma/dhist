@@ -56,9 +56,11 @@ def plot_accuracy():
     ac3 = np.average(card3 / truths3)
     ac4 = np.average(card4 / truths4)
     ac5 = np.average(card5 / truths5)
-    plt.axhline(y=1, color="r", linestyle="--")
-    print(ac1, ac2, ac3, ac4, ac5)
-    plt.plot(x, [ac1, ac2, ac3, ac4, ac5], "-x")
+    plt.axhline(y=1, color="gray", linestyle="--")
+    data = [ac1, ac2, ac3, ac4, ac5]
+    plt.plot(x, data, "-x")
+    for i, j in zip(x, data):
+        plt.annotate("%.3f" % j, xy=(i - 0.05, j * 1.03), fontsize=7)
     plt.ylim([0.0, 1.20])
     plt.xticks(x)
     plt.xlabel("number of tables in join queries")
@@ -73,8 +75,14 @@ def plot_times():
     t4 = read_times("4.card", "card-time") * 1000
     t5 = read_times("5.card", "card-time") * 1000
     data = [t1, t2, t3, t4, t5]
+    m1 = [np.mean(i) for i in data]
+    st1 = [np.std(i) for i in data]
     x = range(1, 6)
-    plt.boxplot(data, showfliers=False)
+    bp = plt.boxplot(data, showfliers=False)
+    for i, line in enumerate(bp["medians"]):
+        x, y = line.get_xydata()[1]
+        text = " μ={:.2f}\n σ={:.2f}".format(m1[i], st1[i])
+        plt.annotate(text, xy=(x, 0.8 * y), fontsize=7)
     # plt.legend()
     plt.ylabel("latency (ms)")
     plt.xlabel("number of tables in join queries")
@@ -83,5 +91,5 @@ def plot_times():
 
 
 if __name__ == "__main__":
-    # plot_accuracy()
-    plot_times()
+    plot_accuracy()
+    # plot_times()
