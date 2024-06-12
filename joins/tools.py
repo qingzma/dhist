@@ -45,5 +45,9 @@ def read_from_csv(file_path, header):
     return pd.read_csv(file_path)[header].values
 
 
+def read_from_csv_to_series(file_path, header):
+    return pd.read_csv(file_path, skip_blank_lines=False)[header]
+
+
 def division(x: np.array, y: np.array):
     return np.divide(x, y, out=np.zeros_like(x), where=y != 0)
