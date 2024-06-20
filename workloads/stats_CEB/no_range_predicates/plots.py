@@ -90,6 +90,19 @@ def plot_times():
     plt.show()
 
 
+def plot_2_join_postgres():
+    postgres = read_times("2.postgres", "postgres")
+    card = read_times("2.card", "card")
+    truth = read_times("2.truth", "truth")
+    post_error = postgres / truth
+
+    print(np.average(post_error))
+
+    plt.hist(post_error)
+    plt.show()
+
+
 if __name__ == "__main__":
-    plot_accuracy()
+    # plot_accuracy()
     # plot_times()
+    plot_2_join_postgres()
