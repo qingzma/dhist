@@ -13,11 +13,11 @@ def train_stats_topk(args):
     dataset = args.dataset
     data_path = args.data_folder
     model_folder = args.model_folder
-    kernel = args.kernel
     grid = args.grid
     topk = args.topk
+    method = args.method
 
-    model_name = f"model_{dataset}_{grid}_{topk}"
+    model_name = f"model_{dataset}_{method}_{grid}_{topk}"
     if args.cdf:
         model_name += "_cdf"
     model_path = os.path.join(model_folder, f"{model_name}.pkl")
@@ -27,10 +27,9 @@ def train_stats_topk(args):
     else:
         model_container = dict()
         schema, all_keys, equivalent_keys, table_keys = process_stats_data(
-            dataset, data_path, model_folder, kernel=kernel
+            dataset, data_path, model_folder, kernel=None
         )
-        join_keys, relevant_keys, counters = get_stats_relevant_attributes(
-            schema)
+        join_keys, relevant_keys, counters = get_stats_relevant_attributes(schema)
 
         for t in schema.tables:
             print("analyze table ", t.table_name)
@@ -49,6 +48,7 @@ def train_stats_topk(args):
 
         model_container["name"] = model_name
         model_container["schema"] = schema
+        model_container["method"] = method
 
         if not os.path.exists(model_folder):
             os.mkdir(model_folder)
@@ -63,13 +63,15 @@ def train_stats_topk(args):
         with open("models/" + model_name + ".pkl", "rb") as f:
             model = pickle.load(f)
 
+        if args.method != "topk":
+            return
+
         tbl = list(model.keys())[0]
         if not model[tbl].jk_corrector:
             schema, all_keys, equivalent_keys, table_keys = process_stats_data(
-                dataset, data_path, model_folder, kernel=kernel
+                dataset, data_path, model_folder, kernel=None
             )
-            join_keys, relevant_keys, counters = get_stats_relevant_attributes(
-                schema)
+            join_keys, relevant_keys, counters = get_stats_relevant_attributes(schema)
 
             for query in schema.join_paths:
                 engine = EngineTopK(model, use_cdf=args.cdf)

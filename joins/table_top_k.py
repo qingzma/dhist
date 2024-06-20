@@ -6,7 +6,11 @@ from matplotlib import ticker
 from joins.base_logger import logger
 from joins.cnts.cnts import CumulativeDistinctCounter
 from joins.domain import Domain
-from joins.histograms.histograms import UpperBoundHistogramTopK
+from joins.histograms.histograms import (
+    JoinHistogram,
+    UpperBoundHistogram,
+    UpperBoundHistogramTopK,
+)
 from joins.histograms.non_key_histogram import (
     NonKeyCumulativeHistogram,
     NonKeyTopKHistogram,
@@ -192,7 +196,17 @@ class KeyColumnTopK:
         self.max = None
 
     def fit(self, df_column, bins, args=None) -> None:
-        kde = UpperBoundHistogramTopK(args.topk)
+        method = args.method
+        if method == "topk":
+            kde = UpperBoundHistogramTopK(args.topk)
+        elif method == "joinhist":
+            kde = JoinHistogram()
+        elif method == "upperbound":
+            kde = UpperBoundHistogram()
+        else:
+            logger.error("unexpected method type %s", method)
+            exit()
+
         kde.fit(df_column, df_column.columns, bins=bins)
         self.pdf = kde
 

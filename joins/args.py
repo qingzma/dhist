@@ -38,10 +38,11 @@ def parse_args(args_):
         default=2**10,
     )
     parser.add_argument(
-        "--kernel",
-        help="kernel function for density estimation",
+        "--method",
+        help="histogram type",
         type=str,
-        default="box",
+        default="topk",
+        choices=["topk", "joinhist", "upperbound"],
     )
     parser.add_argument(
         "--cdf",

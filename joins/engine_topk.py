@@ -49,8 +49,7 @@ class EngineTopK:
 
     def query(self, query_str, n_dominating_counter=-1):
         logger.info("QUERY [%s]", query_str)
-        tables_all, table_query, join_cond, join_keys = parse_query_simple(
-            query_str)
+        tables_all, table_query, join_cond, join_keys = parse_query_simple(query_str)
         conditions = generate_push_down_conditions(
             tables_all, table_query, join_cond, join_keys
         )
@@ -77,16 +76,23 @@ class EngineTopK:
         # only a single join key is allowed in a table
         if max_dim == 2:
             res1 = multi_query_with_same_column(
-                self.models, conditions, join_cond, [
-                    join_paths[0]], n_dominating_counter
+                self.models,
+                conditions,
+                join_cond,
+                [join_paths[0]],
+                n_dominating_counter,
             )
             res2 = multi_query_with_same_column(
-                self.models, conditions, join_cond, [
-                    join_paths[1]], n_dominating_counter, b_disable_selectivity=True
+                self.models,
+                conditions,
+                join_cond,
+                [join_paths[1]],
+                n_dominating_counter,
+                b_disable_selectivity=True,
             )
             # logger.info("res1 %s", res1)
             # logger.info("res2 %s", res2)
-            res = res1*res2/91976
+            res = res1 * res2 / 91976
             return res
 
         if max_dim > 2:
@@ -166,7 +172,8 @@ def multi_query_with_same_column(
     # conditions = copy.deepcopy(conditions)
     # filter top k dominating items, which will be exclude by range predicates.
     id_filtered_out = []
-    if b_primary_table_filter:
+
+    if models["method"] == "topk" and b_primary_table_filter:
         for tbl in conditions:  # ["users"]:  # conditions:  # conditions:
             for cond in conditions[tbl]:
                 if cond.non_key is not None:
@@ -259,19 +266,18 @@ def multi_query_with_same_column(
         for tbl in conditions:
             for cond in conditions[tbl]:
                 if cond.non_key is not None:
-                    model = models[tbl].non_key_hist[cond.non_key.split(".")[
-                        1]].pdf
+                    model = models[tbl].non_key_hist[cond.non_key.split(".")[1]].pdf
                     domain_query = cond.non_key_condition
                     selectivity *= model.selectivity(domain_query)
                     # logger.info("selectivity is %s",
                     #             model.selectivity(domain_query))
 
     if n_dominating_counter > 0:
-        return (
-            get_dominating_items_in_histograms(
-                res.top_k_container, n=n_dominating_counter, size=np.sum(
-                    res.counts)
-            ),
-            join_paths[0],
-        )
+        if hasattr(res, "top_k_container"):
+            return (
+                get_dominating_items_in_histograms(
+                    res.top_k_container, n=n_dominating_counter, size=np.sum(res.counts)
+                ),
+                join_paths[0],
+            )
     return np.sum(res.counts) * selectivity
