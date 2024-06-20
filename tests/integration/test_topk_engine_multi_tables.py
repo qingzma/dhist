@@ -17,7 +17,8 @@ from joins.tools import q_error
 class TestTopkEngineMethod(unittest.TestCase):
     def __init__(self, methodName: str = "runTest") -> None:
         super().__init__(methodName)
-        self.model_name = "model_stats_joinhist_200_20"  # "model_stats_joinhist_200_20", "model_stats_topk_200_20"
+        # "model_stats_joinhist_200_20", "model_stats_topk_200_20"
+        self.model_name = "model_stats_upperbound_200_20"
         self.use_pushed_down = True
         arguments = [
             "--train",
@@ -42,7 +43,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             "20",
             # "--cdf",
             "--method",
-            "topk",
+            "upperbound",
         ]
         args = parse_args(arguments)
         train_stats_topk(args)
@@ -927,7 +928,8 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(
+            query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 142137
         logger.info("result %.6E", res)

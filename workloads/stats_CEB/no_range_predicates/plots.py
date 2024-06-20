@@ -6,15 +6,15 @@ import pandas as pd
 
 from joins.tools import read_from_csv, read_from_csv_to_series
 
-plt.figure(dpi=300)
+plt.figure(dpi=200)
 
 
 def read_data(first: str, second: str, h1="truth", h2="card"):
     truths = read_from_csv_to_series(
-        "workloads/stats_CEB/no_range_predicates/" + first + ".csv", "truth"
+        "workloads/stats_CEB/no_range_predicates/" + first + ".csv", h1
     )
     est = read_from_csv_to_series(
-        "workloads/stats_CEB/no_range_predicates/" + second + ".csv", "card"
+        "workloads/stats_CEB/no_range_predicates/" + second + ".csv", h2
     )
 
     truth1 = truths[~pd.isnull(truths)]
@@ -48,42 +48,96 @@ def plot_accuracy():
     truths5, card5 = read_data("5.truth", "5.card")
     truths = [truths1, truths2, truths3, truths4, truths5]
 
-    truths1, jh1 = read_data("1.truth", "1.joinhist")
-    truths2, jh2 = read_data("2.truth", "2.joinhist")
-    truths3, jh3 = read_data("3.truth", "3.joinhist")
-    truths4, jh4 = read_data("4.truth", "4.joinhist")
-    truths5, jh5 = read_data("5.truth", "5.joinhist")
+    truths1, jh1 = read_data("1.truth", "1.joinhist", h2="joinhist")
+    truths2, jh2 = read_data("2.truth", "2.joinhist", h2="joinhist")
+    truths3, jh3 = read_data("3.truth", "3.joinhist", h2="joinhist")
+    truths4, jh4 = read_data("4.truth", "4.joinhist", h2="joinhist")
+    truths5, jh5 = read_data("5.truth", "5.joinhist", h2="joinhist")
+
+    truths1, ub1 = read_data("1.truth", "1.upperbound", h2="upperbound")
+    truths2, ub2 = read_data("2.truth", "2.upperbound", h2="upperbound")
+    truths3, ub3 = read_data("3.truth", "3.upperbound", h2="upperbound")
+    truths4, ub4 = read_data("4.truth", "4.upperbound", h2="upperbound")
+    truths5, ub5 = read_data("5.truth", "5.upperbound", h2="upperbound")
 
     jhs = [jh1, jh2, jh3, jh4, jh5]
     cards = [card1, card2, card3, card4, card5]
+    ubs = [ub1, ub2, ub3, ub4, ub5]
 
     card = [i / j for i, j in zip(cards, truths)]
     jh = [i / j for i, j in zip(jhs, truths)]
+    ub = [i / j for i, j in zip(ubs, truths)]
+
+    avg_card = [np.average(i) for i in card]
+    avg_jh = [np.average(i) for i in jh]
+    avg_ub = [np.average(i) for i in ub]
+
+    print(min(jh[1]), max(ub[1]))
+    print(min(jh[4]), max(ub[4]))
 
     # postgres = read_from_csv("results/stats/multiple_tables/postgres.csv", "postgres")
     # bayescard = read_from_csv("results/stats/multiple_tables/bayescard.csv", "bayescard")
     # wjsample = read_from_csv("results/stats/multiple_tables/wjsample.csv", "wjsample")
     # deepdb = read_from_csv("results/stats/multiple_tables/deepdb.csv", "deepdb")
     x = range(1, 6)
-    ac1 = np.average(card1 / truths1)
-    ac2 = np.average(card2 / truths2)
-    ac3 = np.average(card3 / truths3)
-    ac4 = np.average(card4 / truths4)
-    ac5 = np.average(card5 / truths5)
+    # ac1 = np.average(card1 / truths1)
+    # ac2 = np.average(card2 / truths2)
+    # ac3 = np.average(card3 / truths3)
+    # ac4 = np.average(card4 / truths4)
+    # ac5 = np.average(card5 / truths5)
     plt.axhline(y=1, color="gray", linestyle="--")
-    data = [ac1, ac2, ac3, ac4, ac5]
+    # data = [ac1, ac2, ac3, ac4, ac5]
     # plt.plot(x, data, "-x")
-    plt.boxplot(
+    bp1 = plt.boxplot(
         card,
-        showfliers=False,
+        # showfliers=False,
         showmeans=True,
+        whis=0,
+        medianprops={'linestyle': None, 'linewidth': 0},
+        widths=0.35,
+        patch_artist=True, boxprops=dict(facecolor="C1"),
+        flierprops={'marker': '.', 'markersize': 10,
+                    'markerfacecolor': 'C1', }
     )
-    for i, j in zip(x, data):
-        plt.annotate("%.3f" % j, xy=(i - 0.05, j * 1.03), fontsize=7)
-    # plt.ylim([0.0, 1.20])
+    bp2 = plt.boxplot(
+        jh,
+        # showfliers=False,
+        showmeans=True,
+        whis=0,
+        medianprops={'linestyle': None, 'linewidth': 0},
+        widths=0.35,
+        patch_artist=True, boxprops=dict(facecolor="C7"),
+        flierprops={'marker': '.', 'markersize': 10,
+                    'markerfacecolor': 'C7', }
+    )
+
+    bp3 = plt.boxplot(
+        ub,
+        # showfliers=False,
+        showmeans=True,
+        whis=0,
+        medianprops={'linestyle': None, 'linewidth': 0, },
+        widths=0.35,
+        patch_artist=True, boxprops=dict(facecolor="C3"),
+        flierprops={'marker': '.', 'markersize': 10,
+                    'markerfacecolor': 'C3', }
+    )
+    plt.yscale("log")
+    plt.legend([bp1["boxes"][0], bp2["boxes"][0], bp3["boxes"][0]],
+               ['DHist', 'Join-Histogram', 'UpperBound'], loc='upper left')
+
+    xxx = 0.1
+    yyy = 1.0
+    for i, j in zip(x, avg_card):
+        plt.annotate("%.3f" % j, xy=(i - xxx, j * yyy), fontsize=7)
+    for i, j in zip(x, avg_jh):
+        plt.annotate("%.3f" % j, xy=(i - xxx, j * yyy), fontsize=7)
+    for i, j in zip(x, avg_ub):
+        plt.annotate("%.3f" % j, xy=(i - xxx, j * yyy), fontsize=7)
+    # plt.ylim([1e-5, 1e2])
     plt.xticks(x)
-    plt.xlabel("number of tables in join queries")
-    plt.ylabel("average prediction accuracy")
+    plt.xlabel("# of tables in join queries")
+    plt.ylabel("prediction accuracy")
     plt.show()
 
 
@@ -93,18 +147,50 @@ def plot_times():
     t3 = read_times("3.card", "card-time") * 1000
     t4 = read_times("4.card", "card-time") * 1000
     t5 = read_times("5.card", "card-time") * 1000
-    data = [t1, t2, t3, t4, t5]
-    m1 = [np.mean(i) for i in data]
-    st1 = [np.std(i) for i in data]
+
+    jh1 = read_times("1.joinhist", "joinhist-time") * 1000
+    jh2 = read_times("2.joinhist", "joinhist-time") * 1000
+    jh3 = read_times("3.joinhist", "joinhist-time") * 1000
+    jh4 = read_times("4.joinhist", "joinhist-time") * 1000
+    jh5 = read_times("5.joinhist", "joinhist-time") * 1000
+
+    ub1 = read_times("1.upperbound", "upperbound-time") * 1000
+    ub2 = read_times("2.upperbound", "upperbound-time") * 1000
+    ub3 = read_times("3.upperbound", "upperbound-time") * 1000
+    ub4 = read_times("4.upperbound", "upperbound-time") * 1000
+    ub5 = read_times("5.upperbound", "upperbound-time") * 1000
+
+    card = [t1, t2, t3, t4, t5]
+    jh = [jh1, jh2, jh3, jh4, jh5]
+    ub = [ub1, ub2, ub3, ub4, ub5]
+
+    m1 = [np.mean(i) for i in card]
+    st1 = [np.std(i) for i in card]
+    m1jh = [np.mean(i) for i in jh]
+    st1jh = [np.std(i) for i in jh]
+    m1ub = [np.mean(i) for i in ub]
+    st1ub = [np.std(i) for i in ub]
     x = range(1, 6)
-    bp = plt.boxplot(data, showfliers=False)
-    for i, line in enumerate(bp["medians"]):
-        x, y = line.get_xydata()[1]
-        text = " μ={:.2f}\n σ={:.2f}".format(m1[i], st1[i])
-        plt.annotate(text, xy=(x, 0.8 * y), fontsize=7)
-    # plt.legend()
+    plt.plot(x, m1, "-<", label="DHist")
+    plt.plot(x, m1jh, "-o", label="Join-Histogram")
+    plt.plot(x, m1ub, "-x", label="UpperBound")
+    # bp = plt.boxplot(card, showfliers=False)
+    # bp_jh = plt.boxplot(jh, showfliers=False)
+    # bp_ub = plt.boxplot(ub, showfliers=False)
+    # for i, line in enumerate(bp["medians"]):
+    #     x, y = line.get_xydata()[1]
+    #     text = " μ={:.2f}\n σ={:.2f}".format(m1[i], st1[i])
+    #     plt.annotate(text, xy=(x, 0.8 * y), fontsize=7)
+    for i, j in zip(x, m1):
+        plt.annotate("{:.3f}".format(j), xy=(i, 1.1*j), fontsize=7)
+    for i, j in zip(x, m1jh):
+        plt.annotate("{:.3f}".format(j), xy=(i, 1.1*j), fontsize=7)
+    for i, j in zip(x, m1ub):
+        plt.annotate("{:.3f}".format(j), xy=(i, 1.1*j), fontsize=7)
+    plt.legend()
+    plt.xticks(x)
     plt.ylabel("latency (ms)")
-    plt.xlabel("number of tables in join queries")
+    plt.xlabel("# of tables in join queries")
     plt.yscale("log")
     plt.show()
 
@@ -122,6 +208,6 @@ def plot_2_join_postgres():
 
 
 if __name__ == "__main__":
-    plot_accuracy()
-    # plot_times()
+    # plot_accuracy()
+    plot_times()
     # plot_2_join_postgres()
