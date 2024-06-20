@@ -86,9 +86,9 @@ def evaluate_stats(args: ArgumentParser):
     save_predictions_to_file(
         pred,
         latency,
-        "card",
-        "card-time",
-        "workloads/stats_CEB/no_range_predicates/6.card.result",
+        "joinhist",
+        "joinhist-time",
+        "workloads/stats_CEB/no_range_predicates/1.joinhist.csv",
         # "results/stats/multiple_tables/card.csv",
     )
 

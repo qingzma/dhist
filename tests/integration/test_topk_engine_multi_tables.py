@@ -24,8 +24,8 @@ class TestTopkEngineMethod(unittest.TestCase):
             "--grid",
             "100",
             # "--cdf",
-            "--method",
-            "topk",
+            # "--method",
+            # "topk",
         ]  # "--cdf"
         self.args = parse_args(arguments)
 

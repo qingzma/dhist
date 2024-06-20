@@ -1,4 +1,5 @@
 # python run.py --evaluate --model models/model_stats_200_20.pkl --query workloads/stats_CEB/no_range_predicates/6.sql
+# python run.py --evaluate --model models/model_stats_joinhist_200_20.pkl --query workloads/stats_CEB/no_range_predicates/2.sql
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -8,7 +9,7 @@ from joins.tools import read_from_csv, read_from_csv_to_series
 plt.figure(dpi=300)
 
 
-def read_data(first: str, second: str):
+def read_data(first: str, second: str, h1="truth", h2="card"):
     truths = read_from_csv_to_series(
         "workloads/stats_CEB/no_range_predicates/" + first + ".csv", "truth"
     )
@@ -45,6 +46,19 @@ def plot_accuracy():
     truths3, card3 = read_data("3.truth", "3.card")
     truths4, card4 = read_data("4.truth", "4.card")
     truths5, card5 = read_data("5.truth", "5.card")
+    truths = [truths1, truths2, truths3, truths4, truths5]
+
+    truths1, jh1 = read_data("1.truth", "1.joinhist")
+    truths2, jh2 = read_data("2.truth", "2.joinhist")
+    truths3, jh3 = read_data("3.truth", "3.joinhist")
+    truths4, jh4 = read_data("4.truth", "4.joinhist")
+    truths5, jh5 = read_data("5.truth", "5.joinhist")
+
+    jhs = [jh1, jh2, jh3, jh4, jh5]
+    cards = [card1, card2, card3, card4, card5]
+
+    card = [i / j for i, j in zip(cards, truths)]
+    jh = [i / j for i, j in zip(jhs, truths)]
 
     # postgres = read_from_csv("results/stats/multiple_tables/postgres.csv", "postgres")
     # bayescard = read_from_csv("results/stats/multiple_tables/bayescard.csv", "bayescard")
@@ -58,10 +72,15 @@ def plot_accuracy():
     ac5 = np.average(card5 / truths5)
     plt.axhline(y=1, color="gray", linestyle="--")
     data = [ac1, ac2, ac3, ac4, ac5]
-    plt.plot(x, data, "-x")
+    # plt.plot(x, data, "-x")
+    plt.boxplot(
+        card,
+        showfliers=False,
+        showmeans=True,
+    )
     for i, j in zip(x, data):
         plt.annotate("%.3f" % j, xy=(i - 0.05, j * 1.03), fontsize=7)
-    plt.ylim([0.0, 1.20])
+    # plt.ylim([0.0, 1.20])
     plt.xticks(x)
     plt.xlabel("number of tables in join queries")
     plt.ylabel("average prediction accuracy")
@@ -103,6 +122,6 @@ def plot_2_join_postgres():
 
 
 if __name__ == "__main__":
-    # plot_accuracy()
+    plot_accuracy()
     # plot_times()
-    plot_2_join_postgres()
+    # plot_2_join_postgres()
