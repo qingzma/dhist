@@ -147,6 +147,9 @@ def plot_times():
     t3 = read_times("3.card", "card-time") * 1000
     t4 = read_times("4.card", "card-time") * 1000
     t5 = read_times("5.card", "card-time") * 1000
+    card = [t1, t2, t3, t4, t5]
+    m1 = [np.mean(i) for i in card]
+    st1 = [np.std(i) for i in card]
 
     jh1 = read_times("1.joinhist", "joinhist-time") * 1000
     jh2 = read_times("2.joinhist", "joinhist-time") * 1000
@@ -160,12 +163,9 @@ def plot_times():
     ub4 = read_times("4.upperbound", "upperbound-time") * 1000
     ub5 = read_times("5.upperbound", "upperbound-time") * 1000
 
-    card = [t1, t2, t3, t4, t5]
     jh = [jh1, jh2, jh3, jh4, jh5]
     ub = [ub1, ub2, ub3, ub4, ub5]
 
-    m1 = [np.mean(i) for i in card]
-    st1 = [np.std(i) for i in card]
     m1jh = [np.mean(i) for i in jh]
     st1jh = [np.std(i) for i in jh]
     m1ub = [np.mean(i) for i in ub]
@@ -207,7 +207,359 @@ def plot_2_join_postgres():
     plt.show()
 
 
+def tune_bin():
+    truths1, card1 = read_data("1.truth", "1.topk_20_10", h2="upperbound")
+    truths2, card2 = read_data("2.truth", "2.topk_20_10", h2="upperbound")
+    truths3, card3 = read_data("3.truth", "3.topk_20_10", h2="upperbound")
+    truths4, card4 = read_data("4.truth", "4.topk_20_10", h2="upperbound")
+    truths5, card5 = read_data("5.truth", "5.topk_20_10", h2="upperbound")
+    truths = [truths1, truths2, truths3, truths4, truths5]
+
+    truths1, jh1 = read_data("1.truth", "1.topk_50_10", h2="card")
+    truths2, jh2 = read_data("2.truth", "2.topk_50_10", h2="card")
+    truths3, jh3 = read_data("3.truth", "3.topk_50_10", h2="card")
+    truths4, jh4 = read_data("4.truth", "4.topk_50_10", h2="card")
+    truths5, jh5 = read_data("5.truth", "5.topk_50_10", h2="card")
+
+    truths1, ub1 = read_data("1.truth", "1.topk_100_10", h2="card")
+    truths2, ub2 = read_data("2.truth", "2.topk_100_10", h2="card")
+    truths3, ub3 = read_data("3.truth", "3.topk_100_10", h2="card")
+    truths4, ub4 = read_data("4.truth", "4.topk_100_10", h2="card")
+    truths5, ub5 = read_data("5.truth", "5.topk_100_10", h2="card")
+
+    truths1, b200_1 = read_data("1.truth", "1.topk_200_10", h2="card")
+    truths2, b200_2 = read_data("2.truth", "2.topk_200_10", h2="card")
+    truths3, b200_3 = read_data("3.truth", "3.topk_200_10", h2="card")
+    truths4, b200_4 = read_data("4.truth", "4.topk_200_10", h2="card")
+    truths5, b200_5 = read_data("5.truth", "5.topk_200_10", h2="card")
+
+    truths1, b400_1 = read_data("1.truth", "1.topk_400_10", h2="card")
+    truths2, b400_2 = read_data("2.truth", "2.topk_400_10", h2="card")
+    truths3, b400_3 = read_data("3.truth", "3.topk_400_10", h2="card")
+    truths4, b400_4 = read_data("4.truth", "4.topk_400_10", h2="card")
+    truths5, b400_5 = read_data("5.truth", "5.topk_400_10", h2="card")
+
+    jhs = [jh1, jh2, jh3, jh4, jh5]
+    cards = [card1, card2, card3, card4, card5]
+    ubs = [ub1, ub2, ub3, ub4, ub5]
+    b200s = [b200_1, b200_2, b200_3, b200_4, b200_5]
+    b400s = [b400_1, b400_2, b400_3, b400_4, b400_5]
+
+    card = [i / j for i, j in zip(cards, truths)]
+    jh = [i / j for i, j in zip(jhs, truths)]
+    ub = [i / j for i, j in zip(ubs, truths)]
+    b200 = [i / j for i, j in zip(b200s, truths)]
+    b400 = [i / j for i, j in zip(b400s, truths)]
+
+    avg_card = [np.average(i) for i in card]
+    avg_jh = [np.average(i) for i in jh]
+    avg_ub = [np.average(i) for i in ub]
+    avg_b200 = [np.average(i) for i in b200]
+    avg_b400 = [np.average(i) for i in b400]
+
+    x = range(1, 6)
+
+    plt.axhline(y=1, color="gray", linestyle="--")
+
+    plt.plot(x, avg_card, "-x", label="bin size = 20")
+    plt.plot(x, avg_jh, "-o", label="bin size = 50")
+    plt.plot(x, avg_ub, "-h", label="bin size = 100")
+    plt.plot(x, avg_b200, "-P", label="bin size = 200")
+    plt.plot(x, avg_b400, "-P", label="bin size = 400")
+
+    plt.legend()
+    # plt.yscale("log")
+    xxx = 0.1
+    yyy = 1.0
+    for i, j in zip(x, avg_card):
+        plt.annotate("%.3f" % j, xy=(i - xxx, j * yyy), fontsize=7)
+    for i, j in zip(x, avg_jh):
+        plt.annotate("%.3f" % j, xy=(i - xxx, j * yyy), fontsize=7)
+    for i, j in zip(x, avg_ub):
+        plt.annotate("%.3f" % j, xy=(i - xxx, j * yyy), fontsize=7)
+    for i, j in zip(x, avg_b200):
+        plt.annotate("%.3f" % j, xy=(i - xxx, j * yyy), fontsize=7)
+    for i, j in zip(x, avg_b400):
+        plt.annotate("%.3f" % j, xy=(i - xxx, j * yyy), fontsize=7)
+    plt.ylim([0.5, 1.2])
+    plt.xticks(x)
+    plt.xlabel("# of tables in join queries")
+    plt.ylabel("prediction accuracy")
+    plt.show()
+
+
+def tune_bin_times():
+    t1 = read_times("1.topk_20_10", "upperbound-time") * 1000
+    t2 = read_times("2.topk_20_10", "upperbound-time") * 1000
+    t3 = read_times("3.topk_20_10", "upperbound-time") * 1000
+    t4 = read_times("4.topk_20_10", "upperbound-time") * 1000
+    t5 = read_times("5.topk_20_10", "upperbound-time") * 1000
+    card = [t1, t2, t3, t4, t5]
+    m1 = [np.mean(i) for i in card]
+    st1 = [np.std(i) for i in card]
+    x = range(1, 6)
+    plt.plot(x, m1, "-x", label="bin size = 20")
+
+    t1 = read_times("1.topk_50_10", "card-time") * 1000
+    t2 = read_times("2.topk_50_10", "card-time") * 1000
+    t3 = read_times("3.topk_50_10", "card-time") * 1000
+    t4 = read_times("4.topk_50_10", "card-time") * 1000
+    t5 = read_times("5.topk_50_10", "card-time") * 1000
+    card = [t1, t2, t3, t4, t5]
+    m1 = [np.mean(i) for i in card]
+    st1 = [np.std(i) for i in card]
+    x = range(1, 6)
+    plt.plot(x, m1, "-o", label="bin size = 50")
+
+    t1 = read_times("1.topk_100_10", "card-time") * 1000
+    t2 = read_times("2.topk_100_10", "card-time") * 1000
+    t3 = read_times("3.topk_100_10", "card-time") * 1000
+    t4 = read_times("4.topk_100_10", "card-time") * 1000
+    t5 = read_times("5.topk_100_10", "card-time") * 1000
+    card = [t1, t2, t3, t4, t5]
+    m1 = [np.mean(i) for i in card]
+    st1 = [np.std(i) for i in card]
+    x = range(1, 6)
+    plt.plot(x, m1, "-h", label="bin size = 100")
+
+    t1 = read_times("1.topk_200_10", "card-time") * 1000
+    t2 = read_times("2.topk_200_10", "card-time") * 1000
+    t3 = read_times("3.topk_200_10", "card-time") * 1000
+    t4 = read_times("4.topk_200_10", "card-time") * 1000
+    t5 = read_times("5.topk_200_10", "card-time") * 1000
+    card = [t1, t2, t3, t4, t5]
+    m1 = [np.mean(i) for i in card]
+    st1 = [np.std(i) for i in card]
+    x = range(1, 6)
+    plt.plot(x, m1, "-p", label="bin size = 200")
+
+    t1 = read_times("1.topk_400_10", "card-time") * 1000
+    t2 = read_times("2.topk_400_10", "card-time") * 1000
+    t3 = read_times("3.topk_400_10", "card-time") * 1000
+    t4 = read_times("4.topk_400_10", "card-time") * 1000
+    t5 = read_times("5.topk_400_10", "card-time") * 1000
+    card = [t1, t2, t3, t4, t5]
+    m1 = [np.mean(i) for i in card]
+    st1 = [np.std(i) for i in card]
+    x = range(1, 6)
+    plt.plot(x, m1, "-P", label="bin size = 400")
+
+    x = range(1, 6)
+
+    # plt.axhline(y=1, color="gray", linestyle="--")
+
+    plt.legend()
+    # plt.yscale("log")
+    # xxx = 0.1
+    # yyy = 1.0
+    # for i, j in zip(x, avg_card):
+    #     plt.annotate("%.3f" % j, xy=(i - xxx, j * yyy), fontsize=7)
+    # for i, j in zip(x, avg_jh):
+    #     plt.annotate("%.3f" % j, xy=(i - xxx, j * yyy), fontsize=7)
+    # for i, j in zip(x, avg_ub):
+    #     plt.annotate("%.3f" % j, xy=(i - xxx, j * yyy), fontsize=7)
+    # for i, j in zip(x, avg_b200):
+    #     plt.annotate("%.3f" % j, xy=(i - xxx, j * yyy), fontsize=7)
+    # for i, j in zip(x, avg_b400):
+    #     plt.annotate("%.3f" % j, xy=(i - xxx, j * yyy), fontsize=7)
+    # plt.ylim([0.5, 1.2])
+    plt.xticks(x)
+    plt.xlabel("# of tables in join queries")
+    plt.ylabel("latency (ms)")
+    plt.show()
+
+
+def tune_k():
+    truths1, card1 = read_data("1.truth", "1.topk_100_1", h2="card")
+    truths2, card2 = read_data("2.truth", "2.topk_100_1", h2="card")
+    truths3, card3 = read_data("3.truth", "3.topk_100_1", h2="card")
+    truths4, card4 = read_data("4.truth", "4.topk_100_1", h2="card")
+    truths5, card5 = read_data("5.truth", "5.topk_100_1", h2="card")
+    truths = [truths1, truths2, truths3, truths4, truths5]
+
+    truths1, jh1 = read_data("1.truth", "1.topk_100_5", h2="card")
+    truths2, jh2 = read_data("2.truth", "2.topk_100_5", h2="card")
+    truths3, jh3 = read_data("3.truth", "3.topk_100_5", h2="card")
+    truths4, jh4 = read_data("4.truth", "4.topk_100_5", h2="card")
+    truths5, jh5 = read_data("5.truth", "5.topk_100_5", h2="card")
+
+    truths1, ub1 = read_data("1.truth", "1.topk_100_10", h2="card")
+    truths2, ub2 = read_data("2.truth", "2.topk_100_10", h2="card")
+    truths3, ub3 = read_data("3.truth", "3.topk_100_10", h2="card")
+    truths4, ub4 = read_data("4.truth", "4.topk_100_10", h2="card")
+    truths5, ub5 = read_data("5.truth", "5.topk_100_10", h2="card")
+
+    truths1, b200_1 = read_data("1.truth", "1.topk_100_20", h2="card")
+    truths2, b200_2 = read_data("2.truth", "2.topk_100_20", h2="card")
+    truths3, b200_3 = read_data("3.truth", "3.topk_100_20", h2="card")
+    truths4, b200_4 = read_data("4.truth", "4.topk_100_20", h2="card")
+    truths5, b200_5 = read_data("5.truth", "5.topk_100_20", h2="card")
+
+    truths1, b400_1 = read_data("1.truth", "1.topk_100_40", h2="card")
+    truths2, b400_2 = read_data("2.truth", "2.topk_100_40", h2="card")
+    truths3, b400_3 = read_data("3.truth", "3.topk_100_40", h2="card")
+    truths4, b400_4 = read_data("4.truth", "4.topk_100_40", h2="card")
+    truths5, b400_5 = read_data("5.truth", "5.topk_100_40", h2="card")
+
+    jhs = [jh1, jh2, jh3, jh4, jh5]
+    cards = [card1, card2, card3, card4, card5]
+    ubs = [ub1, ub2, ub3, ub4, ub5]
+    b200s = [b200_1, b200_2, b200_3, b200_4, b200_5]
+    b400s = [b400_1, b400_2, b400_3, b400_4, b400_5]
+
+    card = [i / j for i, j in zip(cards, truths)]
+    jh = [i / j for i, j in zip(jhs, truths)]
+    ub = [i / j for i, j in zip(ubs, truths)]
+    b200 = [i / j for i, j in zip(b200s, truths)]
+    b400 = [i / j for i, j in zip(b400s, truths)]
+
+    avg_card = [np.average(i) for i in card]
+    avg_jh = [np.average(i) for i in jh]
+    avg_ub = [np.average(i) for i in ub]
+    avg_b200 = [np.average(i) for i in b200]
+    avg_b400 = [np.average(i) for i in b400]
+
+    x = range(1, 6)
+
+    plt.axhline(y=1, color="gray", linestyle="--")
+
+    plt.plot(x, avg_card, "-x", label="k = 1")
+    plt.plot(x, avg_jh, "-o", label="k = 5")
+    plt.plot(x, avg_ub, "-h", label="k = 10")
+    plt.plot(x, avg_b200, "-P", label="k = 20")
+    plt.plot(x, avg_b400, "-P", label="k = 40")
+
+    plt.legend()
+    # plt.yscale("log")
+    xxx = 0.1
+    yyy = 1.0
+    for i, j in zip(x, avg_card):
+        plt.annotate("%.3f" % j, xy=(i - xxx, j * yyy), fontsize=7)
+    for i, j in zip(x, avg_jh):
+        plt.annotate("%.3f" % j, xy=(i - xxx, j * yyy), fontsize=7)
+    for i, j in zip(x, avg_ub):
+        plt.annotate("%.3f" % j, xy=(i - xxx, j * yyy), fontsize=7)
+    for i, j in zip(x, avg_b200):
+        plt.annotate("%.3f" % j, xy=(i - xxx, j * yyy), fontsize=7)
+    for i, j in zip(x, avg_b400):
+        plt.annotate("%.3f" % j, xy=(i - xxx, j * yyy), fontsize=7)
+    # plt.ylim([0.5, 1.2])
+    plt.xticks(x)
+    plt.xlabel("# of tables in join queries")
+    plt.ylabel("prediction accuracy")
+    plt.show()
+
+
+def tune_k_times():
+    t1 = read_times("1.topk_100_1", "card-time") * 1000
+    t2 = read_times("2.topk_100_1", "card-time") * 1000
+    t3 = read_times("3.topk_100_1", "card-time") * 1000
+    t4 = read_times("4.topk_100_1", "card-time") * 1000
+    t5 = read_times("5.topk_100_1", "card-time") * 1000
+    card = [t1, t2, t3, t4, t5]
+    m1 = [np.mean(i) for i in card]
+    st1 = [np.std(i) for i in card]
+    x = range(1, 6)
+    plt.plot(x, m1, "-x", label="k = 1")
+
+    t1 = read_times("1.topk_100_5", "card-time") * 1000
+    t2 = read_times("2.topk_100_5", "card-time") * 1000
+    t3 = read_times("3.topk_100_5", "card-time") * 1000
+    t4 = read_times("4.topk_100_5", "card-time") * 1000
+    t5 = read_times("5.topk_100_5", "card-time") * 1000
+    card = [t1, t2, t3, t4, t5]
+    m1 = [np.mean(i) for i in card]
+    st1 = [np.std(i) for i in card]
+    x = range(1, 6)
+    plt.plot(x, m1, "-o", label="k = 5")
+
+    t1 = read_times("1.topk_100_10", "card-time") * 1000
+    t2 = read_times("2.topk_100_10", "card-time") * 1000
+    t3 = read_times("3.topk_100_10", "card-time") * 1000
+    t4 = read_times("4.topk_100_10", "card-time") * 1000
+    t5 = read_times("5.topk_100_10", "card-time") * 1000
+    card = [t1, t2, t3, t4, t5]
+    m1 = [np.mean(i) for i in card]
+    st1 = [np.std(i) for i in card]
+    x = range(1, 6)
+    plt.plot(x, m1, "-h", label="k = 10")
+
+    t1 = read_times("1.topk_100_20", "card-time") * 1000
+    t2 = read_times("2.topk_100_20", "card-time") * 1000
+    t3 = read_times("3.topk_100_20", "card-time") * 1000
+    t4 = read_times("4.topk_100_20", "card-time") * 1000
+    t5 = read_times("5.topk_100_20", "card-time") * 1000
+    card = [t1, t2, t3, t4, t5]
+    m1 = [np.mean(i) for i in card]
+    st1 = [np.std(i) for i in card]
+    x = range(1, 6)
+    plt.plot(x, m1, "-p", label="k = 20")
+
+    t1 = read_times("1.topk_100_40", "card-time") * 1000
+    t2 = read_times("2.topk_100_40", "card-time") * 1000
+    t3 = read_times("3.topk_100_40", "card-time") * 1000
+    t4 = read_times("4.topk_100_40", "card-time") * 1000
+    t5 = read_times("5.topk_100_40", "card-time") * 1000
+    card = [t1, t2, t3, t4, t5]
+    m1 = [np.mean(i) for i in card]
+    st1 = [np.std(i) for i in card]
+    x = range(1, 6)
+    plt.plot(x, m1, "-P", label="k = 40")
+
+    x = range(1, 6)
+
+    # plt.axhline(y=1, color="gray", linestyle="--")
+
+    plt.legend()
+    # plt.yscale("log")
+    # xxx = 0.1
+    # yyy = 1.0
+    # for i, j in zip(x, avg_card):
+    #     plt.annotate("%.3f" % j, xy=(i - xxx, j * yyy), fontsize=7)
+    # for i, j in zip(x, avg_jh):
+    #     plt.annotate("%.3f" % j, xy=(i - xxx, j * yyy), fontsize=7)
+    # for i, j in zip(x, avg_ub):
+    #     plt.annotate("%.3f" % j, xy=(i - xxx, j * yyy), fontsize=7)
+    # for i, j in zip(x, avg_b200):
+    #     plt.annotate("%.3f" % j, xy=(i - xxx, j * yyy), fontsize=7)
+    # for i, j in zip(x, avg_b400):
+    #     plt.annotate("%.3f" % j, xy=(i - xxx, j * yyy), fontsize=7)
+    # plt.ylim([0.5, 1.2])
+    plt.xticks(x)
+    plt.xlabel("# of tables in join queries")
+    plt.ylabel("latency (ms)")
+    plt.show()
+
+
+def plot_bin_model_size():
+    x = [20, 50, 100, 200, 400]
+    size = np.array([360726, 790214, 1431741, 2278090, 3151738])
+    size = size/(1024.*1024)
+    plt.plot(x, size, "-o")
+    plt.ylabel("size (MB)")
+    plt.xlabel("bin size")
+    plt.xticks(x)
+    plt.show()
+
+
+def plot_k_model_size():
+    x = [1, 5, 10, 20, 40]
+    size = np.array([429412, 899000, 1431741, 2063374, 2456373])
+    size = size/(1024.*1024)
+    plt.plot(x, size, "-o")
+    plt.ylabel("size (MB)")
+    plt.xlabel("k value")
+    plt.xticks(x)
+    plt.show()
+
+
 if __name__ == "__main__":
     # plot_accuracy()
-    plot_times()
+    # plot_times()
     # plot_2_join_postgres()
+    # tune_bin()
+    # tune_bin_times()
+    # plot_bin_model_size()
+    tune_k()
+    tune_k_times()
+    plot_k_model_size()

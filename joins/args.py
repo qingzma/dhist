@@ -4,8 +4,10 @@ import argparse
 def parse_args(args_):
     parser = argparse.ArgumentParser()
     parser.add_argument("--train", help="train models", action="store_true")
-    parser.add_argument("--evaluate", help="evaluate models", action="store_true")
-    parser.add_argument("--dataset", default="stats", help="the target dataset")
+    parser.add_argument(
+        "--evaluate", help="evaluate models", action="store_true")
+    parser.add_argument("--dataset", default="stats",
+                        help="the target dataset")
     parser.add_argument("--data_folder", default="data/stats/")
     parser.add_argument(
         "--model_folder", default="models", help="the folder to store model"
@@ -20,7 +22,8 @@ def parse_args(args_):
         default="query.sql",
         help="the path to the query file, for evaluation",
     )
-    parser.add_argument("--preprocess", help="convert date to int", action="store_true")
+    parser.add_argument(
+        "--preprocess", help="convert date to int", action="store_true")
     parser.add_argument(
         "--db_conn",
         type=str,
@@ -55,7 +58,7 @@ def parse_args(args_):
         "--topk",
         help="the number of dominating items",
         type=int,
-        choices=range(0, 40),
+        choices=range(0, 200),
         default=5,
     )
     # parser.add_argument('--log_level', type=int, default=logging.DEBUG)
