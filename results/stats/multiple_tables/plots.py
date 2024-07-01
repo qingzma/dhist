@@ -46,9 +46,9 @@ def plot_accuracy_without_filter():
     plt.yscale("log")
 
     plt.hist(re_card_bad, bins=logbins,
-             label="DHist-without-jk-correlation", alpha=0.5)
+             label="DHist-without-jk-correlation", alpha=0.3)
     plt.hist(re_card, bins=logbins,
-             label="DHist-with-jk-correlation", alpha=0.5)
+             label="DHist-with-jk-correlation", alpha=0.6)
 
     tick = [10 ** (ii) for ii in [-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8]]
     # print(tick)
