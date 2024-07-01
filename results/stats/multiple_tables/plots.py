@@ -13,8 +13,10 @@ matplotlib.rc('font', **font)
 def plot_accuracy():
     truths = read_from_csv("results/stats/multiple_tables/truth.csv", "truth")
     card = read_from_csv("results/stats/multiple_tables/card.csv", "card")
-    # postgres = read_from_csv("results/stats/multiple_tables/postgres.csv", "postgres")
-    # bayescard = read_from_csv("results/stats/multiple_tables/bayescard.csv", "bayescard")
+    flat = read_from_csv(
+        "workloads/stats_CEB/estimates/stats_CEB_sub_queries_flat.txt", "flat")
+    bayescard = read_from_csv(
+        "workloads/stats_CEB/estimates/stats_CEB_sub_queries_bayescard.txt", "bayescard")
     # wjsample = read_from_csv("results/stats/multiple_tables/wjsample.csv", "wjsample")
     deepdb = read_from_csv(
         "workloads/stats_CEB/estimates/stats_CEB_sub_queries_deepdb.txt", "deepdb")
@@ -28,11 +30,15 @@ def plot_accuracy():
     card = card[idx]
     truths = truths[idx]
     deepdb = deepdb[idx]
+    flat = flat[idx]
+    bayescard = bayescard[idx]
+
     re_card = card / truths
     # re_postgres = postgres / truths
-    # re_bayescard = bayescard / truths
+    re_bayescard = bayescard / truths
     # re_wjsample = wjsample / truths
     re_deepdb = deepdb / truths
+    re_flat = flat/truths
 
     fig, axs = plt.subplots(3, 2)
 
@@ -40,8 +46,8 @@ def plot_accuracy():
         np.log10(
             min(
                 min(re_card),
-                # min(re_postgres),
-                # min(re_bayescard),
+                min(re_flat),
+                min(re_bayescard),
                 # min(re_wjsample),
                 min(re_deepdb),
             )
@@ -49,8 +55,8 @@ def plot_accuracy():
         np.log10(
             max(
                 max(re_card),
-                # max(re_postgres),
-                # max(re_bayescard),
+                max(re_flat),
+                max(re_bayescard),
                 # max(re_wjsample),
                 max(re_deepdb),
             )
@@ -63,12 +69,12 @@ def plot_accuracy():
     axs[0, 0].set_title("DHist")
     # axs[1, 0].hist(re_postgres, bins=logbins, label="postgres")
     axs[1, 0].set_title("FactorJoin")
-    # axs[2, 0].hist(re_bayescard, bins=logbins, label="BayesCard")
+    axs[2, 0].hist(re_bayescard, bins=logbins, label="BayesCard")
     axs[2, 0].set_title("BayesCard")
-    # axs[1, 1].hist(re_wjsample, bins=logbins, label="WJSample")
+    axs[1, 1].hist(re_flat, bins=logbins, label="FLAT")
     axs[1, 1].set_title("Flat")
     # axs[2, 1].hist(re_wjsample, bins=logbins, label="WJSample")
-    axs[2, 1].set_title("Another method")
+    axs[2, 1].set_title("WJSample")
     axs[0, 1].hist(re_deepdb, bins=logbins, label="DeepDB")
     axs[0, 1].set_title("DeepDB")
     # # axs[0, 0].legend()
