@@ -6,9 +6,10 @@ from joins.tools import read_from_csv
 
 
 def plot_accuracy():
-    font = {'family': 'normal',
-            'weight': 'bold',
-            'size': 12}
+    font = {
+        # 'family': 'normal',
+        # 'weight': 'bold',
+        'size': 12}
 
     matplotlib.rc('font', **font)
     truths = read_from_csv("results/stats/single_table/truth.csv", "truth")
@@ -20,12 +21,15 @@ def plot_accuracy():
     wjsample = read_from_csv(
         "results/stats/single_table/wjsample.csv", "wjsample")
     deepdb = read_from_csv("results/stats/single_table/deepdb.csv", "deepdb")
+    factorjoin = read_from_csv(
+        "results/stats/single_table/factorjoin.csv", "factorjoin")
 
     re_card = card / truths
     re_postgres = postgres / truths
     re_bayescard = bayescard / truths
     re_wjsample = wjsample / truths
     re_deepdb = deepdb / truths
+    re_factorjoin = factorjoin/truths
 
     fig, axs = plt.subplots(3, 2)
 
@@ -37,6 +41,7 @@ def plot_accuracy():
                 min(re_bayescard),
                 min(re_wjsample),
                 min(re_deepdb),
+                min(factorjoin),
             )
         ),
         np.log10(
@@ -46,6 +51,7 @@ def plot_accuracy():
                 max(re_bayescard),
                 max(re_wjsample),
                 max(re_deepdb),
+                max(factorjoin),
             )
         ),
         51,
@@ -62,7 +68,7 @@ def plot_accuracy():
     axs[0, 1].set_title("WJSample")
     axs[1, 1].hist(re_deepdb, bins=logbins, label="DeepDB")
     axs[1, 1].set_title("DeepDB")
-    # axs[2, 1].hist(re_deepdb, bins=logbins, label="FactorJoin")
+    axs[2, 1].hist(re_factorjoin, bins=logbins, label="FactorJoin")
     axs[2, 1].set_title("FactorJoin")
     # axs[0, 0].legend()
 
