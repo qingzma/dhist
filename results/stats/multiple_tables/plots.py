@@ -13,6 +13,8 @@ matplotlib.rc('font', **font)
 def plot_accuracy():
     truths = read_from_csv("results/stats/multiple_tables/truth.csv", "truth")
     card = read_from_csv("results/stats/multiple_tables/card.csv", "card")
+    factorjoin = read_from_csv(
+        "results/stats/multiple_tables/factorjoin.csv", "factorjoin")
     flat = read_from_csv(
         "workloads/stats_CEB/estimates/stats_CEB_sub_queries_flat.txt", "flat")
     bayescard = read_from_csv(
@@ -32,6 +34,7 @@ def plot_accuracy():
     deepdb = deepdb[idx]
     flat = flat[idx]
     bayescard = bayescard[idx]
+    factorjoin = factorjoin[idx]
 
     re_card = card / truths
     # re_postgres = postgres / truths
@@ -39,6 +42,7 @@ def plot_accuracy():
     # re_wjsample = wjsample / truths
     re_deepdb = deepdb / truths
     re_flat = flat/truths
+    re_factorjoin = factorjoin/truths
 
     fig, axs = plt.subplots(3, 2)
 
@@ -50,6 +54,7 @@ def plot_accuracy():
                 min(re_bayescard),
                 # min(re_wjsample),
                 min(re_deepdb),
+                min(re_factorjoin),
             )
         ),
         np.log10(
@@ -59,6 +64,7 @@ def plot_accuracy():
                 max(re_bayescard),
                 # max(re_wjsample),
                 max(re_deepdb),
+                max(re_factorjoin),
             )
         ),
         101,
@@ -67,7 +73,7 @@ def plot_accuracy():
     plt.xscale("log")
     axs[0, 0].hist(re_card, bins=logbins, label="DHist")
     axs[0, 0].set_title("DHist")
-    # axs[1, 0].hist(re_postgres, bins=logbins, label="postgres")
+    axs[1, 0].hist(re_factorjoin, bins=logbins, label="FactorJoin")
     axs[1, 0].set_title("FactorJoin")
     axs[2, 0].hist(re_bayescard, bins=logbins, label="BayesCard")
     axs[2, 0].set_title("BayesCard")
