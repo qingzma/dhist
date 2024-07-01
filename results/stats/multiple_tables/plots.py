@@ -10,6 +10,56 @@ font = {
 matplotlib.rc('font', **font)
 
 
+def plot_accuracy_without_filter():
+    truths = read_from_csv("results/stats/multiple_tables/truth.csv", "truth")
+    card = read_from_csv("results/stats/multiple_tables/card.csv", "card")
+    card_bad = read_from_csv(
+        "results/stats/multiple_tables/card_bad.csv", "card")
+    idx1 = np.array([truths != -1][0])
+    idx2 = np.array([card != -1][0])
+
+    idx = np.where(idx1 & idx2)
+    card = card[idx]
+    card_bad = card_bad[idx]
+    truths = truths[idx]
+
+    re_card = card / truths
+    re_card_bad = card_bad / truths
+
+    logbins = np.logspace(
+        np.log10(
+            min(
+                min(re_card),
+                min(re_card_bad),
+            )
+        ),
+        np.log10(
+            max(
+                max(re_card),
+                max(re_card_bad),
+            )
+        ),
+        101,
+    )
+
+    plt.xscale("log")
+    plt.yscale("log")
+
+    plt.hist(re_card_bad, bins=logbins,
+             label="DHist-without-jk-correlation", alpha=0.5)
+    plt.hist(re_card, bins=logbins,
+             label="DHist-with-jk-correlation", alpha=0.5)
+
+    tick = [10 ** (ii) for ii in [-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8]]
+    # print(tick)
+    plt.xticks(tick)
+    plt.legend()
+    plt.ylim([0.7, 1000])
+    plt.xlabel("Relative error")
+    plt.ylabel("Number of queries")
+    plt.show()
+
+
 def plot_accuracy():
     truths = read_from_csv("results/stats/multiple_tables/truth.csv", "truth")
     card = read_from_csv("results/stats/multiple_tables/card.csv", "card")
@@ -70,7 +120,7 @@ def plot_accuracy():
         101,
     )
     # logbins = 301
-    plt.xscale("log")
+    # plt.xscale("log")
     axs[0, 0].hist(re_card, bins=logbins, label="DHist")
     axs[0, 0].set_title("DHist")
     axs[1, 0].hist(re_factorjoin, bins=logbins, label="FactorJoin")
@@ -150,5 +200,6 @@ def plot_times():
 
 
 if __name__ == "__main__":
-    plot_accuracy()
+    # plot_accuracy()
     # plot_times()
+    plot_accuracy_without_filter()
