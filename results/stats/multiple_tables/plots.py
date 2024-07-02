@@ -46,9 +46,9 @@ def plot_accuracy_without_filter():
     plt.yscale("log")
 
     plt.hist(re_card_bad, bins=logbins,
-             label="DHist-without-jk-correlation", alpha=0.3)
+             label="DHist", alpha=0.3)
     plt.hist(re_card, bins=logbins,
-             label="DHist-with-jk-correlation", alpha=0.6)
+             label="DHist-with-jk-discovery", alpha=0.6)
 
     tick = [10 ** (ii) for ii in [-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8]]
     # print(tick)
@@ -128,7 +128,7 @@ def plot_accuracy():
     axs[2, 0].hist(re_bayescard, bins=logbins, label="BayesCard")
     axs[2, 0].set_title("BayesCard")
     axs[1, 1].hist(re_flat, bins=logbins, label="FLAT")
-    axs[1, 1].set_title("Flat")
+    axs[1, 1].set_title("FLAT")
     # axs[2, 1].hist(re_wjsample, bins=logbins, label="WJSample")
     axs[2, 1].set_title("WJSample")
     axs[0, 1].hist(re_deepdb, bins=logbins, label="DeepDB")
@@ -200,6 +200,6 @@ def plot_times():
 
 
 if __name__ == "__main__":
-    # plot_accuracy()
+    plot_accuracy()
     # plot_times()
-    plot_accuracy_without_filter()
+    # plot_accuracy_without_filter()
