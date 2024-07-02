@@ -241,11 +241,17 @@ def plot_update_accuracy():
     )
     # logbins = 301
     # plt.xscale("log")
-    axs.hist(re_card_new_model_new_data, bins=logbins, label="new data new model")
+    axs.hist(
+        re_card_new_model_new_data, bins=logbins, label="new data new model", alpha=0.3
+    )
     # axs.set_title("DHist")
-    axs.hist(re_card_old_model_old_data, bins=logbins, label="old data old model")
+    axs.hist(
+        re_card_old_model_old_data, bins=logbins, label="old data old model", alpha=0.5
+    )
     # axs.set_title("FactorJoin")
-    axs.hist(re_card_old_model_new_data, bins=logbins, label="new data old model")
+    axs.hist(
+        re_card_old_model_new_data, bins=logbins, label="new data old model", alpha=0.7
+    )
     # axs.set_title("FLAT")
 
     axs.legend()
