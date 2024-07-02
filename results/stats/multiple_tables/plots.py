@@ -197,7 +197,74 @@ def plot_times():
     plt.show()
 
 
+def plot_update_accuracy():
+    truths = read_from_csv("results/stats/multiple_tables/truth.csv", "truth")
+    truths2014 = read_from_csv("results/stats/multiple_tables/truth2014.csv", "truth")
+    card = read_from_csv("results/stats/multiple_tables/card.csv", "card")
+    card2014 = read_from_csv("results/stats/multiple_tables/card2014.csv", "card")
+
+    # print([truths != -1][0])
+    idx1 = np.array([truths != -1][0])
+    idx2 = np.array([card != -1][0])
+    idx3 = np.array([truths2014 != -1][0])
+    idx4 = np.array([card2014 != -1][0])
+
+    idx = np.where(idx1 & idx2 & idx3 & idx4)
+
+    truths = truths[idx]
+    truths2014 = truths2014[idx]
+    card = card[idx]
+    card2014 = card2014[idx]
+
+    re_card_new_model_new_data = card / truths
+    re_card_old_model_old_data = card2014 / truths2014
+    re_card_old_model_new_data = card2014 / truths
+
+    fig, axs = plt.subplots(1, 1)
+
+    logbins = np.logspace(
+        np.log10(
+            min(
+                min(re_card_new_model_new_data),
+                min(re_card_old_model_old_data),
+                min(re_card_old_model_new_data),
+            )
+        ),
+        np.log10(
+            max(
+                max(re_card_new_model_new_data),
+                max(re_card_old_model_old_data),
+                max(re_card_old_model_new_data),
+            )
+        ),
+        101,
+    )
+    # logbins = 301
+    # plt.xscale("log")
+    axs.hist(re_card_new_model_new_data, bins=logbins, label="new data new model")
+    # axs.set_title("DHist")
+    axs.hist(re_card_old_model_old_data, bins=logbins, label="old data old model")
+    # axs.set_title("FactorJoin")
+    axs.hist(re_card_old_model_new_data, bins=logbins, label="new data old model")
+    # axs.set_title("FLAT")
+
+    axs.legend()
+
+    # for ax in axs:
+    # for a in axs:
+    axs.set_yscale("log")
+    axs.set_xscale("log")
+    axs.set_ylim([0.1, 1000])
+    axs.set_xticks([0.0001, 0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000])
+
+    fig.text(0.5, 0.01, "Relative error", ha="center")
+    fig.text(0.01, 0.5, "Number of queries", va="center", rotation="vertical")
+    plt.tight_layout()
+    plt.show()
+
+
 if __name__ == "__main__":
-    plot_accuracy()
+    # plot_accuracy()
     # plot_times()
     # plot_accuracy_without_filter()
+    plot_update_accuracy()
