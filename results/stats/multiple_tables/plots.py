@@ -1,20 +1,18 @@
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-import matplotlib
 
 from joins.tools import read_from_csv
 
-font = {
-    'size': 12}
+font = {"size": 12}
 
-matplotlib.rc('font', **font)
+matplotlib.rc("font", **font)
 
 
 def plot_accuracy_without_filter():
     truths = read_from_csv("results/stats/multiple_tables/truth.csv", "truth")
     card = read_from_csv("results/stats/multiple_tables/card.csv", "card")
-    card_bad = read_from_csv(
-        "results/stats/multiple_tables/card_bad.csv", "card")
+    card_bad = read_from_csv("results/stats/multiple_tables/card_bad.csv", "card")
     idx1 = np.array([truths != -1][0])
     idx2 = np.array([card != -1][0])
 
@@ -45,10 +43,8 @@ def plot_accuracy_without_filter():
     plt.xscale("log")
     plt.yscale("log")
 
-    plt.hist(re_card_bad, bins=logbins,
-             label="DHist", alpha=0.3)
-    plt.hist(re_card, bins=logbins,
-             label="DHist-with-jk-discovery", alpha=0.6)
+    plt.hist(re_card_bad, bins=logbins, label="DHist", alpha=0.3)
+    plt.hist(re_card, bins=logbins, label="DHist-with-jk-discovery", alpha=0.6)
 
     tick = [10 ** (ii) for ii in [-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8]]
     # print(tick)
@@ -64,20 +60,25 @@ def plot_accuracy():
     truths = read_from_csv("results/stats/multiple_tables/truth.csv", "truth")
     card = read_from_csv("results/stats/multiple_tables/card.csv", "card")
     factorjoin = read_from_csv(
-        "results/stats/multiple_tables/factorjoin.csv", "factorjoin")
+        "results/stats/multiple_tables/factorjoin.csv", "factorjoin"
+    )
     flat = read_from_csv(
-        "workloads/stats_CEB/estimates/stats_CEB_sub_queries_flat.txt", "flat")
+        "workloads/stats_CEB/estimates/stats_CEB_sub_queries_flat.txt", "flat"
+    )
     bayescard = read_from_csv(
-        "workloads/stats_CEB/estimates/stats_CEB_sub_queries_bayescard.txt", "bayescard")
-    # wjsample = read_from_csv("results/stats/multiple_tables/wjsample.csv", "wjsample")
+        "workloads/stats_CEB/estimates/stats_CEB_sub_queries_bayescard.txt", "bayescard"
+    )
+    wjsample = read_from_csv("results/stats/multiple_tables/wjsample.csv", "wjsample")
     deepdb = read_from_csv(
-        "workloads/stats_CEB/estimates/stats_CEB_sub_queries_deepdb.txt", "deepdb")
+        "workloads/stats_CEB/estimates/stats_CEB_sub_queries_deepdb.txt", "deepdb"
+    )
 
     # print([truths != -1][0])
     idx1 = np.array([truths != -1][0])
     idx2 = np.array([card != -1][0])
+    idx3 = np.array([wjsample != -1][0])
 
-    idx = np.where(idx1 & idx2)
+    idx = np.where(idx1 & idx2 & idx3)
     # print("idx is ", idx)
     card = card[idx]
     truths = truths[idx]
@@ -85,14 +86,15 @@ def plot_accuracy():
     flat = flat[idx]
     bayescard = bayescard[idx]
     factorjoin = factorjoin[idx]
+    wjsample = wjsample[idx]
 
     re_card = card / truths
     # re_postgres = postgres / truths
     re_bayescard = bayescard / truths
-    # re_wjsample = wjsample / truths
+    re_wjsample = wjsample / truths
     re_deepdb = deepdb / truths
-    re_flat = flat/truths
-    re_factorjoin = factorjoin/truths
+    re_flat = flat / truths
+    re_factorjoin = factorjoin / truths
 
     fig, axs = plt.subplots(3, 2)
 
@@ -102,7 +104,7 @@ def plot_accuracy():
                 min(re_card),
                 min(re_flat),
                 min(re_bayescard),
-                # min(re_wjsample),
+                min(re_wjsample),
                 min(re_deepdb),
                 min(re_factorjoin),
             )
@@ -112,7 +114,7 @@ def plot_accuracy():
                 max(re_card),
                 max(re_flat),
                 max(re_bayescard),
-                # max(re_wjsample),
+                max(re_wjsample),
                 max(re_deepdb),
                 max(re_factorjoin),
             )
@@ -129,7 +131,7 @@ def plot_accuracy():
     axs[2, 0].set_title("BayesCard")
     axs[1, 1].hist(re_flat, bins=logbins, label="FLAT")
     axs[1, 1].set_title("FLAT")
-    # axs[2, 1].hist(re_wjsample, bins=logbins, label="WJSample")
+    axs[2, 1].hist(re_wjsample, bins=logbins, label="WJSample")
     axs[2, 1].set_title("WJSample")
     axs[0, 1].hist(re_deepdb, bins=logbins, label="DeepDB")
     axs[0, 1].set_title("DeepDB")
@@ -140,11 +142,10 @@ def plot_accuracy():
             a.set_yscale("log")
             a.set_xscale("log")
             a.set_ylim([0.1, 1000])
-            a.set_xticks([0.0001, 0.001, 0.01, 0.1, 1,
-                         10, 100, 1000, 10000, 100000])
+            a.set_xticks([0.0001, 0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000])
 
-    fig.text(0.5, 0.01, 'Relative error', ha='center')
-    fig.text(0.01, 0.5, 'Number of queries', va='center', rotation='vertical')
+    fig.text(0.5, 0.01, "Relative error", ha="center")
+    fig.text(0.01, 0.5, "Number of queries", va="center", rotation="vertical")
     plt.tight_layout()
     plt.show()
 
@@ -154,15 +155,12 @@ def plot_times():
         "results/stats/single_table/truth.csv", "truth-time-postgres"
     )
     card = read_from_csv("results/stats/single_table/card.csv", "card-time")
-    postgres = read_from_csv(
-        "results/stats/single_table/postgres.csv", "postgres-time")
+    postgres = read_from_csv("results/stats/single_table/postgres.csv", "postgres-time")
     bayescard = read_from_csv(
         "results/stats/single_table/bayescard.csv", "bayescard-time"
     )
-    wjsample = read_from_csv(
-        "results/stats/single_table/wjsample.csv", "wjsample-time")
-    deepdb = read_from_csv(
-        "results/stats/single_table/deepdb.csv", "deepdb-time")
+    wjsample = read_from_csv("results/stats/single_table/wjsample.csv", "wjsample-time")
+    deepdb = read_from_csv("results/stats/single_table/deepdb.csv", "deepdb-time")
     logbins = np.logspace(
         np.log10(
             min(
