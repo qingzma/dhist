@@ -38,12 +38,16 @@ class TestTopkEngineMethod(unittest.TestCase):
         arguments = [
             "--train",
             "--grid",
-            "100",
+            "200",
             "--topk",
-            "40",
+            "20",
             # "--cdf",
             "--method",
             "topk",
+            "--dataset",
+            "stats_all",
+            "--data_folder",
+            "data/stats/",
         ]
         args = parse_args(arguments)
         train_stats_topk(args)
@@ -928,8 +932,7 @@ class TestTopkEngineMethod(unittest.TestCase):
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
-        res = engine.query(
-            query) if self.use_pushed_down else engine.query(query)
+        res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
         truth = 142137
         logger.info("result %.6E", res)

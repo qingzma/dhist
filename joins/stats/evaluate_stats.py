@@ -35,7 +35,7 @@ def evaluate_stats(args: ArgumentParser):
             pred.append(-1)
             latency.append(0)
         else:
-            # query = query_str.split("||")[0][:-1]
+            query = query_str.split("||")[0][:-1]
             # true_card = int(query_str.split("||")[-1])
             # query = query_str.split("||")[-1][:-1]
             # true_card = int(query_str.split("||")[0])
@@ -88,8 +88,8 @@ def evaluate_stats(args: ArgumentParser):
         latency,
         "card",
         "card-time",
-        "workloads/stats_CEB/no_range_predicates/5.topk_100_40.csv",
-        # "results/stats/multiple_tables/card.csv",
+        # "workloads/stats_CEB/no_range_predicates/5.topk_100_40.csv",
+        "results/stats/multiple_tables/updates/cardall.csv",
     )
 
     # logbins = np.logspace(np.log10(min(ratios)), np.log10(max(ratios)), 31)
