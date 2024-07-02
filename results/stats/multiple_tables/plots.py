@@ -199,9 +199,11 @@ def plot_times():
 
 def plot_update_accuracy():
     truths = read_from_csv("results/stats/multiple_tables/truth.csv", "truth")
-    truths2014 = read_from_csv("results/stats/multiple_tables/truth2014.csv", "truth")
-    card = read_from_csv("results/stats/multiple_tables/card.csv", "card")
-    card2014 = read_from_csv("results/stats/multiple_tables/card2014.csv", "card")
+    truths2014 = read_from_csv("results/stats/multiple_tables/truth_2014.csv", "truth")
+    card = read_from_csv("results/stats/multiple_tables/updates/cardall.csv", "card")
+    card2014 = read_from_csv(
+        "results/stats/multiple_tables/updates/card2014.csv", "card"
+    )
 
     # print([truths != -1][0])
     idx1 = np.array([truths != -1][0])
@@ -219,6 +221,9 @@ def plot_update_accuracy():
     re_card_new_model_new_data = card / truths
     re_card_old_model_old_data = card2014 / truths2014
     re_card_old_model_new_data = card2014 / truths
+    print("mean is ", np.mean(re_card_new_model_new_data))
+    print("mean is ", np.mean(re_card_old_model_old_data))
+    print("mean is ", np.mean(re_card_old_model_new_data))
 
     fig, axs = plt.subplots(1, 1)
 
@@ -241,18 +246,17 @@ def plot_update_accuracy():
     )
     # logbins = 301
     # plt.xscale("log")
+
+    # axs.hist(
+    #     re_card_old_model_old_data, bins=logbins, label="old data old model", alpha=0.5
+    # )
+    axs.hist(re_card_new_model_new_data, bins=logbins, label="Updated", alpha=0.3)
     axs.hist(
-        re_card_new_model_new_data, bins=logbins, label="new data new model", alpha=0.3
+        re_card_old_model_new_data,
+        bins=logbins,
+        label="Not Updated",
+        alpha=0.7,
     )
-    # axs.set_title("DHist")
-    axs.hist(
-        re_card_old_model_old_data, bins=logbins, label="old data old model", alpha=0.5
-    )
-    # axs.set_title("FactorJoin")
-    axs.hist(
-        re_card_old_model_new_data, bins=logbins, label="new data old model", alpha=0.7
-    )
-    # axs.set_title("FLAT")
 
     axs.legend()
 
@@ -261,10 +265,11 @@ def plot_update_accuracy():
     axs.set_yscale("log")
     axs.set_xscale("log")
     axs.set_ylim([0.1, 1000])
-    axs.set_xticks([0.0001, 0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000])
 
-    fig.text(0.5, 0.01, "Relative error", ha="center")
-    fig.text(0.01, 0.5, "Number of queries", va="center", rotation="vertical")
+    plt.xlabel("Relative error")
+    plt.ylabel("Number of queries")
+    # fig.text(0.5, 0.01, "Relative error", ha="center")
+    # fig.text(0.01, 0.5, "Number of queries", va="center", rotation="vertical")
     plt.tight_layout()
     plt.show()
 
