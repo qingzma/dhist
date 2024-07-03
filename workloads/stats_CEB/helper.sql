@@ -86,5 +86,21 @@ select u.Id, count(*)  as cnt from users as u, badges as b, comments as c, votes
 
 select sum(cnt) from 
 (
-select u.Id, count(*)  as cnt from users as u, badges as b, comments as c, postHistory as ph, votes as v where u.id=b.userid and u.id=c.userid and u.id=ph.userid and u.id=v.userid group by 1 order by 2 DESC  LIMIT 1
+select u.Id, count(*)  as cnt from users as u, badges as b, comments as c, postHistory as ph, votes as v where u.id=b.userid and u.id=c.userid and u.id=ph.userid and u.id=v.userid group by 1 order by 2 DESC  LIMIT 1000
 ) t;
+
+select sum(hh) from 
+(
+SELECT t1.Id, t1.cnt * t2.cnt as hh FROM 
+(
+select u.Id, count(*)  as cnt from users as u, badges as b, comments as c, votes as v where u.id=b.userid and u.id=c.userid and u.id=v.userid  
+group by 1 order by 2 DESC LIMIT 10000
+) t1,
+(
+select ph.userid, count(*) as cnt from postHistory as ph 
+group by 1 order by 2 DESC LIMIT 10000
+) t2
+where  t1.Id =t2.userid
+order by 2 DESC
+limit 100
+);

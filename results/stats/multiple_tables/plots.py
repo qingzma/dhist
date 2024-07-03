@@ -157,7 +157,7 @@ def plot_times():
     card = read_from_csv("results/stats/single_table/card.csv", "card-time")
     postgres = read_from_csv("results/stats/single_table/postgres.csv", "postgres-time")
     bayescard = read_from_csv(
-        "results/stats/single_table/bayescard.csv", "bayescard-time"
+        "results/stats/single_table/factorjoin.csv", "factorjoin-time"
     )
     wjsample = read_from_csv("results/stats/single_table/wjsample.csv", "wjsample-time")
     deepdb = read_from_csv("results/stats/single_table/deepdb.csv", "deepdb-time")
@@ -185,15 +185,17 @@ def plot_times():
         301,
     )
     plt.xscale("log")
-    plt.hist(card, bins=logbins, label="card", alpha=0.5)
-    plt.hist(postgres, bins=logbins, label="postgres", alpha=0.5)
-    plt.hist(bayescard, bins=logbins, label="BayesCard", alpha=0.5)
+    plt.hist(card, bins=logbins, label="DHist", alpha=0.5)
+    plt.hist(postgres, bins=logbins, label="Postgres", alpha=0.5)
+    plt.hist(bayescard, bins=logbins, label="FactorJoin", alpha=0.5)
     plt.hist(wjsample, bins=logbins, label="WJSample", alpha=0.5)
     plt.hist(deepdb, bins=logbins, label="DeepDB", alpha=0.5)
-    plt.hist(truths, bins=logbins, label="truth", alpha=0.5)
+    plt.hist(truths, bins=logbins, label="Truth(Postgres)", alpha=0.5)
     plt.legend()
-    plt.xlabel("latency (ms)")
-    plt.ylabel("# of queries")
+    plt.xlabel("Latency (ms)")
+    plt.ylabel("Number of queries")
+    plt.ylim([0, 100])
+    # plt.yscale("log")
     plt.show()
 
 
@@ -221,9 +223,9 @@ def plot_update_accuracy():
     re_card_new_model_new_data = card / truths
     re_card_old_model_old_data = card2014 / truths2014
     re_card_old_model_new_data = card2014 / truths
-    print("mean is ", np.mean(re_card_new_model_new_data))
-    print("mean is ", np.mean(re_card_old_model_old_data))
-    print("mean is ", np.mean(re_card_old_model_new_data))
+    print("mean is ", np.median(re_card_new_model_new_data))
+    print("mean is ", np.median(re_card_old_model_old_data))
+    print("mean is ", np.median(re_card_old_model_new_data))
 
     fig, axs = plt.subplots(1, 1)
 
@@ -254,7 +256,7 @@ def plot_update_accuracy():
     axs.hist(
         re_card_old_model_new_data,
         bins=logbins,
-        label="Not Updated",
+        label="Outdated",
         alpha=0.7,
     )
 
@@ -265,6 +267,41 @@ def plot_update_accuracy():
     axs.set_yscale("log")
     axs.set_xscale("log")
     axs.set_ylim([0.1, 1000])
+    plt.annotate(
+        "{:.2f}%".format(100 * np.median(re_card_new_model_new_data)),
+        [
+            1.35 * np.median(re_card_new_model_new_data),
+            # 1.1 * max(re_card_new_model_new_data),
+            0.2,
+        ],
+    )
+
+    plt.annotate(
+        "{:.2f}%".format(100 * np.median(re_card_old_model_new_data)),
+        [
+            0.25 * np.median(re_card_old_model_new_data),
+            # 1.1 * max(re_card_old_model_new_data),
+            0.2,
+        ],
+    )
+
+    plt.vlines(
+        x=np.median(re_card_old_model_new_data),
+        color="b",
+        ymin=0,
+        ymax=230,  # np.max(re_card_old_model_new_data),
+        label="axvline - full height",
+        linestyle="-.",
+    )
+
+    plt.vlines(
+        x=np.median(re_card_new_model_new_data),
+        color="b",
+        ymin=0,
+        ymax=390,
+        label="axvline - full height",
+        linestyle="-.",
+    )
 
     plt.xlabel("Relative error")
     plt.ylabel("Number of queries")
@@ -274,8 +311,74 @@ def plot_update_accuracy():
     plt.show()
 
 
+def plot_model_size():
+    import pandas as pd
+
+    data = [5.9, 162, 310, 1.9, 2.7, 0.866]
+    labels = ["BayesCard", "DeepDB", "FLAT", "FactorJoin", "DHist", "Histogram"]
+    freq_series = pd.Series(data)
+    # plt.bar(data)
+    # plt.xticks(labels)
+    ax = freq_series.plot(
+        kind="bar", stacked=True, color=["b", "r", "g", "y", "m", "c"], alpha=0.5
+    )
+    # ax.set_title("Amount Frequency")
+    ax.set_xlabel("Method")
+    ax.set_ylabel("Model size (MB)")
+    ax.set_xticklabels(labels)
+    plt.xticks(rotation=0)
+    plt.yscale("log")
+    plt.ylim([0.2, 1000])
+    add_value_labels(ax)
+    plt.tight_layout()
+    plt.show()
+
+
+def add_value_labels(ax, spacing=5):
+    """Add labels to the end of each bar in a bar chart.
+
+    Arguments:
+        ax (matplotlib.axes.Axes): The matplotlib object containing the axes
+            of the plot to annotate.
+        spacing (int): The distance between the labels and the bars.
+    """
+
+    # For each bar: Place a label
+    for rect in ax.patches:
+        # Get X and Y placement of label from rect.
+        y_value = rect.get_height()
+        x_value = rect.get_x() + rect.get_width() / 2
+
+        # Number of points between bar and label. Change to your liking.
+        space = spacing
+        # Vertical alignment for positive values
+        va = "bottom"
+
+        # If value of bar is negative: Place label below bar
+        if y_value < 0:
+            # Invert space to place label below
+            space *= -1
+            # Vertically align label at top
+            va = "top"
+
+        # Use Y value as label and format number with one decimal place
+        label = "{:.1f}".format(y_value)
+
+        # Create annotation
+        ax.annotate(
+            label,  # Use `label` as label
+            (x_value, y_value),  # Place label at end of the bar
+            xytext=(0, space),  # Vertically shift label by `space`
+            textcoords="offset points",  # Interpret `xytext` as offset in points
+            ha="center",  # Horizontally center label
+            va=va,
+        )  # Vertically align label differently for
+        # positive and negative values.
+
+
 if __name__ == "__main__":
     # plot_accuracy()
     # plot_times()
     # plot_accuracy_without_filter()
-    plot_update_accuracy()
+    # plot_update_accuracy()
+    plot_model_size()
