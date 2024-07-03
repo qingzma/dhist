@@ -12,7 +12,8 @@ matplotlib.rc("font", **font)
 def plot_accuracy_without_filter():
     truths = read_from_csv("results/stats/multiple_tables/truth.csv", "truth")
     card = read_from_csv("results/stats/multiple_tables/card.csv", "card")
-    card_bad = read_from_csv("results/stats/multiple_tables/card_bad.csv", "card")
+    card_bad = read_from_csv(
+        "results/stats/multiple_tables/card_bad.csv", "card")
     idx1 = np.array([truths != -1][0])
     idx2 = np.array([card != -1][0])
 
@@ -68,7 +69,8 @@ def plot_accuracy():
     bayescard = read_from_csv(
         "workloads/stats_CEB/estimates/stats_CEB_sub_queries_bayescard.txt", "bayescard"
     )
-    wjsample = read_from_csv("results/stats/multiple_tables/wjsample.csv", "wjsample")
+    wjsample = read_from_csv(
+        "results/stats/multiple_tables/wjsample.csv", "wjsample")
     deepdb = read_from_csv(
         "workloads/stats_CEB/estimates/stats_CEB_sub_queries_deepdb.txt", "deepdb"
     )
@@ -142,7 +144,8 @@ def plot_accuracy():
             a.set_yscale("log")
             a.set_xscale("log")
             a.set_ylim([0.1, 1000])
-            a.set_xticks([0.0001, 0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000])
+            a.set_xticks([0.0001, 0.001, 0.01, 0.1, 1,
+                         10, 100, 1000, 10000, 100000])
 
     fig.text(0.5, 0.01, "Relative error", ha="center")
     fig.text(0.01, 0.5, "Number of queries", va="center", rotation="vertical")
@@ -155,12 +158,15 @@ def plot_times():
         "results/stats/single_table/truth.csv", "truth-time-postgres"
     )
     card = read_from_csv("results/stats/single_table/card.csv", "card-time")
-    postgres = read_from_csv("results/stats/single_table/postgres.csv", "postgres-time")
+    postgres = read_from_csv(
+        "results/stats/single_table/postgres.csv", "postgres-time")
     bayescard = read_from_csv(
         "results/stats/single_table/factorjoin.csv", "factorjoin-time"
     )
-    wjsample = read_from_csv("results/stats/single_table/wjsample.csv", "wjsample-time")
-    deepdb = read_from_csv("results/stats/single_table/deepdb.csv", "deepdb-time")
+    wjsample = read_from_csv(
+        "results/stats/single_table/wjsample.csv", "wjsample-time")
+    deepdb = read_from_csv(
+        "results/stats/single_table/deepdb.csv", "deepdb-time")
     logbins = np.logspace(
         np.log10(
             min(
@@ -201,8 +207,10 @@ def plot_times():
 
 def plot_update_accuracy():
     truths = read_from_csv("results/stats/multiple_tables/truth.csv", "truth")
-    truths2014 = read_from_csv("results/stats/multiple_tables/truth_2014.csv", "truth")
-    card = read_from_csv("results/stats/multiple_tables/updates/cardall.csv", "card")
+    truths2014 = read_from_csv(
+        "results/stats/multiple_tables/truth_2014.csv", "truth")
+    card = read_from_csv(
+        "results/stats/multiple_tables/updates/cardall.csv", "card")
     card2014 = read_from_csv(
         "results/stats/multiple_tables/updates/card2014.csv", "card"
     )
@@ -252,7 +260,8 @@ def plot_update_accuracy():
     # axs.hist(
     #     re_card_old_model_old_data, bins=logbins, label="old data old model", alpha=0.5
     # )
-    axs.hist(re_card_new_model_new_data, bins=logbins, label="Updated", alpha=0.3)
+    axs.hist(re_card_new_model_new_data,
+             bins=logbins, label="Updated", alpha=0.3)
     axs.hist(
         re_card_old_model_new_data,
         bins=logbins,
@@ -315,7 +324,8 @@ def plot_model_size():
     import pandas as pd
 
     data = [5.9, 162, 310, 1.9, 2.7, 0.866]
-    labels = ["BayesCard", "DeepDB", "FLAT", "FactorJoin", "DHist", "Histogram"]
+    labels = ["BayesCard", "DeepDB", "FLAT",
+              "FactorJoin", "DHist", "Histogram"]
     freq_series = pd.Series(data)
     # plt.bar(data)
     # plt.xticks(labels)
@@ -377,8 +387,8 @@ def add_value_labels(ax, spacing=5):
 
 
 if __name__ == "__main__":
-    plot_accuracy()
+    # plot_accuracy()
     # plot_times()
     # plot_accuracy_without_filter()
     # plot_update_accuracy()
-    # plot_model_size()
+    plot_model_size()
