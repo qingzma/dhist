@@ -1,9 +1,10 @@
-import psycopg2
-import time
-import os
 import argparse
-import numpy as np
+import os
+import time
+
 import matplotlib.pyplot as plt
+import numpy as np
+import psycopg2
 
 from joins.tools import save_predictions_to_file
 
@@ -109,7 +110,7 @@ def send_query(dataset, method_name, query_file, save_folder, iteration=None):
         execution_time,
         "truth",
         "truth-time-postgres",
-        "results/stats/multiple_tables/truth.csv",
+        "results/stats/multiple_tables/truth_2014.csv",
     )
 
     # if iteration:
@@ -128,7 +129,9 @@ def send_query(dataset, method_name, query_file, save_folder, iteration=None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", default="stats", help="Which dataset to be used")
+    parser.add_argument(
+        "--dataset", default="stats2014", help="Which dataset to be used"
+    )
     parser.add_argument(
         "--method_name",
         default="workloads/stats_CEB/estimates/truth.txt",

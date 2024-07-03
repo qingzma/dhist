@@ -27,6 +27,7 @@ def plot_dominating_trend():
             456.0 / 79851,
             6028320.0 / 15900001,
             1427299116.0 / 2810041173,
+            9848363900400.0 / 18284577171740,
         ]
     )
     x10 = np.array(
@@ -35,6 +36,7 @@ def plot_dominating_trend():
             2316.0 / 79851,
             12207751.0 / 15900001,
             2703632552.0 / 2810041173,
+            18210054452350.0 / 18284577171740,
         ]
     )
     x100 = np.array(
@@ -43,6 +45,7 @@ def plot_dominating_trend():
             7953.0 / 79851,
             14874968.0 / 15900001,
             2800877453.0 / 2810041173,
+            18282926937943.0 / 18284577171740,
         ]
     )
     x1000 = np.array(
@@ -51,10 +54,11 @@ def plot_dominating_trend():
             23463.0 / 79851,
             15702975.0 / 15900001,
             2809920313.0 / 2810041173,
+            18284016443480.0 / 18284577171740,
         ]
     )
 
-    x = [1, 2, 3, 4]
+    x = [1, 2, 3, 4, 5]
 
     ax.plot(x, 100 * x1, "-o", label="k=1", color=colors[0])
     ax.plot(x, 100 * x10, "-v", label="k=10", color=colors[1])
@@ -65,13 +69,13 @@ def plot_dominating_trend():
 
     addlabels(x, x1, ax, color=colors[0])
     addlabels(x, x10, ax, color=colors[1])
-    addlabels(x[:-2], x100, ax, color=colors[2])
-    addlabels(x[:-2], x1000, ax, color=colors[3])
+    addlabels(x[:-3], x100, ax, color=colors[2])
+    addlabels(x[:-3], x1000, ax, color=colors[3])
     plt.yscale("log")
 
     # plt.gca().yaxis.set_major_formatter(mtick.PercentFormatter(decimals=2))
-    ax.set_xlabel("# of tables in a join query")
-    ax.set_ylabel("proportion of top k join paths in join results (%)")
+    ax.set_xlabel("Number of tables in a join query")
+    ax.set_ylabel("Proportion of top k join paths in join results (%)")
     plt.tight_layout()
     plt.show()
 

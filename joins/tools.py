@@ -41,8 +41,19 @@ def save_predictions_to_file(preds, times, header1, header2, file_path):
     df.to_csv(file_path, index=False)
 
 
+def save_predictions_to_file3(preds, times, time2, header1, header2, h3, file_path):
+    data = zip(preds, times, time2)
+    data = list(data)
+    df = pd.DataFrame(data, columns=[header1, header2, h3])
+    df.to_csv(file_path, index=False)
+
+
 def read_from_csv(file_path, header):
     return pd.read_csv(file_path)[header].values
+
+
+def read_from_csv_all(file_path):
+    return pd.read_csv(file_path)
 
 
 def read_from_csv_to_series(file_path, header):
