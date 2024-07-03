@@ -26,6 +26,15 @@ def read_times(suffix):
     idx6 = np.array([neurocard["truth"] != -1][0])
     idx7 = np.array([wjsample["truth"] != -1][0])
     idx8 = np.array([postgres["truth"] != -1][0])
+    # # print("idx1", idx1)
+    # print("idx1", len(idx1))
+    # print("idx2", len(idx2))
+    # print("idx3", len(idx3))
+    # print("idx4", len(idx4))
+    # print("idx5", len(idx5))
+    # print("idx6", len(idx6))
+    # print("idx7", len(idx7))
+    # print("idx8", len(idx8))
 
     idx = np.where(idx1 & idx2 & idx3 & idx4 & idx5 & idx6 & idx7 & idx8)
     print("total count is ", len(list(idx[0])))
@@ -52,7 +61,7 @@ def plt_end_to_end():
     }
 
     weight_counts = {
-        "Plan Time": np.array(plan)/990,
+        "Plan Time": np.array(plan)/500,
         "Execution Time": np.array(execs)/100,
     }
 
@@ -81,9 +90,34 @@ def plt_end_to_end():
     # ax.set_title("Number of penguins with above average body mass")
     ax.legend(loc="center right")
     plt.yscale("log")
-    plt.ylim([0.01, 10000])
+    plt.ylim([0.05, 5000])
     plt.xticks(x, labels, rotation=70)
-    add_value_labels(ax)
+    # add_value_labels(ax)
+    w_10_1 = weight_counts_10["Plan Time (simple query)"]
+    w_10_2 = w_10_1+weight_counts_10["Execution Time (simple query)"]
+    w_1 = weight_counts["Plan Time"]
+    w_2 = w_1+weight_counts["Execution Time"]
+    for i in range(8):
+        ax.annotate(
+            "{:.2f}".format(w_10_1[i]),  # Use `label` as label
+            (i-0.5*width, w_10_1[i]),  # Place label at end of the bar
+            ha="center",  # Horizontally center label
+        )
+        ax.annotate(
+            "{:.1f}".format(w_10_2[i]),  # Use `label` as label
+            (i-0.5*width, w_10_2[i]),  # Place label at end of the bar
+            ha="center",  # Horizontally center label
+        )
+        ax.annotate(
+            "{:.2f}".format(w_1[i]),  # Use `label` as label
+            (i+0.5*width, w_1[i]),  # Place label at end of the bar
+            ha="center",  # Horizontally center label
+        )
+        ax.annotate(
+            "{:.1f}".format(w_2[i]),  # Use `label` as label
+            (i+0.5*width, w_2[i]),  # Place label at end of the bar
+            ha="center",  # Horizontally center label
+        )
 
     plt.ylabel("Time (s)")
     plt.xlabel("Method")
@@ -111,7 +145,7 @@ def plt_end_to_end():
     # plt.show()
 
 
-def add_value_labels(ax, spacing=5):
+def add_value_labels(ax, spacing=5, bottoms=None):
     """Add labels to the end of each bar in a bar chart.
 
     Arguments:
@@ -121,9 +155,17 @@ def add_value_labels(ax, spacing=5):
     """
 
     # For each bar: Place a label
+    i = 0
     for rect in ax.patches:
         # Get X and Y placement of label from rect.
         y_value = rect.get_height()
+        if y_value < 80:
+            continue
+        else:
+            y_value = rect.get_height() if bottoms is None else rect.get_height() + \
+                bottoms[i]
+        i += 1
+        print("y values", y_value)
         x_value = rect.get_x() + rect.get_width() / 2
 
         # Number of points between bar and label. Change to your liking.
@@ -138,8 +180,6 @@ def add_value_labels(ax, spacing=5):
             # Vertically align label at top
             va = "top"
 
-        if y_value < 1:
-            continue
         # Use Y value as label and format number with one decimal place
         label = "{:.1f}".format(y_value)
 
