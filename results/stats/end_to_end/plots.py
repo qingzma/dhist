@@ -119,8 +119,8 @@ def plt_end_to_end():
             ha="center",  # Horizontally center label
         )
 
-    plt.ylabel("Time (s)")
-    plt.xlabel("Method")
+    plt.ylabel("Total time (s)")
+    # plt.xlabel("Method")
     plt.tight_layout()
     plt.show()
 
