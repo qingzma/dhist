@@ -377,8 +377,8 @@ def add_value_labels(ax, spacing=5):
 
 
 if __name__ == "__main__":
-    # plot_accuracy()
+    plot_accuracy()
     # plot_times()
     # plot_accuracy_without_filter()
     # plot_update_accuracy()
-    plot_model_size()
+    # plot_model_size()
