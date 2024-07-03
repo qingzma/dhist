@@ -43,19 +43,20 @@ def read_times(suffix):
 
 
 def plt_end_to_end():
+    execs_10, plan_10 = read_times("_10s")
     execs, plan = read_times("_10s")
 
     weight_counts_10 = {
-        "Plan Time": np.array(plan)/1000,
-        "Execution Time": np.array(execs)/1000,
+        "Plan Time (simple query)": np.array(plan_10)/1000,
+        "Execution Time (simple query)": np.array(execs_10)/1000,
     }
 
     weight_counts = {
-        "Plan Time (simple query)": np.array(plan)/990,
-        "Execution Time (simple query)": np.array(execs)/100,
+        "Plan Time": np.array(plan)/990,
+        "Execution Time": np.array(execs)/100,
     }
-    width = 0.2
 
+    width = 0.3
     fig, ax = plt.subplots()
 
     x = np.array([i for i in range(8)])
@@ -78,13 +79,15 @@ def plt_end_to_end():
         bottom += weight_count
 
     # ax.set_title("Number of penguins with above average body mass")
-    ax.legend(loc="upper right")
+    ax.legend(loc="center right")
     plt.yscale("log")
     plt.ylim([0.01, 10000])
     plt.xticks(x, labels, rotation=70)
     add_value_labels(ax)
-    plt.tight_layout()
 
+    plt.ylabel("Time (s)")
+    plt.xlabel("Method")
+    plt.tight_layout()
     plt.show()
 
     # # data = [5.9, 162, 310, 1.9, 2.7, 0.866]
