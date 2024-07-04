@@ -8,17 +8,17 @@ import numpy as np
 from joins.args import parse_args
 from joins.base_logger import logger
 from joins.engine_topk import EngineTopK as Engine
+from joins.tools import q_error
 
 # from joins.stats.train_stats import train_stats
-from joins.stats.train_stats_topk import train_stats_topk
-from joins.tools import q_error
+from joins.tpcds.train_tpcds_topk import train_tpcds_topk
 
 
 class TestTopkEngineMethod(unittest.TestCase):
     def __init__(self, methodName: str = "runTest") -> None:
         super().__init__(methodName)
         # "model_stats_joinhist_200_20", "model_stats_topk_200_20"
-        self.model_name = "model_stats_topk_100_1"
+        self.model_name = "model_tpcds1g_topk_100_10"
         self.use_pushed_down = True
         arguments = [
             "--train",
@@ -38,19 +38,19 @@ class TestTopkEngineMethod(unittest.TestCase):
         arguments = [
             "--train",
             "--grid",
-            "90",
+            "100",
             "--topk",
-            "20",
+            "10",
             # "--cdf",
             "--method",
             "topk",
             "--dataset",
-            "stats_all",
+            "tpcds1g",
             "--data_folder",
-            "data/stats/",
+            "/data1/tpcds/1x/",
         ]
         args = parse_args(arguments)
-        train_stats_topk(args)
+        train_tpcds_topk(args)
 
     # # remove trained models for test purposes
     # # @classmethod
@@ -927,14 +927,14 @@ class TestTopkEngineMethod(unittest.TestCase):
     #     self.assertTrue(q_error(res, truth) < 5)
 
     def test_multi_way_2_join_key_1(self):
-        query = """SELECT COUNT(*) FROM users as u, comments as c, posts as p WHERE p.OwnerUserId = u.Id AND p.Id = c.PostId AND u.UpVotes>=0 AND u.CreationDate>='2010-08-21 21:27:38'::timestamp AND c.CreationDate>='2010-07-21 11:05:37'::timestamp AND c.CreationDate<='2014-08-25 17:59:25'::timestamp"""
+        query = """SELECT count(*) from item, store_sales,  store_returns,  catalog_sales where item.i_item_sk = store_sales.ss_item_sk AND item.i_item_sk=store_returns.sr_item_sk AND item.i_item_sk=catalog_sales.cs_item_sk"""
         with open("models/" + self.model_name + ".pkl", "rb") as f:
             model = pickle.load(f)
         engine = Engine(model, use_cdf=self.args.cdf)
         t1 = time.time()
         res = engine.query(query) if self.use_pushed_down else engine.query(query)
         t2 = time.time()
-        truth = 142137
+        truth = 6962883474
         logger.info("result %.6E", res)
         logger.info("truth %.6E", truth)
         logger.info("time cost is %.5f s.", t2 - t1)

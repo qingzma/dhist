@@ -4,9 +4,9 @@ import pickle
 from joins.base_logger import logger
 from joins.engine_topk import EngineTopK
 from joins.schema_base import identify_conditions
-from joins.stats.schema import get_stats_relevant_attributes
 from joins.table_top_k import TableContainerTopK
 from joins.tpcds.prepare_data import process_tpcds_data
+from joins.tpcds.schema import get_tpcds_relevant_attributes
 
 
 def train_tpcds_topk(args):
@@ -29,11 +29,11 @@ def train_tpcds_topk(args):
         schema, all_keys, equivalent_keys, table_keys = process_tpcds_data(
             dataset, data_path, model_folder, kernel=None
         )
-        join_keys, relevant_keys, counters = get_stats_relevant_attributes(schema)
+        join_keys, relevant_keys, counters = get_tpcds_relevant_attributes(schema)
 
         for t in schema.tables:
             print("analyze table ", t.table_name)
-            table_path = os.path.join(data_path, t.table_name) + ".csv"
+            table_path = os.path.join(data_path, t.table_name) + ".dat"
             # logger.debug("training model for file %s", table_path)
             tableContainer = TableContainerTopK()
             tableContainer.fit(
@@ -71,7 +71,7 @@ def train_tpcds_topk(args):
             schema, all_keys, equivalent_keys, table_keys = process_tpcds_data(
                 dataset, data_path, model_folder, kernel=None
             )
-            join_keys, relevant_keys, counters = get_stats_relevant_attributes(schema)
+            join_keys, relevant_keys, counters = get_tpcds_relevant_attributes(schema)
 
             for query in schema.join_paths:
                 engine = EngineTopK(model, use_cdf=args.cdf)
@@ -80,18 +80,36 @@ def train_tpcds_topk(args):
                 )
 
                 # logger.info("top_container %s", top_container)
-                # logger.info("join_path %s", join_path)
+                logger.info("join_path %s", join_path)
 
                 # ["posts"]:  # : [i.table_name for i in schema.tables]
                 for t in [i.table_name for i in schema.tables]:
-                    table_path = os.path.join(data_path, t) + ".csv"
+                    table_path = os.path.join(data_path, t) + ".dat"
                     jks = [jk for jk in join_path if t in jk]
-                    # logger.info("table is %s", t)
-                    # logger.info("jks %s", jks)
+                    if t in [
+                        "item",
+                        "store_sales",
+                        "store_returns",
+                        "catalog_sales",
+                        "customer",
+                    ]:
+                        jks = [jk for jk in join_path if t in jk.split(".")[0]]
+
+                    logger.info("table is %s", t)
+                    logger.info("jks %s", jks)
                     assert len(jks) <= 1
                     if len(jks) == 1:
                         # logger.info("jks is %s", jks)
-                        jks = jks[0].replace(t, "").replace(".", "")
+                        if t in [
+                            "item",
+                            "store_sales",
+                            "store_returns",
+                            "catalog_sales",
+                            "customer",
+                        ]:
+                            jks = jks[0].split(".")[1]
+                        else:
+                            jks = jks[0].replace(t, "").replace(".", "")
                         model[t].fit_join_key_corrector(
                             table_path,
                             join_keys=join_keys,

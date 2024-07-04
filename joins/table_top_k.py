@@ -37,7 +37,10 @@ class TableContainerTopK:
     def fit(
         self, file, join_keys, relevant_keys, bin_info, schema: SchemaGraph, args=None
     ) -> None:
-        df = pd.read_csv(file, sep=",")
+        sep = ","
+        if ".dat" in file:
+            sep = "|"
+        df = pd.read_csv(file, sep=sep)
         self.size = df.shape[0]
         self.file_path = file
         self.name = file.split("/")[-1].split(".")[0]
@@ -47,6 +50,7 @@ class TableContainerTopK:
 
         # currently only support at most 1 join keys in a table
         # print("join_keys", join_keys)
+        # print("df", df)
         # assert len(join_keys) == 1
         # if len(join_keys) == 1 or (not use_2d_model):
 
@@ -69,8 +73,10 @@ class TableContainerTopK:
             # counter.fit(df[join_key].fillna(-1))
             # self.counters[join_key] = counter
 
+        # print("relevant_keys", relevant_keys[self.name])
         for relev_key in relevant_keys[self.name]:
             # logger.info("col is %s", relev_key)
+            # exit()
             df_col = df[[relev_key]]  # .fillna(-1)  # replace NULL with -1 !
             column = NonKeyColumnTopK()
             column.fit(df_col, args=args)
@@ -121,13 +127,18 @@ class TableContainerTopK:
         jks,
         args=None,
     ):
-        df = pd.read_csv(file, sep=",")
+        sep = ","
+        if ".dat" in file:
+            sep = "|"
+        df = pd.read_csv(file, sep=sep)
 
         # logger.info("join keys %s", join_keys)
-        # logger.info("jks %s", jks)
+        logger.info("jks %s", jks)
+
         # for jk  in join_keys[self.name]:
         # logger.info("relev %s", relevant_keys[self.name])
         cols = list(set(relevant_keys[self.name]) - set([jks]))
+        logger.info("cols %s", cols)
         df1 = df[[jks] + cols]
         # exit()
         # logger.info("df1 \n %s", df1)
