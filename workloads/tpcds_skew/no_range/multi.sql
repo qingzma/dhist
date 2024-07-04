@@ -11,5 +11,5 @@ where i_item_sk = ss_item_sk AND i_item_sk=sr_item_sk AND i_item_sk=cs_item_sk
 
 query 25
 customer sk: 
-SELECT count(*) FROM store_sales, store_returns, catalog_sales, 
-? where ss_customer_sk AND sr_customer_sk AND cs_bill_customer_sk
+SELECT count(*) FROM customer, store_sales, store_returns, catalog_sales 
+where c_customer_sk=ss_customer_sk AND c_customer_sk=sr_customer_sk AND c_customer_sk=cs_bill_customer_sk
