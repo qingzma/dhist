@@ -27,7 +27,7 @@ def send_query(dataset, method_name, query_file, save_folder, iteration=None):
     # cursor.execute('SET print_sub_queries=true')
     # cursor.execute('SET print_single_tbl_queries=true')
     methods = [
-        "factorjoin",
+        # "factorjoin",
         "dhist",
         "deepdb",
         "flat",
@@ -80,9 +80,6 @@ def send_query(dataset, method_name, query_file, save_folder, iteration=None):
                 print(f"{no}-th query timeout!")
                 conn.rollback()
 
-        cursor.close()
-        conn.close()
-
         save_predictions_to_file3(
             truths,
             execution_time,
@@ -92,6 +89,8 @@ def send_query(dataset, method_name, query_file, save_folder, iteration=None):
             "plan-time",
             "results/stats/end_to_end/" + method + ".csv",
         )
+    cursor.close()
+    conn.close()
 
 
 if __name__ == "__main__":
