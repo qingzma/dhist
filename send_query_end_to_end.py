@@ -11,7 +11,7 @@ from joins.tools import save_predictions_to_file, save_predictions_to_file3
 
 def send_query(dataset, method_name, query_file, save_folder, iteration=None):
     conn = psycopg2.connect(
-        options="-c statement_timeout=600s",
+        # options="-c statement_timeout=600s",
         database=dataset,
         user="postgres",
         password="postgres",
@@ -27,13 +27,13 @@ def send_query(dataset, method_name, query_file, save_folder, iteration=None):
     # cursor.execute('SET print_sub_queries=true')
     # cursor.execute('SET print_single_tbl_queries=true')
     methods = [
-        # "factorjoin",
+        "factorjoin",
         "dhist",
         "deepdb",
         "flat",
-        "neurocard",
-        "wjsample",
-        "truth",
+        # "neurocard",
+        # "wjsample",
+        # "truth",
         # "postgres",
     ]
     # method = "postgres"  # "factorjoin", "dhist", "deepdb", "flat", "neurocard", "wjsample", "truth", "postgres"

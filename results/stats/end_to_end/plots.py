@@ -1,21 +1,22 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 from joins.tools import read_from_csv_all
-import pandas as pd
 
 
 def read_times(suffix):
-    truth = read_from_csv_all("results/stats/end_to_end/truth"+suffix+".csv")
-    deepdb = read_from_csv_all("results/stats/end_to_end/deepdb"+suffix+".csv")
-    dhist = read_from_csv_all("results/stats/end_to_end/dhist"+suffix+".csv")
+    truth = read_from_csv_all("results/stats/end_to_end/truth" + suffix + ".csv")
+    deepdb = read_from_csv_all("results/stats/end_to_end/deepdb" + suffix + ".csv")
+    dhist = read_from_csv_all("results/stats/end_to_end/dhist" + suffix + ".csv")
     factorjoin = read_from_csv_all(
-        "results/stats/end_to_end/factorjoin"+suffix+".csv")
-    flat = read_from_csv_all("results/stats/end_to_end/flat"+suffix+".csv")
+        "results/stats/end_to_end/factorjoin" + suffix + ".csv"
+    )
+    flat = read_from_csv_all("results/stats/end_to_end/flat" + suffix + ".csv")
     neurocard = read_from_csv_all(
-        "results/stats/end_to_end/neurocard"+suffix+".csv")
-    wjsample = read_from_csv_all(
-        "results/stats/end_to_end/wjsample"+suffix+".csv")
+        "results/stats/end_to_end/neurocard" + suffix + ".csv"
+    )
+    wjsample = read_from_csv_all("results/stats/end_to_end/wjsample" + suffix + ".csv")
     postgres = read_from_csv_all("results/stats/end_to_end/postgres.csv")
 
     idx1 = np.array([truth["truth"] != -1][0])
@@ -39,8 +40,7 @@ def read_times(suffix):
     idx = np.where(idx1 & idx2 & idx3 & idx4 & idx5 & idx6 & idx7 & idx8)
     print("total count is ", len(list(idx[0])))
 
-    data = [truth, deepdb, dhist, factorjoin,
-            flat, neurocard, wjsample, postgres]
+    data = [truth, deepdb, dhist, factorjoin, flat, neurocard, wjsample, postgres]
     # print("idx is ", idx)
     # "plan-time"
     execs = []
@@ -53,38 +53,51 @@ def read_times(suffix):
 
 def plt_end_to_end():
     execs_10, plan_10 = read_times("_10s")
-    execs, plan = read_times("_10s")
+    execs, plan = read_times("")
 
     weight_counts_10 = {
-        "Plan Time (simple query)": np.array(plan_10)/1000,
-        "Execution Time (simple query)": np.array(execs_10)/1000,
+        "Plan Time (simple query)": np.array(plan_10) / 1000,
+        "Execution Time (simple query)": np.array(execs_10) / 1000,
     }
 
     weight_counts = {
-        "Plan Time": np.array(plan)/500,
-        "Execution Time": np.array(execs)/100,
+        "Plan Time": np.array(plan) / 1000,
+        "Execution Time": np.array(execs) / 1000,
     }
 
     width = 0.3
     fig, ax = plt.subplots()
 
     x = np.array([i for i in range(8)])
-    labels = ["TrueCard", "DeepDB", "DHist", "FactorJoin",
-              "FLAT", "NeuroCard", "WJSample",  "Postgres"]
+    labels = [
+        "TrueCard",
+        "DeepDB",
+        "DHist",
+        "FactorJoin",
+        "FLAT",
+        "NeuroCard",
+        "WJSample",
+        "Postgres",
+    ]
 
     idx = 0
     bottom = np.zeros(8)
     for boolean, weight_count in weight_counts_10.items():
         # print(boolean, weight_count)
         idx += 1
-        p = ax.bar(x-0.5*width, weight_count, width,
-                   label=boolean, bottom=bottom, alpha=0.3+idx*0.06)
+        p = ax.bar(
+            x - 0.5 * width,
+            weight_count,
+            width,
+            label=boolean,
+            bottom=bottom,
+            alpha=0.3 + idx * 0.06,
+        )
         bottom += weight_count
     bottom = np.zeros(8)
     for boolean, weight_count in weight_counts.items():
         # print(boolean, weight_count)
-        p = ax.bar(x+0.5*width, weight_count, width,
-                   label=boolean, bottom=bottom)
+        p = ax.bar(x + 0.5 * width, weight_count, width, label=boolean, bottom=bottom)
         bottom += weight_count
 
     # ax.set_title("Number of penguins with above average body mass")
@@ -94,28 +107,28 @@ def plt_end_to_end():
     plt.xticks(x, labels, rotation=70)
     # add_value_labels(ax)
     w_10_1 = weight_counts_10["Plan Time (simple query)"]
-    w_10_2 = w_10_1+weight_counts_10["Execution Time (simple query)"]
+    w_10_2 = w_10_1 + weight_counts_10["Execution Time (simple query)"]
     w_1 = weight_counts["Plan Time"]
-    w_2 = w_1+weight_counts["Execution Time"]
+    w_2 = w_1 + weight_counts["Execution Time"]
     for i in range(8):
         ax.annotate(
             "{:.2f}".format(w_10_1[i]),  # Use `label` as label
-            (i-0.5*width, w_10_1[i]),  # Place label at end of the bar
+            (i - 0.5 * width, w_10_1[i]),  # Place label at end of the bar
             ha="center",  # Horizontally center label
         )
         ax.annotate(
             "{:.1f}".format(w_10_2[i]),  # Use `label` as label
-            (i-0.5*width, w_10_2[i]),  # Place label at end of the bar
+            (i - 0.5 * width, w_10_2[i]),  # Place label at end of the bar
             ha="center",  # Horizontally center label
         )
         ax.annotate(
             "{:.2f}".format(w_1[i]),  # Use `label` as label
-            (i+0.5*width, w_1[i]),  # Place label at end of the bar
+            (i + 0.5 * width, w_1[i]),  # Place label at end of the bar
             ha="center",  # Horizontally center label
         )
         ax.annotate(
             "{:.1f}".format(w_2[i]),  # Use `label` as label
-            (i+0.5*width, w_2[i]),  # Place label at end of the bar
+            (i + 0.5 * width, w_2[i]),  # Place label at end of the bar
             ha="center",  # Horizontally center label
         )
 
@@ -162,8 +175,9 @@ def add_value_labels(ax, spacing=5, bottoms=None):
         if y_value < 80:
             continue
         else:
-            y_value = rect.get_height() if bottoms is None else rect.get_height() + \
-                bottoms[i]
+            y_value = (
+                rect.get_height() if bottoms is None else rect.get_height() + bottoms[i]
+            )
         i += 1
         print("y values", y_value)
         x_value = rect.get_x() + rect.get_width() / 2
