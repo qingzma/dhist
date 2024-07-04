@@ -16,7 +16,7 @@ def send_query(dataset, method_name, query_file, save_folder, iteration=None):
         user="postgres",
         password="postgres",
         host="127.0.0.1",
-        port=5432,
+        port=5434,
     )
     cursor = conn.cursor()
 
@@ -34,7 +34,7 @@ def send_query(dataset, method_name, query_file, save_folder, iteration=None):
         # "neurocard",
         # "wjsample",
         # "truth",
-        # "postgres",
+        "postgres",
     ]
     # method = "postgres"  # "factorjoin", "dhist", "deepdb", "flat", "neurocard", "wjsample", "truth", "postgres"
     for method in methods:
@@ -44,7 +44,7 @@ def send_query(dataset, method_name, query_file, save_folder, iteration=None):
         cursor.execute("SET ml_cardest_enabled=false;")
         cursor.execute("SET query_no=0;")
         cursor.execute(f"SET ml_cardest_fname='{single}.txt';")
-        cursor.execute("SET ml_joinest_enabled=true;")
+        cursor.execute("SET ml_joinest_enabled=false;")
         cursor.execute("SET join_est_no=0;")
         cursor.execute(f"SET ml_joinest_fname='{multi}.txt';")
 
@@ -87,7 +87,7 @@ def send_query(dataset, method_name, query_file, save_folder, iteration=None):
             "truth",
             "execution-time",
             "plan-time",
-            "results/stats/end_to_end/" + method + ".csv",
+            "results/stats/end_to_end/" + method + "_machine.csv",
         )
     cursor.close()
     conn.close()
