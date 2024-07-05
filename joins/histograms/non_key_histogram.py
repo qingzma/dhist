@@ -149,6 +149,9 @@ class NonKeyTopKHistogram:
         self.size = data.shape[0]
         uniques = np.sort(pd.unique(data[headers[0]]))
         uniques = uniques[~np.isnan(uniques)]
+        if len(uniques) == 0:
+            print("skip training for data without values.")
+            return
         # print("uniques", uniques)
         self.min = uniques[0]
         self.max = uniques[-1]

@@ -80,7 +80,7 @@ def train_tpcds_topk(args):
                 )
 
                 # logger.info("top_container %s", top_container)
-                logger.info("join_path %s", join_path)
+                # logger.info("join_path %s", join_path)
 
                 # ["posts"]:  # : [i.table_name for i in schema.tables]
                 for t in [i.table_name for i in schema.tables]:
@@ -95,8 +95,8 @@ def train_tpcds_topk(args):
                     ]:
                         jks = [jk for jk in join_path if t in jk.split(".")[0]]
 
-                    logger.info("table is %s", t)
-                    logger.info("jks %s", jks)
+                    # logger.info("table is %s", t)
+                    # logger.info("jks %s", jks)
                     assert len(jks) <= 1
                     if len(jks) == 1:
                         # logger.info("jks is %s", jks)

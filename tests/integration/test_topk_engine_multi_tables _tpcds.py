@@ -18,7 +18,7 @@ class TestTopkEngineMethod(unittest.TestCase):
     def __init__(self, methodName: str = "runTest") -> None:
         super().__init__(methodName)
         # "model_stats_joinhist_200_20", "model_stats_topk_200_20"
-        self.model_name = "model_tpcds1g_topk_100_10"
+        self.model_name = "model_tpcds1g_topk_200_20"
         self.use_pushed_down = True
         arguments = [
             "--train",
@@ -45,9 +45,9 @@ class TestTopkEngineMethod(unittest.TestCase):
             "--method",
             "topk",
             "--dataset",
-            "tpcds1g",
+            "tpcds10g",
             "--data_folder",
-            "/data1/tpcds/1x/",
+            "/data1/tpcds/10x/",
         ]
         args = parse_args(arguments)
         train_tpcds_topk(args)

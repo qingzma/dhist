@@ -7,7 +7,10 @@ from joins.args import parse_args
 from joins.base_logger import logger
 from joins.stats.evaluate_stats import evaluate_stats
 from joins.stats.train_stats import train_stats
+from joins.stats.train_stats_topk import train_stats_topk
 from joins.tools import convert_time_to_int
+from joins.tpcds.evaluate_tpcds import evaluate_tpcds
+from joins.tpcds.train_tpcds_topk import train_tpcds_topk
 
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
@@ -24,7 +27,7 @@ if __name__ == "__main__":
         elif args.train:
             logger.info("start training models")
             start_time = time.time()
-            train_stats(args)
+            train_stats_topk(args)
             end_time = time.time()
             logger.info(
                 "Training completed: total training time is %.6f s.",
@@ -35,6 +38,27 @@ if __name__ == "__main__":
             logger.info("start evaluating models")
             start_time = time.time()
             evaluate_stats(args)
+            end_time = time.time()
+            logger.info(
+                "Evaluation completed: total evaluation time is %.6f s.",
+                end_time - start_time,
+            )
+
+    if args.dataset == "tpcds":
+        if args.train:
+            logger.info("start training models")
+            start_time = time.time()
+            train_tpcds_topk(args)
+            end_time = time.time()
+            logger.info(
+                "Training completed: total training time is %.6f s.",
+                end_time - start_time,
+            )
+
+        elif args.evaluate:
+            logger.info("start evaluating models")
+            start_time = time.time()
+            evaluate_tpcds(args)
             end_time = time.time()
             logger.info(
                 "Evaluation completed: total evaluation time is %.6f s.",

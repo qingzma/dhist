@@ -133,12 +133,12 @@ class TableContainerTopK:
         df = pd.read_csv(file, sep=sep)
 
         # logger.info("join keys %s", join_keys)
-        logger.info("jks %s", jks)
+        # logger.info("jks %s", jks)
 
         # for jk  in join_keys[self.name]:
         # logger.info("relev %s", relevant_keys[self.name])
         cols = list(set(relevant_keys[self.name]) - set([jks]))
-        logger.info("cols %s", cols)
+        # logger.info("cols %s", cols)
         df1 = df[[jks] + cols]
         # exit()
         # logger.info("df1 \n %s", df1)
