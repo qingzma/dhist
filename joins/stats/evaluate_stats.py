@@ -83,14 +83,14 @@ def evaluate_stats(args: ArgumentParser):
     # for q in bad_queries:
     #     logger.info(q)
 
-    save_predictions_to_file(
-        pred,
-        latency,
-        "card",
-        "card-time",
-        # "workloads/stats_CEB/no_range_predicates/5.topk_100_40.csv",
-        "results/stats/multiple_tables/updates/cardall.csv",
-    )
+    # save_predictions_to_file(
+    #     pred,
+    #     latency,
+    #     "card",
+    #     "card-time",
+    #     # "workloads/stats_CEB/no_range_predicates/5.topk_100_40.csv",
+    #     "results/stats/multiple_tables/updates/cardall.csv",
+    # )
 
     # logbins = np.logspace(np.log10(min(ratios)), np.log10(max(ratios)), 31)
     # plt.xscale("log")
