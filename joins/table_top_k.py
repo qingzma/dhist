@@ -40,7 +40,18 @@ class TableContainerTopK:
         sep = ","
         if ".dat" in file:
             sep = "|"
-        df = pd.read_csv(file, sep=sep)
+
+        if args.dataset == 'job-light':
+            table_name = file.split("/")[-1].split(".")[0]
+            print('read imdb')
+            # list_name = schema.table_dictionary[table_name].attributes
+            # df = pd.read_csv(file, names=list_name, header=None, escapechar='\\', encoding='utf-8',
+            #                  quotechar='"',
+            #                  sep=",")
+            df = pd.read_csv(file, sep=",")
+        else:
+            df = pd.read_csv(file, sep=sep)
+        # df = pd.read_csv(file, sep=sep)
         self.size = df.shape[0]
         self.file_path = file
         self.name = file.split("/")[-1].split(".")[0]

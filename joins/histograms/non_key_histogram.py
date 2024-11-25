@@ -291,12 +291,19 @@ class NonKeyTopKHistogram:
 
             # uniform assumption term
             if idx_left == idx_right:
-                cnt += (
-                    1.0
-                    * self.counts_no_top_k[idx_right]
-                    / self.bin_width
-                    * (domain.max - domain.min)
-                )
+                if domain.max == domain.min:
+                    cnt += (
+                            1.0
+                            * self.counts_no_top_k[idx_right]
+                            / (self.bin_width * 0.07)
+                    )
+                else:
+                    cnt += (
+                            1.0
+                            * self.counts_no_top_k[idx_right]
+                            / self.bin_width
+                            * (domain.max - domain.min)
+                    )
             else:
                 # add right part
                 cnt += (

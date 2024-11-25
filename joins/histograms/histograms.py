@@ -136,6 +136,10 @@ class UpperBoundHistogramTopK(BaseHistogram):
         groups = data.groupby(
             pd.cut(data[headers[0]], bins, include_lowest=True), observed=False
         )
+        # for name, group in groups:
+        #     print(f"Group: {name}")
+        #     print(group)
+        #     print("-" * 40)
         self.counts = np.array(groups[headers[0]].count()).astype("float")
 
         uniques = pd.unique(data[headers[0]])
@@ -169,6 +173,8 @@ class UpperBoundHistogramTopK(BaseHistogram):
                     container = {}
                 cnt = 1
         top_k_container.append(container)
+        # print('len of top k container', len(top_k_container))
+        # print('top k container', top_k_container)
         # if cntt < 20:
         #     print(domain_value[0], domain_value[1], counter)
         # cntt += 1
@@ -495,11 +501,11 @@ class TableJoin(BaseHistogram):
 
 
 if __name__ == "__main__":
-    b = pd.read_csv("data/stats/badges.csv")[["UserId"]]
-    c = pd.read_csv("data/stats/comments.csv")[["UserId"]]
-    u = pd.read_csv("data/stats/users.csv")[["Id"]]
-    ph = pd.read_csv("data/stats/postHistory.csv")[["UserId"]]
-    p = pd.read_csv("data/stats/posts.csv")[["OwnerUserId"]]
+    b = pd.read_csv("End-to-End-CardEst-Benchmark/datasets/stats_simplified/badges.csv")[["UserId"]]
+    c = pd.read_csv("End-to-End-CardEst-Benchmark/datasets/stats_simplified/comments.csv")[["UserId"]]
+    u = pd.read_csv("End-to-End-CardEst-Benchmark/datasets/stats_simplified/users.csv")[["Id"]]
+    ph = pd.read_csv("End-to-End-CardEst-Benchmark/datasets/stats_simplified/postHistory.csv")[["UserId"]]
+    p = pd.read_csv("End-to-End-CardEst-Benchmark/datasets/stats_simplified/posts.csv")[["OwnerUserId"]]
 
     low = np.min(
         [
@@ -521,8 +527,8 @@ if __name__ == "__main__":
     )
     print("low ", low)
     print("high ", high)
-    bins = np.linspace(low, high, 300)
-
+    bins = np.linspace(low, high, 200)
+    print('bins', bins)
     # truth
     tj_b = TableJoin()
     tj_b.fit(b, ["UserId"])
@@ -530,6 +536,7 @@ if __name__ == "__main__":
     tj_c.fit(c, ["UserId"])
     tj = tj_b.join(tj_c, bins=bins)
 
+    print('tj', len(tj))
     # join-histogram
     jh_b = JoinHistogram()
     jh_b.fit(b, ["UserId"], bins)
@@ -555,7 +562,8 @@ if __name__ == "__main__":
     # plt.figure(dpi=300)
     ub_error = division(ub.counts, tj)
     # print(ub_error)
-    plt.hist(bins[:-1], bins, weights=ub_error, label="Upper Bound", color=colors[2])
+    # plt.hist(bins[:-1], bins, weights=ub_error, label="Upper Bound", color=colors[2])
+    plt.hist(bins[:-1], bins, weights=ub_error, label="FactorJoin", color=colors[2])
     # plt.yscale("log")
     # plt.show()
 
@@ -566,7 +574,8 @@ if __name__ == "__main__":
     ubtk_c.fit(c, ["UserId"], bins)
     ubtk = ubtk_b.join(ubtk_c)
 
-    print("estimation from top K ", np.sum(ubtk))
+    print("estimation from top K ", np.sum(ubtk.counts))
+
 
     ubtk_error = division(ubtk.counts, tj)
     # print(ub_error)
@@ -574,6 +583,13 @@ if __name__ == "__main__":
     # plt.yscale("log")
 
     plt.hist(bins[:-1], bins, weights=jh_error, label="Join-Histogram", color=colors[1])
+
+
+    # deepdb 13575752.846134752
+    deepdb_value = float(13575752.846134752 / 15900001)
+    print(deepdb_value)
+    plt.axhline(y=deepdb_value, color='red', linestyle='--', label='DeepDB')
+
     plt.legend()
     plt.xlabel("Join Key: UserId")
     plt.ylabel("Accuracy: prediction/truth")
@@ -594,9 +610,14 @@ if __name__ == "__main__":
         (1, 0.4),
         weight="bold",
     )
+    plt.annotate(
+        "Overall Accuracy: %.4f" % ( 13575752.846134752 / np.sum(tj)),
+        (1, 0.7),
+        weight="bold",
+    )
 
+    plt.savefig('example.pdf')
     plt.show()
-
     # ubtk_b = UpperBoundHistogramTopK(3)
     # ubtk_b.fit(b, ["UserId"], bins)
     # ubtk_c = UpperBoundHistogramTopK(3)

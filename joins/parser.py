@@ -17,7 +17,7 @@ from joins.schema_base import (
 )
 
 
-def timestamp_transorform(time_string, start_date="2010-07-19 00:00:00"):
+def timestamp_transform(time_string, start_date="2010-07-19 00:00:00"):
     start_date_int = time.strptime(start_date, "%Y-%m-%d %H:%M:%S")
     time_array = time.strptime(time_string, "'%Y-%m-%d %H:%M:%S'")
     return int(time.mktime(time_array)) - int(time.mktime(start_date_int))
@@ -444,7 +444,7 @@ def parse_query(query_str, schema):
                 else:
                     assert right.tokens[1].value == "::"
                     right.value = str(
-                        timestamp_transorform(right.tokens[0].value))
+                        timestamp_transform(right.tokens[0].value))
                     query.add_where_condition(
                         alias_dict[left.tokens[0].value],
                         left.tokens[2].value
@@ -560,7 +560,7 @@ def parse_query_simple(query):
                 assert (
                     "::timestamp" in value
                 )  # this is hardcoded for STATS-CEB workload
-                value = timestamp_transorform(
+                value = timestamp_transform(
                     value.strip().split("::timestamp")[0])
             if table not in table_query:
                 table_query[table] = dict()

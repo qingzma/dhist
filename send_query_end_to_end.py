@@ -34,16 +34,19 @@ def send_query(dataset, method_name, query_file, save_folder, iteration=None):
         # "neurocard",
         # "wjsample",
         # "truth",
+        # "oracle",
+        # "bayescard",
         "postgres",
     ]
     # method = "postgres"  # "factorjoin", "dhist", "deepdb", "flat", "neurocard", "wjsample", "truth", "postgres"
     for method in methods:
         single = "stats_CEB_single_" + method
         multi = "stats_CEB_sub_queries_" + method
+        # multi = "job_light_sub_queries_" + method
 
-        cursor.execute("SET ml_cardest_enabled=false;")
-        cursor.execute("SET query_no=0;")
-        cursor.execute(f"SET ml_cardest_fname='{single}.txt';")
+        # cursor.execute("SET ml_cardest_enabled=false;")
+        # cursor.execute("SET query_no=0;")
+        # cursor.execute(f"SET ml_cardest_fname='{single}.txt';")
         cursor.execute("SET ml_joinest_enabled=false;")
         cursor.execute("SET join_est_no=0;")
         cursor.execute(f"SET ml_joinest_fname='{multi}.txt';")
@@ -56,6 +59,8 @@ def send_query(dataset, method_name, query_file, save_folder, iteration=None):
         for no, query_str in enumerate(queries):
             if "||" in query_str:
                 query = query_str.split("||")[1]
+            else:
+                query = query_str
             print(f"Executing query {no}")
 
             try:

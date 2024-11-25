@@ -180,7 +180,7 @@ def multi_query_with_same_column(
                     domain_query = cond.non_key_condition
                     jks = cond.join_keys[0].split(".")[1]
                     # TODO below is a tempary soluiton to identify the primary table
-                    if jks == "Id":
+                    if jks == "Id" or jks == "id":
                         id_filtered_out = models[tbl].filter_join_key_by_query(
                             domain_query,
                             col=cond.non_key.split(".")[1],
