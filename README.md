@@ -35,7 +35,7 @@ python run.py --evaluate --model models/model_stats_gaussian_1000_cdf.pkl --quer
 ```
 
 #### 2.2.2 postgres results
-588 query
+run 588 query
 ```
 python send_query.py --query_file workloads/stats_CEB/sub_plan_queries/stats_CEB_single_table_sub_query.sql
 ``` 
